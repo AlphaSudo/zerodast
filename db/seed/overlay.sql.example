@@ -1,0 +1,14 @@
+-- overlay.sql files are for additive test data only.
+-- Allowed statements:
+--   * INSERT INTO existing tables
+--   * CREATE TABLE for isolated throwaway test fixtures
+--   * CREATE INDEX on safe test tables
+--   * ALTER TABLE ... ADD COLUMN only
+-- Forbidden patterns:
+--   * DROP / DELETE / UPDATE / TRUNCATE
+--   * CREATE FUNCTION / COPY PROGRAM / psql meta-commands
+--   * URLs, IPs, subqueries, RETURNING clauses, or obfuscated SQL
+
+-- Example:
+-- INSERT INTO documents (user_id, title, content, visibility)
+-- VALUES (1, 'Feature Preview Document', 'Synthetic data for DAST coverage.', 'private');

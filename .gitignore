@@ -1,0 +1,9 @@
+node_modules/
+reports/
+*.tar
+.env
+tmp/
+.DS_Store
+coverage/
+demo-app/node_modules/
+
