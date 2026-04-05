@@ -232,7 +232,7 @@
   - [x] Test: non-route JS file -> no match -> FULL (fail-safe)
 
 ### 3.9 Commit
-- [ ] Git commit: "feat(security): add Docker network isolation, container hardening, delta detection, authz tests, and canary verification"
+- [x] Git commit: "feat(security): add Docker network isolation, container hardening, delta detection, authz tests, and canary verification"
 
 ---
 
@@ -264,7 +264,7 @@
   - [x] Document each suppression with rationale
 
 ### 4.5 Commit
-- [ ] Git commit: "feat(zap): add pinned ZAP config with passive+active scan, auth injection, and tech-stack filtering"
+- [x] Git commit: "feat(zap): add pinned ZAP config with passive+active scan, auth injection, and tech-stack filtering"
 
 ---
 
@@ -563,6 +563,7 @@
 | 9. Verification | 12 | ~2 hours |
 | 10. Polish | 5 | ~30 min |
 | **Total** | **111 items** | **~21 hours** |
+
 
 
 
