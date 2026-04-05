@@ -457,7 +457,7 @@
   - [x] Print summary at end
 
 ### 8.4 Commit
-- [ ] Git commit: "feat(dev): add docker-compose, Makefile, and local DAST runner for developer testing"
+- [x] Git commit: "feat(dev): add docker-compose, Makefile, and local DAST runner for developer testing"
 
 ---
 
