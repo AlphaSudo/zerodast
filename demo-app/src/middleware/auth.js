@@ -20,7 +20,7 @@ function requireAuth(req, res, next) {
       email: payload.email,
     };
     return next();
-  } catch (error) {
+  } catch (_error) {
     return res.status(401).json({ error: "Invalid token" });
   }
 }
@@ -29,3 +29,4 @@ module.exports = {
   requireAuth,
   JWT_SECRET,
 };
+

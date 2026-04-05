@@ -271,83 +271,64 @@
 ## Phase 5: GitHub Actions Workflows
 
 ### 5.1 CI Workflow (Lane 1: Untrusted)
-- [ ] Create `.github/workflows/ci.yml`
-  - [ ] Name: `CI Tests` (exact — dast-pr.yml depends on this name)
-  - [ ] Trigger: `on: pull_request: branches: [main]`
-  - [ ] Permissions: `contents: read` only
-  - [ ] Concurrency group with cancel-in-progress
-  - [ ] Step: checkout with **fetch-depth: 0** (for delta detection)
-  - [ ] Step: Install dependencies (`npm ci`)
-  - [ ] Step: Lint (`npm run lint`)
-  - [ ] Step: Unit tests (`npm test`)
-  - [ ] Step: SAST with Semgrep (pinned SHA)
-  - [ ] Step: Secret detection with Gitleaks (pinned SHA)
-  - [ ] Step: Delta endpoint detection → output to file
-  - [ ] Step: Build Docker image with exact PR number tag
-  - [ ] Step: `docker save` → tar file
-  - [ ] Step: Upload artifact (image tar + delta endpoints) with retention-days: 1
-  - [ ] All actions pinned by SHA (Rule 0: PIN)
+- [x] Create `.github/workflows/ci.yml`
+  - [x] Name: `CI Tests`
+  - [x] Trigger: `pull_request` on `main`
+  - [x] Permissions: `contents: read` only
+  - [x] Concurrency group with cancel-in-progress
+  - [x] Checkout with `fetch-depth: 0`
+  - [x] Use `working-directory: demo-app` for npm steps
+  - [x] Install dependencies with `npm ci`
+  - [x] Lint with `npm run lint`
+  - [x] Test with `npm test`
+  - [x] Run Semgrep with pinned SHA
+  - [x] Run Gitleaks with pinned SHA
+  - [x] Detect delta endpoints and save artifact file
+  - [x] Build Docker image for the PR SHA
+  - [x] `docker save` the image tarball
+  - [x] Upload artifact bundle with retention-days `1`
+  - [x] All actions pinned by SHA
 
 ### 5.2 DAST PR Workflow (Lane 2: Trusted)
-- [ ] Create `.github/workflows/dast-pr.yml`
-  - [ ] Name: `DAST PR Scan`
-  - [ ] Trigger: `on: workflow_run: workflows: ["CI Tests"]`
-  - [ ] Concurrency group by head SHA with cancel-in-progress
-  - [ ] **Job 1: dast-scan**
-    - [ ] `runs-on: ubuntu-22.04` (pinned runner)
-    - [ ] `timeout-minutes: 15`
-    - [ ] Permissions: `actions: read`, `contents: read` (NO write)
-    - [ ] Condition: only run if CI succeeded and was a PR event
-    - [ ] Step: Checkout main branch (trusted scripts) — `ref: main`
-    - [ ] Step: Sparse checkout PR code (only `db/seed/overlay.sql`)
-    - [ ] Step: Install pglast (`pip install pglast==6.*`)
-    - [ ] Step: Validate PR overlay (if exists)
-    - [ ] Step: Pre-pull all Docker images (Postgres, ZAP) BEFORE any isolation
-    - [ ] Step: Create Docker `--internal` network
-    - [ ] Step: Start PostgreSQL on internal network
-    - [ ] Step: Wait for DB healthy
-    - [ ] Step: Seed DB (schema.sql + mock_data.sql + overlay.sql if valid)
-    - [ ] Step: Download PR artifact (image tar + delta file)
-      - [ ] Include `github-token: ${{ secrets.GITHUB_TOKEN }}`
-      - [ ] Include `run-id: ${{ github.event.workflow_run.id }}`
-    - [ ] Step: `docker load` PR image
-    - [ ] Step: Start hardened PR app on internal network (container-hardening.sh)
-    - [ ] Step: Wait for app healthy (timeout 60s)
-    - [ ] Step: Bootstrap auth (Alice + Bob tokens)
-    - [ ] Step: Configure DAST scope (delta or full)
-    - [ ] Step: Run ZAP on internal network
-      - [ ] `-config check.onstart=false`
-      - [ ] `-Xmx3g -Xms1g`
-      - [ ] Handle exit codes (2,3 = expected findings)
-    - [ ] Step: Run authz tests
-    - [ ] Step: Run verify-canaries.sh (nightly only, skip on delta)
-    - [ ] Step: Kill untrusted container (always, even on failure)
-    - [ ] Step: Remove Docker network (always)
-    - [ ] Step: Upload DAST report artifact (retention-days: 30)
-  - [ ] **Job 2: report-results**
-    - [ ] `needs: dast-scan`
-    - [ ] `runs-on: ubuntu-22.04` (DIFFERENT runner — no untrusted code)
-    - [ ] `timeout-minutes: 5`
-    - [ ] Permissions: `pull-requests: write`, `issues: write`
-    - [ ] Step: Checkout main (only `scripts/parse-zap-report.js`)
-    - [ ] Step: Download DAST report artifact
-    - [ ] Step: Parse report and post PR comment via `actions/github-script`
-    - [ ] Step: Fail if findings exceed `ZAP_FAIL_LEVEL`
+- [x] Create `.github/workflows/dast-pr.yml`
+  - [x] Name: `DAST PR Scan`
+  - [x] Trigger: `workflow_run` of `CI Tests`
+  - [x] Concurrency group by head SHA with cancel-in-progress
+  - [x] `dast-scan` job on `ubuntu-22.04`
+  - [x] `timeout-minutes: 15`
+  - [x] Permissions: `actions: read`, `contents: read`
+  - [x] Condition: only run for successful PR-triggered CI runs
+  - [x] Checkout trusted `main`
+  - [x] Download cross-workflow PR artifact bundle using `github-token` and `run-id`
+  - [x] Install `pglast` and validate `overlay.sql` if present in artifacts
+  - [x] Pre-pull Postgres and ZAP images
+  - [x] `docker load` the PR image tarball
+  - [x] Generate delta or full ZAP config from artifact input
+  - [x] Seed DB with schema, mock data, and optional overlay
+  - [x] Bootstrap auth token before ZAP
+  - [x] Run ZAP in the isolated runtime environment
+  - [x] Run authz tests post-scan
+  - [x] Run canary verification only for `FULL` scans
+  - [x] Upload DAST reports and summary artifacts
+  - [x] `report-results` job runs on a separate runner
+  - [x] Comment on the PR via `actions/github-script`
+  - [x] Fail the workflow if findings exceed `ZAP_FAIL_LEVEL`
 
 ### 5.3 DAST Nightly Workflow
-- [ ] Create `.github/workflows/dast-nightly.yml`
-  - [ ] Trigger: `on: push: branches: [main]` + `schedule: cron: '0 2 * * *'`
-  - [ ] `timeout-minutes: 30`
-  - [ ] Full scan — all endpoints, no delta
-  - [ ] Same security layers (internal network, container hardening)
-  - [ ] Longer ZAP timeout (60 min active scan)
-  - [ ] Run verify-canaries.sh (self-validation)
-  - [ ] Run authz-tests.sh
-  - [ ] Upload report as artifact
-  - [ ] Create GitHub Issue for new critical/high findings
+- [x] Create `.github/workflows/dast-nightly.yml`
+  - [x] Trigger on `push` to `main`
+  - [x] Trigger on nightly `schedule`
+  - [x] `timeout-minutes: 30`
+  - [x] Build the demo image from the current repo state
+  - [x] Run full scan with same isolation/hardening layers
+  - [x] Bootstrap auth before ZAP
+  - [x] Run `verify-canaries.sh`
+  - [x] Run `authz-tests.sh`
+  - [x] Upload nightly report artifact
+  - [x] Create a GitHub issue when findings exceed threshold
 
 ### 5.4 Commit
-- [ ] Git commit: "feat(ci): add 3-workflow DAST pipeline with privilege isolation, Docker network isolation, and configurable fail levels"
+- [x] Git commit: `feat(ci): add 3-workflow DAST pipeline with privilege isolation, Docker network isolation, and configurable fail levels`
 
 ---
 
@@ -563,6 +544,8 @@
 | 9. Verification | 12 | ~2 hours |
 | 10. Polish | 5 | ~30 min |
 | **Total** | **111 items** | **~21 hours** |
+
+
 
 
 

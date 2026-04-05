@@ -12,6 +12,17 @@ ZAP_CONFIG_PATH="${ZAP_CONFIG_PATH:-/tmp/zap-config.yaml}"
 REPORTS_DIR="${REPORTS_DIR:-$(pwd)/reports}"
 DATABASE_URL="${DATABASE_URL:-postgresql://testuser:throwaway_ci_test_pass@${DB_CONTAINER}:5432/testdb}"
 JWT_SECRET="${JWT_SECRET:-zerodast-test-jwt-secret-not-for-production}"
+SCHEMA_SQL="${SCHEMA_SQL:-}"
+MOCK_DATA_SQL="${MOCK_DATA_SQL:-}"
+OVERLAY_SQL="${OVERLAY_SQL:-}"
+APP_HEALTH_PATH="${APP_HEALTH_PATH:-/health}"
+APP_PORT_BIND="${APP_PORT_BIND:-127.0.0.1:8080:8080}"
+AUTH_BOOTSTRAP_SCRIPT="${AUTH_BOOTSTRAP_SCRIPT:-}"
+AUTH_BOOTSTRAP_URL="${AUTH_BOOTSTRAP_URL:-http://127.0.0.1:8080}"
+AUTH_TOKEN_PATH="${AUTH_TOKEN_PATH:-/tmp/zap-auth-token.txt}"
+POST_SCAN_SCRIPT="${POST_SCAN_SCRIPT:-}"
+DB_WAIT_ATTEMPTS="${DB_WAIT_ATTEMPTS:-30}"
+APP_WAIT_ATTEMPTS="${APP_WAIT_ATTEMPTS:-30}"
 ZAP_EXIT=0
 
 cleanup() {
@@ -19,6 +30,37 @@ cleanup() {
   docker network rm "$NETWORK_NAME" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
+
+wait_for_db() {
+  local attempt
+  for attempt in $(seq 1 "$DB_WAIT_ATTEMPTS"); do
+    if docker exec "$DB_CONTAINER" pg_isready -U testuser -d testdb >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+  done
+  echo "Database did not become ready in time" >&2
+  return 1
+}
+
+seed_sql_file() {
+  local sql_file="$1"
+  if [[ -n "$sql_file" && -f "$sql_file" ]]; then
+    docker exec -i "$DB_CONTAINER" psql -v ON_ERROR_STOP=1 -U testuser -d testdb < "$sql_file"
+  fi
+}
+
+wait_for_app() {
+  local attempt
+  for attempt in $(seq 1 "$APP_WAIT_ATTEMPTS"); do
+    if docker exec "$APP_CONTAINER" wget -qO- "http://127.0.0.1:8080${APP_HEALTH_PATH}" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+  done
+  echo "Application did not become healthy in time" >&2
+  return 1
+}
 
 mkdir -p "$REPORTS_DIR"
 
@@ -33,10 +75,15 @@ docker run -d --rm \
   "$DB_IMAGE" >/dev/null
 
 echo "Started database container: $DB_CONTAINER"
+wait_for_db
+seed_sql_file "$SCHEMA_SQL"
+seed_sql_file "$MOCK_DATA_SQL"
+seed_sql_file "$OVERLAY_SQL"
 
 docker run -d --rm \
   --network "$NETWORK_NAME" \
   --name "$APP_CONTAINER" \
+  -p "$APP_PORT_BIND" \
   --cap-drop=ALL \
   --security-opt=no-new-privileges:true \
   --read-only \
@@ -50,6 +97,14 @@ docker run -d --rm \
   "$APP_IMAGE" >/dev/null
 
 echo "Started hardened app container: $APP_CONTAINER"
+wait_for_app
+
+if [[ -n "$AUTH_BOOTSTRAP_SCRIPT" ]]; then
+  APP_URL="$AUTH_BOOTSTRAP_URL" bash "$AUTH_BOOTSTRAP_SCRIPT" "$AUTH_BOOTSTRAP_URL"
+  if [[ -f "$AUTH_TOKEN_PATH" ]]; then
+    AUTH_TOKEN=$(cat "$AUTH_TOKEN_PATH")
+  fi
+fi
 
 if [[ ! -f "$ZAP_CONFIG_PATH" ]]; then
   echo "ZAP config not found: $ZAP_CONFIG_PATH" >&2
@@ -75,3 +130,7 @@ if [[ "${ZAP_EXIT:-0}" -gt 3 ]]; then
 fi
 
 echo "ZAP finished with exit code ${ZAP_EXIT:-0}"
+
+if [[ -n "$POST_SCAN_SCRIPT" ]]; then
+  APP_URL="$AUTH_BOOTSTRAP_URL" bash "$POST_SCAN_SCRIPT"
+fi

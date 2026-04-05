@@ -12,9 +12,13 @@ const counts = {
 };
 
 function normalizeRisk(value) {
-  const risk = String(value || "informational").trim().toLowerCase();
-  if (risk === "info") return "informational";
-  return counts[risk] !== undefined ? risk : "informational";
+  const text = String(value || "informational").trim().toLowerCase();
+  if (text.includes("critical")) return "critical";
+  if (text.includes("high")) return "high";
+  if (text.includes("medium")) return "medium";
+  if (text.includes("low")) return "low";
+  if (text.includes("info")) return "informational";
+  return "informational";
 }
 
 function shouldFail() {

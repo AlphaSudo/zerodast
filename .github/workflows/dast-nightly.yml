@@ -1,0 +1,120 @@
+name: DAST Nightly
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'
+
+concurrency:
+  group: dast-nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nightly-scan:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: demo-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: demo-app
+        run: npm ci
+
+      - name: Build nightly image
+        run: docker build -t zerodast-demo-app:${{ github.sha }} demo-app
+
+      - name: Pre-pull trusted images
+        run: |
+          docker pull postgres:16-alpine
+          docker pull zaproxy/zaproxy:2.16.0
+
+      - name: Prepare post-scan hook
+        run: |
+          cat <<'EOF' > /tmp/post-scan.sh
+          #!/usr/bin/env bash
+          set -euo pipefail
+          bash scripts/authz-tests.sh "$APP_URL"
+          bash scripts/verify-canaries.sh reports/zap-report.json
+          EOF
+          chmod +x /tmp/post-scan.sh
+
+      - name: Run nightly DAST
+        env:
+          APP_IMAGE: zerodast-demo-app:${{ github.sha }}
+          SCHEMA_SQL: ${{ github.workspace }}/db/seed/schema.sql
+          MOCK_DATA_SQL: ${{ github.workspace }}/db/seed/mock_data.sql
+          ZAP_CONFIG_PATH: ${{ github.workspace }}/security/zap/automation.yaml
+          AUTH_BOOTSTRAP_SCRIPT: ${{ github.workspace }}/scripts/bootstrap-auth.sh
+          AUTH_BOOTSTRAP_URL: http://127.0.0.1:8080
+          AUTH_TOKEN_PATH: /tmp/zap-auth-token.txt
+          POST_SCAN_SCRIPT: /tmp/post-scan.sh
+          REPORTS_DIR: ${{ github.workspace }}/reports
+        run: bash security/run-dast-env.sh
+
+      - name: Upload nightly report artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: nightly-dast-report
+          path: reports
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Parse report
+        if: always()
+        id: parse_report
+        run: |
+          set +e
+          if [ -f reports/zap-report.json ]; then
+            node scripts/parse-zap-report.js reports/zap-report.json | tee report-summary.md
+            status=${PIPESTATUS[0]}
+          else
+            echo 'ZAP report was not produced.' | tee report-summary.md
+            status=1
+          fi
+          echo "parse_exit=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Create issue for failing threshold
+        if: always() && steps.parse_report.outputs.parse_exit != '0'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea
+        with:
+          script: |
+            const fs = require('fs');
+            const summary = fs.readFileSync('report-summary.md', 'utf8');
+            const title = `ZeroDAST nightly findings above threshold (${context.sha.slice(0, 7)})`;
+            const body = [
+              'Nightly DAST found alerts above the configured threshold.',
+              '',
+              summary,
+              '',
+              `Workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            ].join('\n');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['security', 'dast'],
+            });
+
+      - name: Fail workflow on configured threshold
+        if: always()
+        run: |
+          if [ "${{ steps.parse_report.outputs.parse_exit }}" != "0" ]; then
+            exit 1
+          fi

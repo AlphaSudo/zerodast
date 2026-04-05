@@ -1,0 +1,75 @@
+name: CI Tests
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-scan:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: demo-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: demo-app
+        run: npm ci
+
+      - name: Lint demo app
+        working-directory: demo-app
+        run: npm run lint
+
+      - name: Test demo app
+        working-directory: demo-app
+        run: npm test
+
+      - name: Semgrep SAST
+        uses: returntocorp/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d
+        with:
+          config: auto
+
+      - name: Gitleaks secret detection
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare artifact directory
+        run: mkdir -p artifacts
+
+      - name: Detect delta endpoints
+        run: bash scripts/delta-detect.sh > artifacts/delta-endpoints.txt
+
+      - name: Collect optional overlay
+        run: |
+          if [ -f db/seed/overlay.sql ]; then
+            cp db/seed/overlay.sql artifacts/overlay.sql
+          fi
+
+      - name: Build demo image
+        run: docker build -t zerodast-demo-app:${{ github.event.pull_request.head.sha }} demo-app
+
+      - name: Save demo image
+        run: docker save zerodast-demo-app:${{ github.event.pull_request.head.sha }} -o artifacts/demo-app.tar
+
+      - name: Upload PR artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pr-artifacts
+          path: artifacts
+          retention-days: 1
