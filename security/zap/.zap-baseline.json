@@ -1,0 +1,9 @@
+{
+  "suppressions": [
+    {
+      "name": "Modern Web Application",
+      "risk": "Informational",
+      "reason": "Expected on the demo app and not part of the gating canaries."
+    }
+  ]
+}

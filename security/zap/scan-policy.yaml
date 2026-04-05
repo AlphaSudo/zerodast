@@ -1,0 +1,29 @@
+policyDefinition:
+  defaultStrength: medium
+  defaultThreshold: medium
+  rules:
+    - id: 40012
+      name: Reflected XSS
+      threshold: medium
+      strength: high
+      enabled: true
+    - id: 40018
+      name: SQL Injection
+      threshold: medium
+      strength: high
+      enabled: true
+    - id: 40026
+      name: Cross-Domain Misconfiguration
+      threshold: low
+      strength: medium
+      enabled: true
+    - id: 40014
+      name: Path Traversal
+      threshold: medium
+      strength: high
+      enabled: true
+    - id: 40028
+      name: Open Redirect / SSRF style checks
+      threshold: medium
+      strength: medium
+      enabled: true

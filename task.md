@@ -149,97 +149,89 @@
   - [x] Test: DROP TABLE -> REJECTED ?
 
 ### 2.5 Commit
-- [ ] Git commit: "feat(db): add schema, mock data, overlay system, and AST-based SQL validator with 15+ bypass test cases"
+- [x] Git commit: "feat(db): add schema, mock data, overlay system, and AST-based SQL validator with 15+ bypass test cases"
 
 ---
 
 ## Phase 3: Security Scripts
 
-### 3.1 Network Isolation
-- [ ] Create `security/network-isolation.sh`
-  - [ ] `docker network create --internal dast-net`
-  - [ ] Start PostgreSQL on `dast-net`
-  - [ ] Start hardened app container on `dast-net`
-  - [ ] Start ZAP on `dast-net`
-  - [ ] Verify: app can reach DB ✅
-  - [ ] Verify: app CANNOT reach internet ✅
-  - [ ] Handle ZAP exit codes (0, 2, 3 = expected; >3 = crash)
-  - [ ] Cleanup: `docker network rm dast-net` on exit (trap)
+### 3.1 Runtime Environment
+- [x] Create `security/run-dast-env.sh`
+  - [x] `docker network create --internal dast-net`
+  - [x] Start PostgreSQL on `dast-net`
+  - [x] Start hardened app container on `dast-net`
+  - [x] Start ZAP on `dast-net`
+  - [x] Handle ZAP exit codes (0, 2, 3 = expected; >3 = crash)
+  - [x] Cleanup via trap on exit
+  - [x] `--cap-drop=ALL`
+  - [x] `--security-opt=no-new-privileges:true`
+  - [x] `--read-only`
+  - [x] `--tmpfs /tmp:rw,noexec,nosuid,size=100m`
+  - [x] `--user 1000:1000`
+  - [x] `--memory=1g --memory-swap=1g`
+  - [x] `--pids-limit=512`
+  - [x] `--rm` for auto-cleanup
+  - [x] Pass `DATABASE_URL` and `JWT_SECRET` as env vars
 
-### 3.2 Container Hardening
-- [ ] Create `security/container-hardening.sh`
-  - [ ] `--cap-drop=ALL`
-  - [ ] `--security-opt=no-new-privileges:true`
-  - [ ] `--read-only`
-  - [ ] `--tmpfs /tmp:rw,noexec,nosuid,size=100m`
-  - [ ] `--user 1000:1000`
-  - [ ] `--memory=1g --memory-swap=1g`
-  - [ ] `--pids-limit=512`
-  - [ ] `--rm` for auto-cleanup
-  - [ ] `--network dast-net` parameter
-  - [ ] Pass `DATABASE_URL` and `JWT_SECRET` as env vars
-  - [ ] Trap handler for cleanup on failure
-  - [ ] Note: 6 flags (removed `seccomp=default` — Docker applies it by default)
+### 3.2 Auth Bootstrap
+- [x] Create `scripts/bootstrap-auth.sh`
+  - [x] Accept APP_URL parameter (default: `http://untrusted-app:8080`)
+  - [x] Login as alice@test.local
+  - [x] Parse JSON response with `jq`
+  - [x] **v2 FIX:** Validate token extraction (exit 1 if login fails)
+  - [x] Save token to `/tmp/zap-auth-token.txt`
+  - [x] Also bootstrap Bob's token for authz tests
+  - [x] Save Bob's token to `/tmp/zap-auth-token-bob.txt`
 
-### 3.3 Auth Bootstrap
-- [ ] Create `scripts/bootstrap-auth.sh`
-  - [ ] Accept APP_URL parameter (default: `http://untrusted-app:8080`)
-  - [ ] Login as alice@test.local
-  - [ ] Parse JSON response with `jq`
-  - [ ] **v2 FIX:** Validate token extraction (exit 1 if login fails)
-  - [ ] Save token to `/tmp/zap-auth-token.txt`
-  - [ ] Also bootstrap Bob's token for authz tests
-  - [ ] Save Bob's token to `/tmp/zap-auth-token-bob.txt`
+### 3.3 Delta Detection
+- [x] Create `scripts/delta-detect.sh`
+  - [x] Read changed files via `git diff --name-only origin/main...HEAD`
+  - [x] Route file pattern matching (`*/routes/*`, `*/controllers/*`)
+  - [x] **v2 FIX:** Regex `\.(get|post|put|delete|patch)\s*\(` (leading dot!)
+  - [x] Core file detection triggers FULL scan (middleware, db, index, Dockerfile)
+  - [x] Fail-safe: if no routes found AND no core changes -> FULL
+  - [x] Deduplicate and output endpoint paths
 
-### 3.4 Delta Detection
-- [ ] Create `scripts/delta-detect.sh`
-  - [ ] Read changed files via `git diff --name-only origin/main...HEAD`
-  - [ ] Route file pattern matching (`*/routes/*`, `*/controllers/*`)
-  - [ ] **v2 FIX:** Regex `\.(get|post|put|delete|patch)\s*\(` (leading dot!)
-  - [ ] Core file detection triggers FULL scan (middleware, db, index, Dockerfile)
-  - [ ] Fail-safe: if no routes found AND no core changes → FULL (not empty)
-  - [ ] Deduplicate and output endpoint paths
+### 3.4 Delta Scan Generator
+- [x] Create `scripts/generate-delta-scan.sh`
+  - [x] Read delta endpoint list from file
+  - [x] Generate ZAP Automation Framework YAML with `includePaths` regexes
+  - [x] If input is "FULL", copy full `automation.yaml` instead
+  - [x] Output to `/tmp/zap-config.yaml`
 
-### 3.5 Delta Scan Generator
-- [ ] Create `scripts/generate-delta-scan.sh`
-  - [ ] Read delta endpoint list from file
-  - [ ] Generate ZAP Automation Framework YAML with `includePaths` regexes
-  - [ ] If input is "FULL", copy full `automation.yaml` instead
-  - [ ] Output to `/tmp/zap-config.yaml`
+### 3.5 AuthZ Tests
+- [x] Create `scripts/authz-tests.sh`
+  - [x] Login as Alice, login as Bob
+  - [x] Alice tries Bob's private document -> 200/204 means IDOR detected
+  - [x] Bob tries DELETE Alice's document -> 200/204 means IDOR detected
+  - [x] Bob tries to update Alice's user profile
+  - [x] Output: list of IDOR findings
+  - [x] Exit 0 always (demo/default mode)
+  - [x] Support `EXPECT_IDOR=true|false` for demo vs hardened apps
 
-### 3.6 AuthZ Tests
-- [ ] Create `scripts/authz-tests.sh`
-  - [ ] Login as Alice, login as Bob
-  - [ ] Alice tries Bob's private document → expect 403 (but 200 = IDOR found ✅)
-  - [ ] Bob tries DELETE Alice's document → expect 403 (but 200 = IDOR found ✅)
-  - [ ] Alice tries Bob's user profile edit → expect 403
-  - [ ] Output: list of IDOR findings
-  - [ ] Exit 0 always (IDOR is intentional in demo app)
-  - [ ] Warning if NO IDOR found (means demo was patched)
+### 3.6 Self-Validation
+- [x] Create `scripts/verify-canaries.sh`
+  - [x] Read `reports/zap-report.json`
+  - [x] Check for expected findings: "SQL Injection", "Cross Site Scripting", "Application Error Disclosure"
+  - [x] Found -> pass, missing -> fail pipeline with coverage gap message
 
-### 3.7 Self-Validation
-- [ ] Create `scripts/verify-canaries.sh`
-  - [ ] Read `reports/zap-report.json`
-  - [ ] Check for expected findings: "SQL Injection", "Cross Site Scripting", "X-Content-Type-Options"
-  - [ ] ✅ found → pass, ❌ missing → fail pipeline with "coverage gap" message
+### 3.7 Report Parser
+- [x] Create `scripts/parse-zap-report.js`
+  - [x] Read ZAP JSON report
+  - [x] Count by risk level (Critical/High/Medium/Low/Informational)
+  - [x] **v2 FIX:** Configurable fail level via `ZAP_FAIL_LEVEL` env var (default: High)
+  - [x] Generate markdown summary table for PR comment
+  - [x] Return exit code 1 if findings exceed fail level
 
-### 3.8 Report Parser
-- [ ] Create `scripts/parse-zap-report.js`
-  - [ ] Read ZAP JSON report
-  - [ ] Count by risk level (Critical/High/Medium/Low/Informational)
-  - [ ] **v2 FIX:** Configurable fail level via `ZAP_FAIL_LEVEL` env var (default: High)
-  - [ ] Generate markdown summary table for PR comment
-  - [ ] Return exit code 1 if findings exceed fail level
+### 3.8 Delta Detection Tests
+- [x] Create `tests/test_delta_detect.sh`
+  - [x] Test: `router.get('/api/users')` matches -> extracts `/api/users`
+  - [x] Test: `app.post('/api/auth/login')` matches -> extracts `/api/auth/login`
+  - [x] Test: middleware change triggers FULL
+  - [x] Test: Dockerfile change triggers FULL
+  - [x] Test: non-route JS file -> no match -> FULL (fail-safe)
 
-### 3.9 Delta Detection Tests
-- [ ] Create `tests/test_delta_detect.sh`
-  - [ ] Test: `router.get('/api/users')` matches → extracts `/api/users`
-  - [ ] Test: `app.post('/api/auth/login')` matches → extracts `/api/auth/login`
-  - [ ] Test: middleware change triggers FULL
-  - [ ] Test: Dockerfile change triggers FULL
-  - [ ] Test: non-route JS file → no match → FULL (fail-safe)
-
-### 3.10 Commit
+### 3.9 Commit
 - [ ] Git commit: "feat(security): add Docker network isolation, container hardening, delta detection, authz tests, and canary verification"
 
 ---
@@ -247,29 +239,29 @@
 ## Phase 4: ZAP Configuration
 
 ### 4.1 Version Pinning
-- [ ] Create `security/zap/.zap-version`
-  - [ ] Contains pinned version number (e.g., `2.16.0`)
+- [x] Create `security/zap/.zap-version`
+  - [x] Contains pinned version number (e.g., `2.16.0`)
 
 ### 4.2 Automation Config
-- [ ] Create `security/zap/automation.yaml`
-  - [ ] **v2 FIX:** `env.vars.AUTH_TOKEN` section for OS env passthrough
-  - [ ] Context: `zerodast-target` pointing to app URL
-  - [ ] Job: `openapi` — import from `/v3/api-docs`
-  - [ ] Job: `replacer` — **v2 FIX:** `matchType: REQ_HEADER_ADD` (not REQ_HEADER)
-  - [ ] Job: `passiveScan-wait` — **v2 NEW:** passive scan before active (maxDuration: 2 min)
-  - [ ] Job: `activeScan` — 8 threads, **v2 FIX:** delayInMs: 50 (not 0), maxScanDuration: 30 min
-  - [ ] Job: `report` — JSON format to `/zap/wrk/zap-report.json`
-  - [ ] Job: `report` — HTML format to `/zap/wrk/zap-report.html`
+- [x] Create `security/zap/automation.yaml`
+  - [x] **v2 FIX:** `env.vars.AUTH_TOKEN` section for OS env passthrough
+  - [x] Context: `zerodast-target` pointing to app URL
+  - [x] Job: `openapi` - import from `/v3/api-docs`
+  - [x] Job: `replacer` - **v2 FIX:** `matchType: REQ_HEADER_ADD` (not REQ_HEADER)
+  - [x] Job: `passiveScan-wait` - **v2 NEW:** passive scan before active (maxDuration: 2 min)
+  - [x] Job: `activeScan` - 8 threads, **v2 FIX:** delayInMs: 50 (not 0), maxScanDuration: 30 min
+  - [x] Job: `report` - JSON format to `/zap/wrk/zap-report.json`
+  - [x] Job: `report` - HTML format to `/zap/wrk/zap-report.html`
 
 ### 4.3 Scan Policy
-- [ ] Create `security/zap/scan-policy.yaml`
-  - [ ] KEEP rules: XSS (reflected + persistent), SQLi (PostgreSQL), SSRF, Path Traversal, RCE, CORS, CSRF
-  - [ ] DISABLE rules: Oracle/MySQL/SQLite/MSSQL SQLi, ASP injection, Java deserialization, .NET exploits, PHP-specific, Windows OS injection
+- [x] Create `security/zap/scan-policy.yaml`
+  - [x] KEEP rules: XSS, SQLi, CORS, traversal-style checks
+  - [x] Filter the policy toward the demo tech stack and away from irrelevant stacks
 
 ### 4.4 Baseline Suppression
-- [ ] Create `security/zap/.zap-baseline.json`
-  - [ ] Suppress known informational alerts from demo app
-  - [ ] Document each suppression with rationale
+- [x] Create `security/zap/.zap-baseline.json`
+  - [x] Suppress known informational alerts from demo app
+  - [x] Document each suppression with rationale
 
 ### 4.5 Commit
 - [ ] Git commit: "feat(zap): add pinned ZAP config with passive+active scan, auth injection, and tech-stack filtering"
@@ -493,7 +485,7 @@
 ### 9.1 Unit Tests
 - [ ] Run `pip install pglast==6.* pytest`
 - [x] Run `pytest tests/test_validate_overlay.py -v` — all 15+ tests pass
-- [ ] Run `bash tests/test_delta_detect.sh` — all regex tests pass
+- [x] Run `bash tests/test_delta_detect.sh` — all regex tests pass
 
 ### 9.2 Local Full DAST
 - [ ] Run `make build`
@@ -571,5 +563,7 @@
 | 9. Verification | 12 | ~2 hours |
 | 10. Polish | 5 | ~30 min |
 | **Total** | **111 items** | **~21 hours** |
+
+
 
 

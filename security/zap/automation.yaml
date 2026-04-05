@@ -1,0 +1,48 @@
+env:
+  vars:
+    AUTH_TOKEN: "${AUTH_TOKEN}"
+  contexts:
+    - name: "zerodast-target"
+      urls: ["http://untrusted-app:8080"]
+  parameters:
+    failOnError: true
+    progressToStdout: true
+
+jobs:
+  - type: openapi
+    parameters:
+      apiUrl: "http://untrusted-app:8080/v3/api-docs"
+
+  - type: replacer
+    parameters:
+      deleteAllRules: true
+      rules:
+        - description: "Auth token injection"
+          matchType: "REQ_HEADER_ADD"
+          matchString: "Authorization"
+          replacement: "Bearer ${AUTH_TOKEN}"
+          enabled: true
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 2
+
+  - type: activeScan
+    parameters:
+      context: "zerodast-target"
+      maxRuleDurationInMins: 5
+      maxScanDurationInMins: 30
+      threadPerHost: 8
+      delayInMs: 50
+
+  - type: report
+    parameters:
+      template: "traditional-json"
+      reportDir: "/zap/wrk"
+      reportFile: "zap-report.json"
+
+  - type: report
+    parameters:
+      template: "traditional-html"
+      reportDir: "/zap/wrk"
+      reportFile: "zap-report.html"
