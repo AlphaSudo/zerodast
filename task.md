@@ -497,8 +497,8 @@
 - [ ] Submit valid INSERT → validator accepts ✅
 
 ### 9.6 Line Ending Check
-- [ ] Verify all `.sh` files have Unix line endings (LF, not CRLF)
-- [ ] Add `.gitattributes` if needed: `*.sh text eol=lf`
+- [x] Verify all `.sh` files have Unix line endings (LF, not CRLF)
+- [x] Add `.gitattributes` if needed: `*.sh text eol=lf`
 
 ### 9.7 Final Commit
 - [ ] Git commit: "test: verify all security layers, canary detection, and overlay bypass rejection"
