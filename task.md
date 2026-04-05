@@ -335,26 +335,26 @@
 ## Phase 6: AI-Driven Repo Inspection Prompts
 
 ### 6.1 Prompts
-- [ ] Create `ai-prompts/INSPECT_REPO.md`
-  - [ ] Step 1: Identify tech stack from manifest files
-  - [ ] Step 2: Find API surface (route definitions)
-  - [ ] Step 3: Understand auth mechanism (JWT, session, OAuth2, API key)
-  - [ ] Step 4: Understand data model (migrations, schemas, ORM models)
-  - [ ] Step 5: Identify DAST config (Docker, env vars, health endpoints)
-  - [ ] Output: Structured YAML profile for other prompts to consume
-- [ ] Create `ai-prompts/GENERATE_CONFIG.md`
-  - [ ] Takes INSPECT_REPO output
-  - [ ] Generates: ZAP automation YAML, seed data SQL, auth bootstrap script, docker-compose, scan policy
-- [ ] Create `ai-prompts/ADAPT_AUTH.md`
-  - [ ] Framework-specific auth bootstrap generators
-  - [ ] Templates for: Express+JWT, FastAPI+OAuth2, Spring+Sessions, Go+APIKey
-- [ ] Create `ai-prompts/ADAPT_SEED.md`
-  - [ ] Schema-aware mock data generators
-  - [ ] Reads migration files, generates INSERT statements covering all tables
-- [ ] Create `ai-prompts/AI_TRIAGE.md` (**v2 NEW**)
-  - [ ] Post-scan triage prompt
-  - [ ] Input: zap-report.json + source code of vulnerable endpoint
-  - [ ] Output: Root cause analysis + exact fix suggestion
+- [x] Create `ai-prompts/INSPECT_REPO.md`
+  - [x] Step 1: Identify tech stack from manifest files
+  - [x] Step 2: Find API surface (route definitions)
+  - [x] Step 3: Understand auth mechanism (JWT, session, OAuth2, API key)
+  - [x] Step 4: Understand data model (migrations, schemas, ORM models)
+  - [x] Step 5: Identify DAST config (Docker, env vars, health endpoints)
+  - [x] Output: Structured YAML profile for other prompts to consume
+- [x] Create `ai-prompts/GENERATE_CONFIG.md`
+  - [x] Takes INSPECT_REPO output
+  - [x] Generates: ZAP automation YAML, seed data SQL, auth bootstrap script, docker-compose, scan policy
+- [x] Create `ai-prompts/ADAPT_AUTH.md`
+  - [x] Framework-specific auth bootstrap generators
+  - [x] Templates for: Express+JWT, FastAPI+OAuth2, Spring+Sessions, Go+APIKey
+- [x] Create `ai-prompts/ADAPT_SEED.md`
+  - [x] Schema-aware mock data generators
+  - [x] Reads migration files, generates INSERT statements covering all tables
+- [x] Create `ai-prompts/AI_TRIAGE.md` (**v2 NEW**)
+  - [x] Post-scan triage prompt
+  - [x] Input: zap-report.json + source code of vulnerable endpoint
+  - [x] Output: Root cause analysis + exact fix suggestion
 
 ### 6.2 Commit
 - [ ] Git commit: "feat(ai): add 5 structured AI prompts for universal repo adaptation and post-scan triage"
@@ -544,6 +544,7 @@
 | 9. Verification | 12 | ~2 hours |
 | 10. Polish | 5 | ~30 min |
 | **Total** | **111 items** | **~21 hours** |
+
 
 
 
