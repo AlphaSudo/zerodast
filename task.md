@@ -425,36 +425,36 @@
   - [x] Examples for Node.js, Python, Java, Go
 
 ### 7.9 Commit
-- [ ] Git commit: "docs: add comprehensive documentation covering architecture, security, setup, and AI-guided adaptation"
+- [x] Git commit: "docs: add comprehensive documentation covering architecture, security, setup, and AI-guided adaptation"
 
 ---
 
 ## Phase 8: Local Development Tools
 
 ### 8.1 Docker Compose
-- [ ] Create `docker-compose.yml`
-  - [ ] DB service: postgres:16-alpine with explicit healthcheck
-  - [ ] App service: builds from `./demo-app`, depends on healthy DB
-  - [ ] ZAP service: pinned version, `profiles: ["dast"]`, network mode
-  - [ ] All env vars (DATABASE_URL, JWT_SECRET = throwaway values)
-  - [ ] Port mappings: 5432 (DB), 8080 (App)
+- [x] Create `docker-compose.yml`
+  - [x] DB service: postgres:16-alpine with explicit healthcheck
+  - [x] App service: builds from `./demo-app`, depends on healthy DB
+  - [x] ZAP service: pinned version, `profiles: ["dast"]`, network mode
+  - [x] All env vars (DATABASE_URL, JWT_SECRET = throwaway values)
+  - [x] Port mappings: 5432 (DB), 8080 (App)
 
 ### 8.2 Makefile
-- [ ] Create `Makefile`
-  - [ ] `make build` — build demo-app Docker image
-  - [ ] `make up` — start DB + app, wait for healthy
-  - [ ] `make seed` — run schema.sql + mock_data.sql
-  - [ ] `make dast` — full local DAST (up + seed + auth + ZAP)
-  - [ ] `make validate FILE=overlay.sql` — run AST validator
-  - [ ] `make test` — run pytest for validator + bash tests for delta
-  - [ ] `make authz` — run authz tests
-  - [ ] `make clean` — docker compose down -v --remove-orphans
+- [x] Create `Makefile`
+  - [x] `make build` — build demo-app Docker image
+  - [x] `make up` — start DB + app, wait for healthy
+  - [x] `make seed` — run schema.sql + mock_data.sql
+  - [x] `make dast` — full local DAST (up + seed + auth + ZAP)
+  - [x] `make validate FILE=overlay.sql` — run AST validator
+  - [x] `make test` — run pytest for validator + bash tests for delta
+  - [x] `make authz` — run authz tests
+  - [x] `make clean` — docker compose down -v --remove-orphans
 
 ### 8.3 Local DAST Runner
-- [ ] Create `scripts/run-dast-local.sh`
-  - [ ] docker-compose up → seed → auth bootstrap → ZAP scan → verify canaries → report
-  - [ ] Trap handler for cleanup on exit/error
-  - [ ] Print summary at end
+- [x] Create `scripts/run-dast-local.sh`
+  - [x] Local wrapper runs build -> isolated runtime -> auth bootstrap -> ZAP scan -> verify canaries -> report
+  - [x] Trap handler for cleanup on exit/error
+  - [x] Print summary at end
 
 ### 8.4 Commit
 - [ ] Git commit: "feat(dev): add docker-compose, Makefile, and local DAST runner for developer testing"
@@ -544,6 +544,8 @@
 | 9. Verification | 12 | ~2 hours |
 | 10. Polish | 5 | ~30 min |
 | **Total** | **111 items** | **~21 hours** |
+
+
 
 
 

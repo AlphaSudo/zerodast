@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: testdb
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: throwaway_ci_test_pass
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d testdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "5432:5432"
+
+  app:
+    build:
+      context: ./demo-app
+    environment:
+      DATABASE_URL: postgresql://testuser:throwaway_ci_test_pass@db:5432/testdb
+      JWT_SECRET: zerodast-test-jwt-secret-not-for-production
+      PORT: 8080
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+
+  zap:
+    image: zaproxy/zaproxy:2.16.0
+    profiles: ["dast"]
+    depends_on:
+      app:
+        condition: service_started
+    command: ["zap.sh", "-version"]
