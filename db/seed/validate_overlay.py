@@ -10,7 +10,7 @@ except ImportError as exc:  # pragma: no cover
     print(f"pglast is required: {exc}", file=sys.stderr)
     sys.exit(1)
 
-MAX_FILE_SIZE = 100 * 1024
+MAX_FILE_SIZE = 100_000
 META_COMMAND_PATTERN = re.compile(r"^\s*\\(copy|!|i|ir|o|g|set|connect)\b", re.IGNORECASE | re.MULTILINE)
 URL_OR_IP_PATTERN = re.compile(
     r"(?:https?://|ftp://|\b(?:\d{1,3}\.){3}\d{1,3}\b|\b[a-z0-9.-]+\.(?:com|net|org|io|dev|app|local)\b)",
@@ -62,21 +62,37 @@ def detect_raw_hazards(sql_text: str) -> None:
         fail("Overlay rejected: block comments are not allowed due to obfuscation risk")
 
 
-def iter_nodes(node):
+def iter_nodes(node, seen=None):
     if node is None:
         return
+
+    if seen is None:
+        seen = set()
+
+    if isinstance(node, (list, tuple)):
+        for item in node:
+            yield from iter_nodes(item, seen)
+        return
+
+    marker = id(node)
+    if marker in seen:
+        return
+    seen.add(marker)
+
     yield node
-    if isinstance(node, list):
-        for item in node:
-            yield from iter_nodes(item)
-        return
-    if isinstance(node, tuple):
-        for item in node:
-            yield from iter_nodes(item)
-        return
+
     if hasattr(node, "__dict__"):
         for value in node.__dict__.values():
-            yield from iter_nodes(value)
+            yield from iter_nodes(value, seen)
+    if hasattr(node, "__slots__"):
+        for slot in node.__slots__:
+            if slot in {"ancestors"}:
+                continue
+            try:
+                value = getattr(node, slot)
+            except AttributeError:
+                continue
+            yield from iter_nodes(value, seen)
 
 
 def node_name(node) -> str:
@@ -172,3 +188,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+

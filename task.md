@@ -492,7 +492,7 @@
 
 ### 9.1 Unit Tests
 - [ ] Run `pip install pglast==6.* pytest`
-- [ ] Run `pytest tests/test_validate_overlay.py -v` — all 15+ tests pass
+- [x] Run `pytest tests/test_validate_overlay.py -v` — all 15+ tests pass
 - [ ] Run `bash tests/test_delta_detect.sh` — all regex tests pass
 
 ### 9.2 Local Full DAST
