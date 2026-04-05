@@ -357,72 +357,72 @@
   - [x] Output: Root cause analysis + exact fix suggestion
 
 ### 6.2 Commit
-- [ ] Git commit: "feat(ai): add 5 structured AI prompts for universal repo adaptation and post-scan triage"
+- [x] Git commit: "feat(ai): add 5 structured AI prompts for universal repo adaptation and post-scan triage"
 
 ---
 
 ## Phase 7: Documentation
 
 ### 7.1 Root README
-- [ ] Create `README.md`
-  - [ ] Project name, tagline, architecture diagram (ASCII art)
-  - [ ] **v2 FIX:** "Self-benchmarked via AlphaSudo/sbtr-benchmark" (not "certified")
-  - [ ] Quick Start (5 steps)
-  - [ ] Comparison table: T1/T2/T3/T4
-  - [ ] ⚠️ WARNING: Demo app is intentionally vulnerable — never deploy to production
+- [x] Create `README.md`
+  - [x] Project name, tagline, architecture diagram (ASCII art)
+  - [x] **v2 FIX:** "Self-benchmarked via AlphaSudo/sbtr-benchmark" (not "certified")
+  - [x] Quick Start (5 steps)
+  - [x] Comparison table: T1/T2/T3/T4
+  - [x] ?? WARNING: Demo app is intentionally vulnerable - never deploy to production
   - [ ] License badge, status badges
 
 ### 7.2 Architecture Doc
-- [ ] Create `docs/ARCHITECTURE.md`
-  - [ ] 3-layer defense model with diagrams
-  - [ ] **v2 FIX:** "Privilege Isolation" not "Temporal Isolation" in security layers
-  - [ ] Docker `--internal` network explanation
-  - [ ] Data flow between workflows
-  - [ ] Speed lever explanations
+- [x] Create `docs/ARCHITECTURE.md`
+  - [x] 3-layer defense model with diagrams
+  - [x] **v2 FIX:** "Privilege Isolation" not "Temporal Isolation" in security layers
+  - [x] Docker `--internal` network explanation
+  - [x] Data flow between workflows
+  - [x] Speed lever explanations
 
 ### 7.3 Quick Start
-- [ ] Create `docs/QUICK_START.md`
-  - [ ] Prerequisites: Docker, Node.js 20+, Python 3.8+
-  - [ ] Step-by-step local setup
-  - [ ] Copy-paste YAML for different frameworks
-  - [ ] Common pitfalls (CRLF line endings, workflow name mismatch)
+- [x] Create `docs/QUICK_START.md`
+  - [x] Prerequisites: Docker, Node.js 20+, Python 3.8+
+  - [x] Step-by-step local setup
+  - [x] Copy-paste YAML for different frameworks
+  - [x] Common pitfalls (CRLF line endings, workflow name mismatch)
 
 ### 7.4 Contributing Security
-- [ ] Create `docs/CONTRIBUTING_SECURITY.md`
-  - [ ] How to write `overlay.sql` for new features
-  - [ ] Allowed/forbidden statement whitelist
-  - [ ] Why ON CONFLICT DO UPDATE is forbidden
-  - [ ] What happens when validation fails
-  - [ ] Sparse checkout path requirements
+- [x] Create `docs/CONTRIBUTING_SECURITY.md`
+  - [x] How to write `overlay.sql` for new features
+  - [x] Allowed/forbidden statement whitelist
+  - [x] Why ON CONFLICT DO UPDATE is forbidden
+  - [x] What happens when validation fails
+  - [x] Sparse checkout path requirements
 
 ### 7.5 Supply Chain Rules
-- [ ] Create `docs/SUPPLY_CHAIN_RULES.md`
-  - [ ] 6-Rule Framework from AlphaSudo/sbtr-benchmark
-  - [ ] How each rule is implemented in workflows
-  - [ ] **Rule 4b exception** for DAST (sandboxed binary crossing) — documented
-  - [ ] Mapping to SBTR benchmark tiers
+- [x] Create `docs/SUPPLY_CHAIN_RULES.md`
+  - [x] 6-Rule Framework from AlphaSudo/sbtr-benchmark
+  - [x] How each rule is implemented in workflows
+  - [x] **Rule 4b exception** for DAST (sandboxed binary crossing) - documented
+  - [x] Mapping to SBTR benchmark tiers
 
 ### 7.6 Threat Model
-- [ ] Create `docs/THREAT_MODEL.md`
-  - [ ] All attack vectors (poisoned seed, poisoned code, container escape, token hijacking)
-  - [ ] Mitigation for each
-  - [ ] **v2 NEW:** Fork PR behavior documented ("fork PRs get DAST only after merge — intentional")
-  - [ ] Residual risk: hypervisor escape (GitHub's problem)
-  - [ ] ZAP on `--internal` network nuance (trusted image, but documented)
+- [x] Create `docs/THREAT_MODEL.md`
+  - [x] All attack vectors (poisoned seed, poisoned code, container escape, token hijacking)
+  - [x] Mitigation for each
+  - [x] **v2 NEW:** Fork PR behavior documented ("fork PRs get DAST only after merge - intentional")
+  - [x] Residual risk: hypervisor escape (GitHub's problem)
+  - [x] ZAP on `--internal` network nuance (trusted image, but documented)
 
 ### 7.7 Tier Comparison
-- [ ] Create `docs/TIER_COMPARISON.md`
-  - [ ] T1 vs T2 vs T3 (us) vs T4
-  - [ ] **v2 FIX:** Scores labeled as self-benchmarked
-  - [ ] Scan time, security score, cost, complexity
-  - [ ] When to upgrade from T3 to T4
+- [x] Create `docs/TIER_COMPARISON.md`
+  - [x] T1 vs T2 vs T3 (us) vs T4
+  - [x] **v2 FIX:** Scores labeled as self-benchmarked
+  - [x] Scan time, security score, cost, complexity
+  - [x] When to upgrade from T3 to T4
 
 ### 7.8 AI Setup Guide
-- [ ] Create `docs/AI_GUIDED_SETUP.md`
-  - [ ] How to use the AI prompts
-  - [ ] Workflow: Inspect → Generate → Adapt → Validate
-  - [ ] Dry-run mode: verify auth bootstrap before full scan
-  - [ ] Examples for Node.js, Python, Java, Go
+- [x] Create `docs/AI_GUIDED_SETUP.md`
+  - [x] How to use the AI prompts
+  - [x] Workflow: Inspect -> Generate -> Adapt -> Validate
+  - [x] Dry-run mode: verify auth bootstrap before full scan
+  - [x] Examples for Node.js, Python, Java, Go
 
 ### 7.9 Commit
 - [ ] Git commit: "docs: add comprehensive documentation covering architecture, security, setup, and AI-guided adaptation"
@@ -544,6 +544,8 @@
 | 9. Verification | 12 | ~2 hours |
 | 10. Polish | 5 | ~30 min |
 | **Total** | **111 items** | **~21 hours** |
+
+
 
 
 
