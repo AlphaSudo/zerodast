@@ -25,6 +25,7 @@ Nightly / Mainline DAST
 - Supports delta-scoped PR scanning and full nightly scanning.
 
 ## Quick Start
+
 1. Install Docker, Node.js 22+, Python 3.11+, and Git Bash on Windows.
 2. Use `demo-app/` as the local scan target and install dependencies with `npm install` if you need local lint/test execution.
 3. Review `db/seed/schema.sql`, `db/seed/mock_data.sql`, and `db/seed/validate_overlay.py` to understand the seed model.
