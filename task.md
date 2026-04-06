@@ -79,7 +79,7 @@
   - [x] Multi-stage build (builder -> production)
   - [x] `FROM node:20-alpine` for both stages
   - [x] `npm ci --omit=dev` in builder
-  - [x] Non-root user (1000:1000) in production stage
+  - [x] Non-root user in production stage (`USER node`)
   - [x] `HEALTHCHECK` using `wget -qO-` (Alpine lacks curl)
   - [x] `EXPOSE 8080`
 
@@ -246,10 +246,12 @@
 - [x] Create `security/zap/automation.yaml`
   - [x] **v2 FIX:** `env.vars.AUTH_TOKEN` section for OS env passthrough
   - [x] Context: `zerodast-target` pointing to app URL
-  - [x] Job: `openapi` - import from `/v3/api-docs`
-  - [x] Job: `replacer` - **v2 FIX:** `matchType: REQ_HEADER_ADD` (not REQ_HEADER)
+  - [x] Job: `openapi` - import from `/v3/api-docs` with `targetUrl` override to `http://untrusted-app:8080`
+  - [x] Job: `replacer` - runtime-baked Bearer token injection via `REQ_HEADER`
+  - [x] Job: `requestor` - seed `/api/debug/error` and `/api/search/preview`
+  - [x] Job: `spider` - discover additional reachable URLs
   - [x] Job: `passiveScan-wait` - **v2 NEW:** passive scan before active (maxDuration: 2 min)
-  - [x] Job: `activeScan` - 8 threads, **v2 FIX:** delayInMs: 50 (not 0), maxScanDuration: 30 min
+  - [x] Job: `activeScan` - 8 threads, **v2 FIX:** delayInMs: 50 (not 0), maxScanDuration: 30 min, tuned SQLi/XSS rules
   - [x] Job: `report` - JSON format to `/zap/wrk/zap-report.json`
   - [x] Job: `report` - HTML format to `/zap/wrk/zap-report.html`
 
@@ -472,7 +474,7 @@
 - [ ] Run `make build`
 - [ ] Run `make up` — app starts, healthcheck passes
 - [ ] Run `make seed` — DB seeded without errors
-- [ ] Run `make dast` — full ZAP scan completes
+- [x] Run local DAST runner (`make dast` / `scripts/run-dast-local.sh`) - full ZAP scan completes
 - [x] Verify ZAP finds: SQL Injection ?
 - [x] Verify ZAP finds: Cross Site Scripting ?
 - [ ] Verify ZAP finds: Missing security headers ✅
