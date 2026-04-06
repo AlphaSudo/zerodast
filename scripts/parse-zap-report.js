@@ -11,13 +11,29 @@ const counts = {
   informational: 0,
 };
 
-function normalizeRisk(value) {
-  const text = String(value || "informational").trim().toLowerCase();
-  if (text.includes("critical")) return "critical";
-  if (text.includes("high")) return "high";
-  if (text.includes("medium")) return "medium";
-  if (text.includes("low")) return "low";
-  if (text.includes("info")) return "informational";
+/**
+ * Resolve risk level from the ZAP alert object.
+ * Prefer the numeric riskcode (0=Info,1=Low,2=Medium,3=High) over
+ * the textual riskdesc which has the format "Risk (Confidence)" and
+ * caused false classification (e.g. "Informational (High)" matched
+ * the "high" substring before this fix).
+ */
+function normalizeRisk(alert) {
+  // riskcode is the most reliable source
+  const code = Number(alert.riskcode ?? -1);
+  if (code >= 0) {
+    const codeMap = { 0: "informational", 1: "low", 2: "medium", 3: "high", 4: "critical" };
+    if (codeMap[code] !== undefined) return codeMap[code];
+  }
+
+  // Fallback to riskdesc text — parse only the part before the parenthesis
+  const raw = String(alert.riskdesc || alert.risk || "informational").trim().toLowerCase();
+  const riskPart = raw.split("(")[0].trim();
+
+  if (riskPart.includes("critical")) return "critical";
+  if (riskPart.includes("high")) return "high";
+  if (riskPart.includes("medium")) return "medium";
+  if (riskPart.includes("low")) return "low";
   return "informational";
 }
 
@@ -35,7 +51,7 @@ if (!fs.existsSync(reportPath)) {
 const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
 for (const site of report.site || []) {
   for (const alert of site.alerts || []) {
-    const risk = normalizeRisk(alert.riskdesc || alert.risk || alert.riskcode);
+    const risk = normalizeRisk(alert);
     counts[risk] += 1;
   }
 }

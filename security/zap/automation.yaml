@@ -3,30 +3,61 @@ env:
     AUTH_TOKEN: "${AUTH_TOKEN}"
   contexts:
     - name: "zerodast-target"
-      urls: ["http://untrusted-app:8080"]
+      urls:
+        - "http://untrusted-app:8080"
+      includePaths:
+        - "http://untrusted-app:8080.*"
+      excludePaths:
+        - "http://untrusted-app:8080/api-docs.*"
+      technology:
+        include:
+          - "Db.PostgreSQL"
+          - "Language.JavaScript"
   parameters:
     failOnError: true
     progressToStdout: true
 
 jobs:
-  - type: openapi
-    parameters:
-      apiUrl: "http://untrusted-app:8080/v3/api-docs"
-
+  # 1. Set up auth header injection BEFORE any requests are made
   - type: replacer
     parameters:
       deleteAllRules: true
-      rules:
-        - description: "Auth token injection"
-          matchType: "REQ_HEADER_ADD"
-          matchString: "Authorization"
-          replacement: "Bearer ${AUTH_TOKEN}"
-          enabled: true
+    rules:
+      - description: "Auth token injection"
+        matchType: "REQ_HEADER"
+        matchString: "Authorization"
+        replacementString: "Bearer ${AUTH_TOKEN}"
 
+  # 2. Import OpenAPI spec — targetUrl overrides the `localhost` server in the spec
+  - type: openapi
+    parameters:
+      apiUrl: "http://untrusted-app:8080/v3/api-docs"
+      targetUrl: "http://untrusted-app:8080"
+      context: "zerodast-target"
+
+  # 3. Seed URLs not covered by the OpenAPI spec
+  - type: requestor
+    requests:
+      - url: "http://untrusted-app:8080/api/debug/error"
+        method: "GET"
+      - url: "http://untrusted-app:8080/api/search/preview?q=test"
+        method: "GET"
+
+  # 4. Traditional spider to find any additional links
+  - type: spider
+    parameters:
+      context: "zerodast-target"
+      url: "http://untrusted-app:8080"
+      maxDuration: 2
+      maxDepth: 5
+      maxChildren: 10
+
+  # 5. Wait for passive scan to complete
   - type: passiveScan-wait
     parameters:
       maxDuration: 2
 
+  # 6. Active scan with tuned scan policy
   - type: activeScan
     parameters:
       context: "zerodast-target"
@@ -34,13 +65,44 @@ jobs:
       maxScanDurationInMins: 30
       threadPerHost: 8
       delayInMs: 50
+    policyDefinition:
+      defaultStrength: medium
+      defaultThreshold: medium
+      rules:
+        # SQL Injection — the primary canary
+        - id: 40018
+          name: "SQL Injection"
+          threshold: low
+          strength: insane
+        # Reflected XSS — the primary canary
+        - id: 40012
+          name: "Cross Site Scripting (Reflected)"
+          threshold: low
+          strength: insane
+        # Application Error Disclosure — the primary canary (passive rule, boosted)
+        - id: 90022
+          name: "Application Error Disclosure"
+          threshold: low
+          strength: medium
+        # Cross-Domain Misconfiguration
+        - id: 10098
+          name: "Cross-Domain Misconfiguration"
+          threshold: low
+          strength: medium
+        # Path Traversal
+        - id: 40014
+          name: "Cross Site Scripting (Persistent)"
+          threshold: medium
+          strength: high
 
+  # 7. Generate JSON report
   - type: report
     parameters:
       template: "traditional-json"
       reportDir: "/zap/wrk"
       reportFile: "zap-report.json"
 
+  # 8. Generate HTML report
   - type: report
     parameters:
       template: "traditional-html"

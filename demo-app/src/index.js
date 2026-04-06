@@ -30,6 +30,17 @@ app.use(userRoutes);
 app.use(documentRoutes);
 app.use(searchRoutes);
 
+/**
+ * @openapi
+ * /api/debug/error:
+ *   get:
+ *     summary: Intentionally triggers a 500 error for DAST validation
+ *     tags:
+ *       - Debug
+ *     responses:
+ *       500:
+ *         description: Application error with stack trace
+ */
 app.get("/api/debug/error", (_req, _res, next) => {
   next(new Error("Intentional demo exception for application error disclosure."));
 });
