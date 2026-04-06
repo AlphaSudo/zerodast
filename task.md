@@ -479,7 +479,7 @@
 - [x] Verify ZAP finds: Cross Site Scripting ?
 - [ ] Verify ZAP finds: Missing security headers ✅
 - [x] Run `bash scripts/verify-canaries.sh` - all canaries pass
-- [ ] Run `bash scripts/authz-tests.sh` — IDOR surfaces confirmed
+- [x] Run `bash scripts/authz-tests.sh` - IDOR surfaces confirmed
 
 ### 9.3 Network Isolation Verification
 - [ ] Start app on `--internal` network
