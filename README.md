@@ -18,6 +18,7 @@ Nightly / Mainline DAST
 ```
 
 ## What ZeroDAST Does
+
 - Builds a demo scan target with intentional SQLi, XSS, IDOR, and application-error-disclosure surfaces.
 - Uses a trusted second-stage workflow to run DAST against an artifactized image rather than directly trusting PR execution.
 - Isolates app, DB, and ZAP inside Docker `--internal` networking.
