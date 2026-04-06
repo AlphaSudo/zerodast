@@ -57,7 +57,7 @@ jobs:
       context: "zerodast-target"
       maxRuleDurationInMins: 5
       maxScanDurationInMins: 30
-      threadPerHost: 8
+      threadPerHost: 4
       delayInMs: 50
     policyDefinition:
       defaultStrength: medium

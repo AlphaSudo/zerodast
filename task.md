@@ -517,7 +517,7 @@
 - [ ] Tag: `v0.1.0` — first local-validated release
 
 ### 10.3 Pre-Public Checklist (for when we go public)
-- [ ] 3 consecutive successful E2E runs locally
+- [x] 3 consecutive successful E2E runs locally
 - [ ] Test fork PR path (only ci.yml runs - no DAST, no secrets)
 - [ ] Test merge to main (dast-nightly triggers full scan)
 - [ ] Test malicious overlay PR (validator blocks)
@@ -543,3 +543,5 @@
 | 9. Verification | 12 | ~2 hours |
 | 10. Polish | 5 | ~30 min |
 | **Total** | **111 items** | **~21 hours** |
+
+

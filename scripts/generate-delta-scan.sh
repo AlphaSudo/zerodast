@@ -56,7 +56,7 @@ mapfile -t endpoints < <(grep -v '^$' "$INPUT_FILE")
   echo '      context: "zerodast-target"'
   echo '      maxRuleDurationInMins: 5'
   echo '      maxScanDurationInMins: 30'
-  echo '      threadPerHost: 8'
+  echo '      threadPerHost: 4'
   echo '      delayInMs: 50'
   echo '  - type: report'
   echo '    parameters:'
@@ -66,3 +66,4 @@ mapfile -t endpoints < <(grep -v '^$' "$INPUT_FILE")
 } > "$OUTPUT_FILE"
 
 echo "$OUTPUT_FILE"
+
