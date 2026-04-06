@@ -479,28 +479,28 @@
 - [x] Run `bash scripts/authz-tests.sh` - IDOR surfaces confirmed
 
 ### 9.3 Network Isolation Verification
-- [ ] Start app on `--internal` network
-- [ ] From app container: `wget -qO- https://httpbin.org/get` → FAILS ✅
-- [ ] From app container: `wget -qO- http://dast-db:5432` → SUCCEEDS ✅
+- [x] Start app on `--internal` network
+- [x] From app container: `wget -qO- https://httpbin.org/get` fails
+- [x] From app container: TCP connect to `dast-db:5432` succeeds
 
 ### 9.4 Container Hardening Verification
-- [ ] Verify `--read-only` works with Node.js demo app (no crash)
-- [ ] Verify `--pids-limit=512` sufficient under ZAP load
-- [ ] Verify `--memory=1g` sufficient (no OOM kills)
+- [x] Verify `--read-only` works with Node.js demo app (no crash)
+- [x] Verify `--pids-limit=512` sufficient under ZAP load
+- [x] Verify `--memory=1g` sufficient (no OOM kills)
 
 ### 9.5 Overlay Bypass Testing
-- [ ] Submit `INSERT INTO users SELECT * FROM pg_shadow` → validator rejects ❌
-- [ ] Submit `CREATE FUNCTION evil()` → validator rejects ❌
-- [ ] Submit file with `\copy` command → validator rejects ❌
-- [ ] Submit file > 100KB → validator rejects ❌
-- [ ] Submit valid INSERT → validator accepts ✅
+- [x] Submit `INSERT INTO users SELECT * FROM pg_shadow` - validator rejects
+- [x] Submit `CREATE FUNCTION evil()` - validator rejects
+- [x] Submit file with `\copy` command - validator rejects
+- [x] Submit file > 100KB - validator rejects
+- [x] Submit valid INSERT - validator accepts
 
 ### 9.6 Line Ending Check
 - [x] Verify all `.sh` files have Unix line endings (LF, not CRLF)
 - [x] Add `.gitattributes` if needed: `*.sh text eol=lf`
 
 ### 9.7 Final Commit
-- [ ] Git commit: "test: verify all security layers, canary detection, and overlay bypass rejection"
+- [x] Git commit: "test: verify all security layers, canary detection, and overlay bypass rejection"
 
 ---
 
@@ -543,6 +543,7 @@
 | 9. Verification | 12 | ~2 hours |
 | 10. Polish | 5 | ~30 min |
 | **Total** | **111 items** | **~21 hours** |
+
 
 
 
