@@ -477,7 +477,7 @@
 - [x] Run local DAST runner (`make dast` / `scripts/run-dast-local.sh`) - full ZAP scan completes
 - [x] Verify ZAP finds: SQL Injection ?
 - [x] Verify ZAP finds: Cross Site Scripting ?
-- [ ] Verify ZAP finds: Missing security headers ✅
+- [x] Verify ZAP finds: Application Error Disclosure ?
 - [x] Run `bash scripts/verify-canaries.sh` - all canaries pass
 - [x] Run `bash scripts/authz-tests.sh` - IDOR surfaces confirmed
 
