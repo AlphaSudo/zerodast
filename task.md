@@ -78,7 +78,7 @@
 - [x] Create `demo-app/Dockerfile`
   - [x] Multi-stage build (builder -> production)
   - [x] `FROM node:20-alpine` for both stages
-  - [x] `npm ci --omit=dev` in builder
+  - [x] `npm install --omit=dev` in builder
   - [x] Non-root user in production stage (`USER node`)
   - [x] `HEALTHCHECK` using `wget -qO-` (Alpine lacks curl)
   - [x] `EXPOSE 8080`
@@ -177,7 +177,7 @@
 - [x] Create `scripts/bootstrap-auth.sh`
   - [x] Accept APP_URL parameter (default: `http://untrusted-app:8080`)
   - [x] Login as alice@test.local
-  - [x] Parse JSON response with `jq`
+  - [x] Parse JSON response with `jq` or Node.js fallback
   - [x] **v2 FIX:** Validate token extraction (exit 1 if login fails)
   - [x] Save token to `/tmp/zap-auth-token.txt`
   - [x] Also bootstrap Bob's token for authz tests
@@ -471,13 +471,10 @@
 - [x] Run `bash tests/test_delta_detect.sh` - all regex tests pass
 
 ### 9.2 Local Full DAST
-- [ ] Run `make build`
-- [ ] Run `make up` — app starts, healthcheck passes
-- [ ] Run `make seed` — DB seeded without errors
-- [x] Run local DAST runner (`make dast` / `scripts/run-dast-local.sh`) - full ZAP scan completes
-- [x] Verify ZAP finds: SQL Injection ?
-- [x] Verify ZAP finds: Cross Site Scripting ?
-- [x] Verify ZAP finds: Application Error Disclosure ?
+- [x] Run integrated local DAST path (`make dast` / `scripts/run-dast-local.sh`) - build, app startup, DB seed, and full ZAP scan complete
+  - [x] Verify ZAP finds: SQL Injection ?
+  - [x] Verify ZAP finds: Cross Site Scripting ?
+  - [x] Verify ZAP finds: Application Error Disclosure ?
 - [x] Run `bash scripts/verify-canaries.sh` - all canaries pass
 - [x] Run `bash scripts/authz-tests.sh` - IDOR surfaces confirmed
 
