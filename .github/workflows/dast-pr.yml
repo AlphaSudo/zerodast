@@ -91,8 +91,7 @@ jobs:
           MOCK_DATA_SQL: ${{ github.workspace }}/db/seed/mock_data.sql
           OVERLAY_SQL: ${{ github.workspace }}/artifacts/overlay.sql
           ZAP_CONFIG_PATH: /tmp/zap-config.yaml
-          AUTH_BOOTSTRAP_SCRIPT: ${{ github.workspace }}/scripts/bootstrap-auth.sh
-          AUTH_BOOTSTRAP_URL: http://127.0.0.1:8080
+          AUTH_BOOTSTRAP_MODE: app_container
           AUTH_TOKEN_PATH: /tmp/zap-auth-token.txt
           POST_SCAN_SCRIPT: /tmp/post-scan.sh
           REPORTS_DIR: ${{ github.workspace }}/reports
@@ -194,4 +193,5 @@ jobs:
           if [ "${{ needs.dast-scan.outputs.parse_exit }}" != "0" ]; then
             exit 1
           fi
+
 

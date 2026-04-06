@@ -58,8 +58,7 @@ jobs:
           SCHEMA_SQL: ${{ github.workspace }}/db/seed/schema.sql
           MOCK_DATA_SQL: ${{ github.workspace }}/db/seed/mock_data.sql
           ZAP_CONFIG_PATH: ${{ github.workspace }}/security/zap/automation.yaml
-          AUTH_BOOTSTRAP_SCRIPT: ${{ github.workspace }}/scripts/bootstrap-auth.sh
-          AUTH_BOOTSTRAP_URL: http://127.0.0.1:8080
+          AUTH_BOOTSTRAP_MODE: app_container
           AUTH_TOKEN_PATH: /tmp/zap-auth-token.txt
           POST_SCAN_SCRIPT: /tmp/post-scan.sh
           REPORTS_DIR: ${{ github.workspace }}/reports
@@ -118,4 +117,5 @@ jobs:
           if [ "${{ steps.parse_report.outputs.parse_exit }}" != "0" ]; then
             exit 1
           fi
+
 
