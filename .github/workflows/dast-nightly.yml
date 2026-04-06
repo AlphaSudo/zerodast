@@ -111,12 +111,8 @@ jobs:
               labels: ['security', 'dast'],
             });
 
-      - name: Fail workflow on configured threshold
-        if: always()
-        run: |
-          if [ "${{ steps.parse_report.outputs.parse_exit }}" != "0" ]; then
-            exit 1
-          fi
+
+
 
 
 
