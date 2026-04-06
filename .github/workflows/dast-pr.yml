@@ -61,7 +61,7 @@ jobs:
       - name: Pre-pull trusted images
         run: |
           docker pull postgres:16-alpine
-          docker pull zaproxy/zap-stable:2.16.0
+          docker pull zaproxy/zap-stable:2.17.0
 
       - name: Load demo image
         run: docker load -i artifacts/demo-app.tar
@@ -193,6 +193,7 @@ jobs:
           if [ "${{ needs.dast-scan.outputs.parse_exit }}" != "0" ]; then
             exit 1
           fi
+
 
 
 

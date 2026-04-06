@@ -240,7 +240,7 @@
 
 ### 4.1 Version Pinning
 - [x] Create `security/zap/.zap-version`
-  - [x] Contains pinned version number (e.g., `2.16.0`)
+  - [x] Contains pinned version number (e.g., `2.17.0`)
 
 ### 4.2 Automation Config
 - [x] Create `security/zap/automation.yaml`
@@ -543,5 +543,6 @@
 | 9. Verification | 12 | ~2 hours |
 | 10. Polish | 5 | ~30 min |
 | **Total** | **111 items** | **~21 hours** |
+
 
 

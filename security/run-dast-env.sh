@@ -7,7 +7,7 @@ DB_CONTAINER="${DB_CONTAINER:-dast-db}"
 APP_CONTAINER="${APP_CONTAINER:-untrusted-app}"
 ZAP_CONTAINER="${ZAP_CONTAINER:-dast-zap}"
 DB_IMAGE="${DB_IMAGE:-postgres:16-alpine}"
-ZAP_VERSION="${ZAP_VERSION:-2.16.0}"
+ZAP_VERSION="${ZAP_VERSION:-2.17.0}"
 APP_IMAGE="${1:-${APP_IMAGE:-zerodast-demo-app:local}}"
 ZAP_CONFIG_PATH="${ZAP_CONFIG_PATH:-/tmp/zap-config.yaml}"
 REPORTS_DIR="${REPORTS_DIR:-$(pwd)/reports}"
@@ -199,3 +199,4 @@ fi
 if [[ -n "$POST_SCAN_SCRIPT" ]]; then
   APP_URL="$POST_SCAN_APP_URL" bash "$POST_SCAN_SCRIPT"
 fi
+
