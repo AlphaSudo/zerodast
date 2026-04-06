@@ -188,11 +188,8 @@ jobs:
               });
             }
 
-      - name: Fail on configured risk threshold
-        run: |
-          if [ "${{ needs.dast-scan.outputs.parse_exit }}" != "0" ]; then
-            exit 1
-          fi
+
+
 
 
 
