@@ -1,22 +1,23 @@
 SHELL := C:/Program Files/PowerShell/7/pwsh.exe
 .SHELLFLAGS := -NoProfile -Command
 
-COMPOSE = docker compose
-PYTHON = C:\\Users\\CM\\AppData\\Local\\Programs\\Python\\Python311\\python.exe
-GIT_BASH = C:\\Program Files\\Git\\bin\\bash.exe
-NPM = C:\\Users\\CM\\AppData\\Roaming\\fnm\\node-versions\\v22.15.0\\installation\\npm.cmd
+ENGINE_EXE ?=
+COMPOSE_EXE ?=
+PYTHON = C:\Users\CM\AppData\Local\Programs\Python\Python311\python.exe
+GIT_BASH = C:\Program Files\Git\bin\bash.exe
+NPM = C:\Users\CM\AppData\Roaming\fnm\node-versions\v22.15.0\installation\npm.cmd
+APP_IMAGE = zerodast-demo-app:local
 
 .PHONY: build up seed dast validate test authz clean lint app-test
 
 build:
-	$(COMPOSE) build app
+	if ('$(COMPOSE_EXE)') { & '$(COMPOSE_EXE)' build app } else { docker compose build app }
 
 up:
-	$(COMPOSE) up -d db app
+	if ('$(COMPOSE_EXE)') { & '$(COMPOSE_EXE)' up -d db app } else { docker compose up -d db app }
 
 seed:
-	Get-Content -Raw 'db/seed/schema.sql' | $(COMPOSE) exec -T db psql -v ON_ERROR_STOP=1 -U testuser -d testdb
-	Get-Content -Raw 'db/seed/mock_data.sql' | $(COMPOSE) exec -T db psql -v ON_ERROR_STOP=1 -U testuser -d testdb
+	$composeCmd = if ('$(COMPOSE_EXE)') { '$(COMPOSE_EXE)' } else { $null }; $schema = Get-Content -Raw 'db/seed/schema.sql'; $mock = Get-Content -Raw 'db/seed/mock_data.sql'; if ($composeCmd) { $schema | & $composeCmd exec -T db psql -v ON_ERROR_STOP=1 -U testuser -d testdb; $mock | & $composeCmd exec -T db psql -v ON_ERROR_STOP=1 -U testuser -d testdb } else { $schema | docker compose exec -T db psql -v ON_ERROR_STOP=1 -U testuser -d testdb; $mock | docker compose exec -T db psql -v ON_ERROR_STOP=1 -U testuser -d testdb }
 
 lint:
 	Set-Location 'demo-app'; & '$(NPM)' run lint
@@ -35,7 +36,7 @@ authz:
 	& '$(GIT_BASH)' 'scripts/authz-tests.sh' 'http://127.0.0.1:8080'
 
 dast:
-	& '$(GIT_BASH)' 'scripts/run-dast-local.sh'
+	if ('$(ENGINE_EXE)') { $env:CONTAINER_ENGINE_BIN = '$(ENGINE_EXE)' }; & '$(GIT_BASH)' 'scripts/run-dast-local.sh'
 
 clean:
-	$(COMPOSE) down -v --remove-orphans
+	if ('$(COMPOSE_EXE)') { & '$(COMPOSE_EXE)' down -v --remove-orphans } else { docker compose down -v --remove-orphans }

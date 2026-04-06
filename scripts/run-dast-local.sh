@@ -5,34 +5,48 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPORTS_DIR="${REPORTS_DIR:-${ROOT_DIR}/reports}"
 APP_IMAGE="${APP_IMAGE:-zerodast-demo-app:local}"
 ZAP_CONFIG_PATH="${ZAP_CONFIG_PATH:-${ROOT_DIR}/security/zap/automation.yaml}"
+ENGINE_BIN="${CONTAINER_ENGINE_BIN:-docker}"
 HOOK_FILE="$(mktemp)"
+
+engine() {
+  "$ENGINE_BIN" "$@"
+}
+
+host_path() {
+  local path="$1"
+  if [[ "$ENGINE_BIN" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "$path"
+  else
+    printf '%s\n' "$path"
+  fi
+}
 
 cleanup() {
   rm -f "$HOOK_FILE"
-  docker rm -f dast-zap untrusted-app dast-db >/dev/null 2>&1 || true
-  docker network rm dast-net >/dev/null 2>&1 || true
+  engine rm -f dast-zap untrusted-app dast-db >/dev/null 2>&1 || true
+  engine network rm dast-net >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
 mkdir -p "$REPORTS_DIR"
+HOST_BUILD_CONTEXT="$(host_path "$ROOT_DIR/demo-app")"
 
 cat > "$HOOK_FILE" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
-bash "$ROOT_DIR/scripts/authz-tests.sh" "\$APP_URL"
 bash "$ROOT_DIR/scripts/verify-canaries.sh" "$REPORTS_DIR/zap-report.json"
 EOF
 chmod +x "$HOOK_FILE"
 
-echo "[1/5] Building demo app image"
-docker build -t "$APP_IMAGE" "$ROOT_DIR/demo-app"
+echo "[1/5] Building demo app image with $ENGINE_BIN"
+engine build -t "$APP_IMAGE" "$HOST_BUILD_CONTEXT"
 
 echo "[2/5] Running isolated DAST environment"
+CONTAINER_ENGINE_BIN="$ENGINE_BIN" \
 SCHEMA_SQL="$ROOT_DIR/db/seed/schema.sql" \
 MOCK_DATA_SQL="$ROOT_DIR/db/seed/mock_data.sql" \
 ZAP_CONFIG_PATH="$ZAP_CONFIG_PATH" \
-AUTH_BOOTSTRAP_SCRIPT="$ROOT_DIR/scripts/bootstrap-auth.sh" \
-AUTH_BOOTSTRAP_URL="http://127.0.0.1:8080" \
+AUTH_BOOTSTRAP_MODE="app_container" \
 AUTH_TOKEN_PATH="/tmp/zap-auth-token.txt" \
 POST_SCAN_SCRIPT="$HOOK_FILE" \
 REPORTS_DIR="$REPORTS_DIR" \

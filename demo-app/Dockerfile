@@ -15,9 +15,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/src ./src
 COPY package.json ./package.json
 
-RUN addgroup -g 1000 appgroup && adduser -D -u 1000 -G appgroup appuser
-
-USER 1000:1000
+USER node
 
 EXPOSE 8080
 

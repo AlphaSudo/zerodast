@@ -1,9 +1,9 @@
 TRUNCATE TABLE api_tokens, organizations, documents, users RESTART IDENTITY CASCADE;
 
 INSERT INTO users (email, name, password_hash, role) VALUES
-  ('alice@test.local', 'Alice Example', crypt('Test123!', gen_salt('bf', 10)), 'user'),
-  ('bob@test.local', 'Bob Example', crypt('Test123!', gen_salt('bf', 10)), 'user'),
-  ('admin@test.local', 'Admin Example', crypt('Test123!', gen_salt('bf', 10)), 'admin');
+  ('alice@test.local', 'Alice Example', '$2a$10$YdKjZdzIEpErMtnmFgoaGuYUulEzk0fTs0Jn5mmTffv7EvY/ggV9m', 'user'),
+  ('bob@test.local', 'Bob Example', '$2a$10$YdKjZdzIEpErMtnmFgoaGuYUulEzk0fTs0Jn5mmTffv7EvY/ggV9m', 'user'),
+  ('admin@test.local', 'Admin Example', '$2a$10$YdKjZdzIEpErMtnmFgoaGuYUulEzk0fTs0Jn5mmTffv7EvY/ggV9m', 'admin');
 
 INSERT INTO documents (user_id, title, content, visibility) VALUES
   (1, 'Alice Payroll Notes', 'Quarterly payroll workbook draft.', 'private'),

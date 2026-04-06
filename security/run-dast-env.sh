@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ENGINE_BIN="${CONTAINER_ENGINE_BIN:-docker}"
 NETWORK_NAME="${NETWORK_NAME:-dast-net}"
 DB_CONTAINER="${DB_CONTAINER:-dast-db}"
 APP_CONTAINER="${APP_CONTAINER:-untrusted-app}"
@@ -19,22 +20,46 @@ APP_HEALTH_PATH="${APP_HEALTH_PATH:-/health}"
 APP_PORT_BIND="${APP_PORT_BIND:-127.0.0.1:8080:8080}"
 AUTH_BOOTSTRAP_SCRIPT="${AUTH_BOOTSTRAP_SCRIPT:-}"
 AUTH_BOOTSTRAP_URL="${AUTH_BOOTSTRAP_URL:-http://127.0.0.1:8080}"
+AUTH_BOOTSTRAP_MODE="${AUTH_BOOTSTRAP_MODE:-script}"
+AUTH_BOOTSTRAP_EMAIL="${AUTH_BOOTSTRAP_EMAIL:-alice@test.local}"
+AUTH_BOOTSTRAP_PASSWORD="${AUTH_BOOTSTRAP_PASSWORD:-Test123!}"
 AUTH_TOKEN_PATH="${AUTH_TOKEN_PATH:-/tmp/zap-auth-token.txt}"
 POST_SCAN_SCRIPT="${POST_SCAN_SCRIPT:-}"
 DB_WAIT_ATTEMPTS="${DB_WAIT_ATTEMPTS:-30}"
 APP_WAIT_ATTEMPTS="${APP_WAIT_ATTEMPTS:-30}"
 ZAP_EXIT=0
 
+engine() {
+  "$ENGINE_BIN" "$@"
+}
+
+host_path() {
+  local path="$1"
+  if [[ "$ENGINE_BIN" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "$path"
+  else
+    printf '%s\n' "$path"
+  fi
+}
+
+bootstrap_auth_inside_app() {
+  engine exec \
+    -e BOOTSTRAP_EMAIL="$AUTH_BOOTSTRAP_EMAIL" \
+    -e BOOTSTRAP_PASSWORD="$AUTH_BOOTSTRAP_PASSWORD" \
+    "$APP_CONTAINER" \
+    node -e "fetch('http://127.0.0.1:8080/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: process.env.BOOTSTRAP_EMAIL, password: process.env.BOOTSTRAP_PASSWORD }) }).then(async (response) => { const body = await response.text(); if (!response.ok) { console.error(body); process.exit(1); } const parsed = JSON.parse(body); if (!parsed.token) { console.error(body); process.exit(1); } process.stdout.write(parsed.token); }).catch((error) => { console.error(error.stack || error.message); process.exit(1); });"
+}
+
 cleanup() {
-  docker rm -f "$ZAP_CONTAINER" "$APP_CONTAINER" "$DB_CONTAINER" >/dev/null 2>&1 || true
-  docker network rm "$NETWORK_NAME" >/dev/null 2>&1 || true
+  engine rm -f "$ZAP_CONTAINER" "$APP_CONTAINER" "$DB_CONTAINER" >/dev/null 2>&1 || true
+  engine network rm "$NETWORK_NAME" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
 wait_for_db() {
   local attempt
   for attempt in $(seq 1 "$DB_WAIT_ATTEMPTS"); do
-    if docker exec "$DB_CONTAINER" pg_isready -U testuser -d testdb >/dev/null 2>&1; then
+    if engine exec "$DB_CONTAINER" pg_isready -U testuser -d testdb >/dev/null 2>&1; then
       return 0
     fi
     sleep 2
@@ -46,14 +71,14 @@ wait_for_db() {
 seed_sql_file() {
   local sql_file="$1"
   if [[ -n "$sql_file" && -f "$sql_file" ]]; then
-    docker exec -i "$DB_CONTAINER" psql -v ON_ERROR_STOP=1 -U testuser -d testdb < "$sql_file"
+    engine exec -i "$DB_CONTAINER" psql -v ON_ERROR_STOP=1 -U testuser -d testdb < "$sql_file"
   fi
 }
 
 wait_for_app() {
   local attempt
   for attempt in $(seq 1 "$APP_WAIT_ATTEMPTS"); do
-    if docker exec "$APP_CONTAINER" wget -qO- "http://127.0.0.1:8080${APP_HEALTH_PATH}" >/dev/null 2>&1; then
+    if engine exec "$APP_CONTAINER" wget -qO- "http://127.0.0.1:8080${APP_HEALTH_PATH}" >/dev/null 2>&1; then
       return 0
     fi
     sleep 2
@@ -62,11 +87,14 @@ wait_for_app() {
   return 1
 }
 
+HOST_ZAP_CONFIG_PATH="$(host_path "$ZAP_CONFIG_PATH")"
+HOST_REPORTS_DIR="$(host_path "$REPORTS_DIR")"
+
 mkdir -p "$REPORTS_DIR"
 
-docker network create --internal "$NETWORK_NAME" >/dev/null 2>&1 || true
+engine network create --internal "$NETWORK_NAME" >/dev/null 2>&1 || true
 
-docker run -d --rm \
+engine run -d --rm \
   --network "$NETWORK_NAME" \
   --name "$DB_CONTAINER" \
   -e POSTGRES_DB=testdb \
@@ -80,7 +108,7 @@ seed_sql_file "$SCHEMA_SQL"
 seed_sql_file "$MOCK_DATA_SQL"
 seed_sql_file "$OVERLAY_SQL"
 
-docker run -d --rm \
+engine run -d --rm \
   --network "$NETWORK_NAME" \
   --name "$APP_CONTAINER" \
   -p "$APP_PORT_BIND" \
@@ -99,7 +127,10 @@ docker run -d --rm \
 echo "Started hardened app container: $APP_CONTAINER"
 wait_for_app
 
-if [[ -n "$AUTH_BOOTSTRAP_SCRIPT" ]]; then
+if [[ "$AUTH_BOOTSTRAP_MODE" == "app_container" ]]; then
+  AUTH_TOKEN="$(bootstrap_auth_inside_app)"
+  printf '%s' "$AUTH_TOKEN" > "$AUTH_TOKEN_PATH"
+elif [[ -n "$AUTH_BOOTSTRAP_SCRIPT" ]]; then
   APP_URL="$AUTH_BOOTSTRAP_URL" bash "$AUTH_BOOTSTRAP_SCRIPT" "$AUTH_BOOTSTRAP_URL"
   if [[ -f "$AUTH_TOKEN_PATH" ]]; then
     AUTH_TOKEN=$(cat "$AUTH_TOKEN_PATH")
@@ -111,13 +142,13 @@ if [[ ! -f "$ZAP_CONFIG_PATH" ]]; then
   exit 1
 fi
 
-docker run --rm \
+engine run --rm \
   --network "$NETWORK_NAME" \
   --name "$ZAP_CONTAINER" \
   -e ZAP_JVM_OPTS="-Xmx3g -Xms1g" \
   -e AUTH_TOKEN="${AUTH_TOKEN:-}" \
-  -v "$ZAP_CONFIG_PATH:/zap/wrk/config.yaml:ro" \
-  -v "$REPORTS_DIR:/zap/wrk:rw" \
+  -v "$HOST_ZAP_CONFIG_PATH:/zap/wrk/config.yaml:ro" \
+  -v "$HOST_REPORTS_DIR:/zap/wrk:rw" \
   "zaproxy/zaproxy:${ZAP_VERSION}" \
   zap.sh -cmd -autorun /zap/wrk/config.yaml \
   -config check.onstart=false \
