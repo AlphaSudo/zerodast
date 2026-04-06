@@ -33,6 +33,11 @@ Nightly / Mainline DAST
 4. Review `.github/workflows/ci.yml`, `.github/workflows/dast-pr.yml`, and `.github/workflows/dast-nightly.yml` to understand the two-lane pipeline.
 5. Use the prompts under `ai-prompts/` to adapt the pattern to another repository.
 
+## Benchmarking
+
+- Benchmark protocol: `docs/BENCHMARK_PROTOCOL.md`
+- Results template: `docs/BENCHMARK_RESULTS_TEMPLATE.md`
+
 ## Comparison
 | Tier | Description | Speed | Security Posture | Cost |
 | --- | --- | --- | --- | --- |
@@ -46,4 +51,5 @@ The demo app is intentionally vulnerable. Never deploy it to production or expos
 
 ## Status
 - License: Apache-2.0
-- Current state: local implementation in progress, workflows authored, local validation partially executed
+- Current state: local and GitHub validation working on the self-validating demo; external two-repo benchmark protocol defined, real-repo benchmark pending
+
