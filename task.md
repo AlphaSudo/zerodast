@@ -314,7 +314,7 @@
   - [x] Upload DAST reports and summary artifacts
   - [x] `report-results` job runs on a separate runner
   - [x] Comment on the PR via `actions/github-script`
-  - [x] Fail the workflow if findings exceed `ZAP_FAIL_LEVEL`
+  - [x] Report findings summary and comments without hard-failing the intentionally vulnerable demo repo by default
 
 ### 5.3 DAST Nightly Workflow
 - [x] Create `.github/workflows/dast-nightly.yml`
@@ -543,6 +543,7 @@
 | 9. Verification | 12 | ~2 hours |
 | 10. Polish | 5 | ~30 min |
 | **Total** | **111 items** | **~21 hours** |
+
 
 
 
