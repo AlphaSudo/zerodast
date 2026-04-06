@@ -507,22 +507,22 @@
 ## Phase 10: Polish & Ship
 
 ### 10.1 Final Review
-- [ ] Review all `@<SHA>` placeholders → replace with real pinned SHAs
-- [ ] Review all `// codeql[...]` suppression comments are present on intentional vulns
-- [ ] Review `workflow_run` workflow name matches exactly
-- [ ] Review `.gitattributes` for line endings
-- [ ] Run full `make dast` one final time — clean run
+- [x] Review all `@<SHA>` placeholders - replace with real pinned SHAs
+- [x] Review all `// codeql[...]` suppression comments are present on intentional vulns
+- [x] Review `workflow_run` workflow name matches exactly
+- [x] Review `.gitattributes` for line endings
+- [x] Run full `make dast` one final time - clean run
 
 ### 10.2 Git Tags
 - [ ] Tag: `v0.1.0` — first local-validated release
 
 ### 10.3 Pre-Public Checklist (for when we go public)
 - [ ] 3 consecutive successful E2E runs locally
-- [ ] Test fork PR path (only ci.yml runs — no DAST, no secrets)
+- [ ] Test fork PR path (only ci.yml runs - no DAST, no secrets)
 - [ ] Test merge to main (dast-nightly triggers full scan)
 - [ ] Test malicious overlay PR (validator blocks)
 - [ ] Measure actual CI time: target 5-9 min delta, 15-25 min full
-- [ ] Create `SECURITY.md` for public repo
+- [x] Create `SECURITY.md` for public repo
 - [ ] Push to AlphaSudo/zerodast
 
 ---
@@ -543,17 +543,3 @@
 | 9. Verification | 12 | ~2 hours |
 | 10. Polish | 5 | ~30 min |
 | **Total** | **111 items** | **~21 hours** |
-
-
-
-
-
-
-
-
-
-
-
-
-
-

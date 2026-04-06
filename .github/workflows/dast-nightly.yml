@@ -40,7 +40,7 @@ jobs:
       - name: Pre-pull trusted images
         run: |
           docker pull postgres:16-alpine
-          docker pull zaproxy/zaproxy:2.16.0
+          docker pull zaproxy/zap-stable:2.16.0
 
       - name: Prepare post-scan hook
         run: |
@@ -118,3 +118,4 @@ jobs:
           if [ "${{ steps.parse_report.outputs.parse_exit }}" != "0" ]; then
             exit 1
           fi
+
