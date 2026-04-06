@@ -11,6 +11,7 @@ ZAP_VERSION="${ZAP_VERSION:-2.16.0}"
 APP_IMAGE="${1:-${APP_IMAGE:-zerodast-demo-app:local}}"
 ZAP_CONFIG_PATH="${ZAP_CONFIG_PATH:-/tmp/zap-config.yaml}"
 REPORTS_DIR="${REPORTS_DIR:-$(pwd)/reports}"
+WORKSPACE_DIR="${WORKSPACE_DIR:-$(pwd)}"
 DATABASE_URL="${DATABASE_URL:-postgresql://testuser:throwaway_ci_test_pass@${DB_CONTAINER}:5432/testdb}"
 JWT_SECRET="${JWT_SECRET:-zerodast-test-jwt-secret-not-for-production}"
 SCHEMA_SQL="${SCHEMA_SQL:-}"
@@ -25,6 +26,10 @@ AUTH_BOOTSTRAP_EMAIL="${AUTH_BOOTSTRAP_EMAIL:-alice@test.local}"
 AUTH_BOOTSTRAP_PASSWORD="${AUTH_BOOTSTRAP_PASSWORD:-Test123!}"
 AUTH_TOKEN_PATH="${AUTH_TOKEN_PATH:-/tmp/zap-auth-token.txt}"
 POST_SCAN_SCRIPT="${POST_SCAN_SCRIPT:-}"
+POST_SCAN_APP_URL="${POST_SCAN_APP_URL:-$AUTH_BOOTSTRAP_URL}"
+RUN_AUTHZ_NETWORK="${RUN_AUTHZ_NETWORK:-false}"
+AUTHZ_SCRIPT_PATH="${AUTHZ_SCRIPT_PATH:-scripts/authz-tests.js}"
+EXPECT_IDOR="${EXPECT_IDOR:-true}"
 DB_WAIT_ATTEMPTS="${DB_WAIT_ATTEMPTS:-30}"
 APP_WAIT_ATTEMPTS="${APP_WAIT_ATTEMPTS:-30}"
 ZAP_EXIT=0
@@ -96,6 +101,7 @@ HOST_ZAP_CONFIG_PATH="$(host_path "$ZAP_CONFIG_PATH")"
 HOST_REPORTS_DIR="$(host_path "$REPORTS_DIR")"
 
 mkdir -p "$REPORTS_DIR"
+chmod 0777 "$REPORTS_DIR" >/dev/null 2>&1 || true
 
 engine network create --internal "$NETWORK_NAME" >/dev/null 2>&1 || true
 
@@ -179,6 +185,17 @@ fi
 
 echo "ZAP finished with exit code ${ZAP_EXIT:-0}"
 
+if [[ "$RUN_AUTHZ_NETWORK" == "true" ]]; then
+  HOST_WORKSPACE_DIR="$(host_path "$WORKSPACE_DIR")"
+  engine run --rm \
+    --network "$NETWORK_NAME" \
+    -e EXPECT_IDOR="$EXPECT_IDOR" \
+    -v "$HOST_WORKSPACE_DIR:/work:ro" \
+    -w /work \
+    node:20-alpine \
+    node "$AUTHZ_SCRIPT_PATH" "http://$APP_CONTAINER:8080"
+fi
+
 if [[ -n "$POST_SCAN_SCRIPT" ]]; then
-  APP_URL="$AUTH_BOOTSTRAP_URL" bash "$POST_SCAN_SCRIPT"
+  APP_URL="$POST_SCAN_APP_URL" bash "$POST_SCAN_SCRIPT"
 fi

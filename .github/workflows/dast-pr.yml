@@ -75,7 +75,6 @@ jobs:
           cat <<'EOF' > /tmp/post-scan.sh
           #!/usr/bin/env bash
           set -euo pipefail
-          bash scripts/authz-tests.sh "$APP_URL"
           EOF
           if [ "$first_line" = "FULL" ]; then
             cat <<'EOF' >> /tmp/post-scan.sh
@@ -93,6 +92,7 @@ jobs:
           ZAP_CONFIG_PATH: /tmp/zap-config.yaml
           AUTH_BOOTSTRAP_MODE: app_container
           AUTH_TOKEN_PATH: /tmp/zap-auth-token.txt
+          RUN_AUTHZ_NETWORK: 'true'
           POST_SCAN_SCRIPT: /tmp/post-scan.sh
           REPORTS_DIR: ${{ github.workspace }}/reports
         run: bash security/run-dast-env.sh
@@ -193,5 +193,6 @@ jobs:
           if [ "${{ needs.dast-scan.outputs.parse_exit }}" != "0" ]; then
             exit 1
           fi
+
 
 

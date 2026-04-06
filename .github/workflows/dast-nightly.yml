@@ -47,7 +47,6 @@ jobs:
           cat <<'EOF' > /tmp/post-scan.sh
           #!/usr/bin/env bash
           set -euo pipefail
-          bash scripts/authz-tests.sh "$APP_URL"
           bash scripts/verify-canaries.sh reports/zap-report.json
           EOF
           chmod +x /tmp/post-scan.sh
@@ -60,6 +59,7 @@ jobs:
           ZAP_CONFIG_PATH: ${{ github.workspace }}/security/zap/automation.yaml
           AUTH_BOOTSTRAP_MODE: app_container
           AUTH_TOKEN_PATH: /tmp/zap-auth-token.txt
+          RUN_AUTHZ_NETWORK: 'true'
           POST_SCAN_SCRIPT: /tmp/post-scan.sh
           REPORTS_DIR: ${{ github.workspace }}/reports
         run: bash security/run-dast-env.sh
@@ -117,5 +117,6 @@ jobs:
           if [ "${{ steps.parse_report.outputs.parse_exit }}" != "0" ]; then
             exit 1
           fi
+
 
 
