@@ -4,21 +4,21 @@
 - Name: spring-petclinic/spring-petclinic-rest
 - URL: https://github.com/spring-petclinic/spring-petclinic-rest
 - Commit SHA: 155f89a08828386493c27b5584cd2a93d0dcfc39
-- Stack summary: Java, Spring Boot, REST-only backend, Maven build
-- API surface summary: Documented OpenAPI surface with Swagger UI and `/petclinic/v3/api-docs`
-- Auth model: Default mode is unauthenticated; optional basic auth exists but is not required for the first benchmark pass
+- Stack summary: Java 17+, Spring Boot, Maven build, REST-only backend
+- API surface summary: Swagger UI at `/petclinic/swagger-ui.html`, OpenAPI JSON at `/petclinic/v3/api-docs`, broad CRUD API surface under `/petclinic/api/*`
+- Auth model: Default mode is unauthenticated; optional basic auth can be enabled with `petclinic.security.enable=true`
 
 ## Setup Assumptions
 - Local runtime assumptions: Java 17+, Maven wrapper, default in-memory H2 database, app expected on port 9966 with `/petclinic` base path
-- CI/runtime assumptions: Docker-capable environment or direct JVM run; no paid infrastructure required
-- Required secrets: None for default unauthenticated mode
-- Mock/seed assumptions: Repository ships with its own sample data via default H2 startup path
+- CI/runtime assumptions: Docker-capable environment or direct JVM run; no paid infrastructure required; default mode should boot without external DB services
+- Required secrets: None for the first unauthenticated benchmark pass
+- Mock/seed assumptions: Repository ships with built-in sample data through its default H2 startup path
 
 ## Adaptation Summary
 - Files created: Pending benchmark execution
 - Files modified: Pending benchmark execution
-- Auth/bootstrap changes: Expected to be minimal in the first pass because the default path is unauthenticated
-- Scan policy changes: Expected to be modest; likely base-path and OpenAPI import adjustments
+- Auth/bootstrap changes: Expected to be minimal in the first pass because the default path is unauthenticated; basic-auth variant can be benchmarked later as an extension scenario
+- Scan policy changes: Expected to be modest; likely base-path and OpenAPI import adjustments plus route scoping for `/petclinic`
 - Any repo-specific compromises: None yet
 
 ## Tier Results
@@ -34,7 +34,7 @@
 - High-level result: Pending benchmark execution
 - Candidate findings of note: Pending benchmark execution
 - Confirmed findings (if any): None yet
-- Caveats: Real-repo findings are candidate findings until independently validated
+- Caveats: Real-repo findings are candidate findings until independently validated; first benchmark pass should optimize for stable reach and useful artifacts, not vulnerability-count marketing
 
 ## Stability Notes
 - Consecutive run behavior: Pending benchmark execution
@@ -43,5 +43,5 @@
 
 ## Final Assessment
 - Suitable / Suitable with caveats / Not suitable: Pending benchmark execution
-- Recommendation: Execute this repository first because it is the cleaner external adaptation target
-- What this repo should teach us about ZeroDAST: How well the T1/T2/T3/T4 model transfers to a documented Spring REST backend with low setup friction
+- Recommendation: Execute this repository first because it is the cleaner external adaptation target and gives us a strong Java/Spring data point with low setup friction
+- What this repo should teach us about ZeroDAST: How well the T1/T2/T3/T4 model transfers to a documented Spring REST backend with OpenAPI, a non-root context path, and optional security modes
