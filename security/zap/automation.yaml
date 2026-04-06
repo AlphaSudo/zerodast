@@ -18,7 +18,6 @@ env:
     progressToStdout: true
 
 jobs:
-  # 1. Set up auth header injection BEFORE any requests are made
   - type: replacer
     parameters:
       deleteAllRules: true
@@ -28,14 +27,12 @@ jobs:
         matchString: "Authorization"
         replacementString: "Bearer ${AUTH_TOKEN}"
 
-  # 2. Import OpenAPI spec — targetUrl overrides the `localhost` server in the spec
   - type: openapi
     parameters:
       apiUrl: "http://untrusted-app:8080/v3/api-docs"
       targetUrl: "http://untrusted-app:8080"
       context: "zerodast-target"
 
-  # 3. Seed URLs not covered by the OpenAPI spec
   - type: requestor
     requests:
       - url: "http://untrusted-app:8080/api/debug/error"
@@ -43,7 +40,6 @@ jobs:
       - url: "http://untrusted-app:8080/api/search/preview?q=test"
         method: "GET"
 
-  # 4. Traditional spider to find any additional links
   - type: spider
     parameters:
       context: "zerodast-target"
@@ -52,12 +48,10 @@ jobs:
       maxDepth: 5
       maxChildren: 10
 
-  # 5. Wait for passive scan to complete
   - type: passiveScan-wait
     parameters:
       maxDuration: 2
 
-  # 6. Active scan with tuned scan policy
   - type: activeScan
     parameters:
       context: "zerodast-target"
@@ -67,42 +61,31 @@ jobs:
       delayInMs: 50
     policyDefinition:
       defaultStrength: medium
-      defaultThreshold: medium
+      defaultThreshold: low
       rules:
-        # SQL Injection — the primary canary
         - id: 40018
           name: "SQL Injection"
           threshold: low
           strength: insane
-        # Reflected XSS — the primary canary
+        - id: 40022
+          name: "SQL Injection - PostgreSQL"
+          threshold: low
+          strength: insane
         - id: 40012
           name: "Cross Site Scripting (Reflected)"
           threshold: low
           strength: insane
-        # Application Error Disclosure — the primary canary (passive rule, boosted)
-        - id: 90022
-          name: "Application Error Disclosure"
-          threshold: low
-          strength: medium
-        # Cross-Domain Misconfiguration
-        - id: 10098
-          name: "Cross-Domain Misconfiguration"
-          threshold: low
-          strength: medium
-        # Path Traversal
         - id: 40014
           name: "Cross Site Scripting (Persistent)"
           threshold: medium
           strength: high
 
-  # 7. Generate JSON report
   - type: report
     parameters:
       template: "traditional-json"
       reportDir: "/zap/wrk"
       reportFile: "zap-report.json"
 
-  # 8. Generate HTML report
   - type: report
     parameters:
       template: "traditional-html"

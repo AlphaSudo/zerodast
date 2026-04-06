@@ -30,7 +30,11 @@ APP_WAIT_ATTEMPTS="${APP_WAIT_ATTEMPTS:-30}"
 ZAP_EXIT=0
 
 engine() {
-  "$ENGINE_BIN" "$@"
+  if [[ "$ENGINE_BIN" == *.exe ]]; then
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" "$ENGINE_BIN" "$@"
+  else
+    "$ENGINE_BIN" "$@"
+  fi
 }
 
 host_path() {
@@ -53,6 +57,7 @@ bootstrap_auth_inside_app() {
 cleanup() {
   engine rm -f "$ZAP_CONTAINER" "$APP_CONTAINER" "$DB_CONTAINER" >/dev/null 2>&1 || true
   engine network rm "$NETWORK_NAME" >/dev/null 2>&1 || true
+  rm -f /tmp/zap-runtime-config.yaml 2>/dev/null || true
 }
 trap cleanup EXIT
 
@@ -142,14 +147,26 @@ if [[ ! -f "$ZAP_CONFIG_PATH" ]]; then
   exit 1
 fi
 
+# Bake the auth token directly into the ZAP config YAML.
+# ZAP AF may not resolve ${AUTH_TOKEN} inside replacer rule values,
+# so we pre-resolve it via sed to guarantee the Bearer header is correct.
+ZAP_RUNTIME_CONFIG="/tmp/zap-runtime-config.yaml"
+if [[ -n "${AUTH_TOKEN:-}" ]]; then
+  echo "Auth token obtained (${#AUTH_TOKEN} chars), baking into ZAP config"
+  sed "s|\${AUTH_TOKEN}|${AUTH_TOKEN}|g" "$ZAP_CONFIG_PATH" > "$ZAP_RUNTIME_CONFIG"
+else
+  echo "WARNING: AUTH_TOKEN is empty — authenticated endpoints will return 401" >&2
+  cp "$ZAP_CONFIG_PATH" "$ZAP_RUNTIME_CONFIG"
+fi
+HOST_ZAP_RUNTIME_PATH="$(host_path "$ZAP_RUNTIME_CONFIG")"
+
 engine run --rm \
   --network "$NETWORK_NAME" \
   --name "$ZAP_CONTAINER" \
   -e ZAP_JVM_OPTS="-Xmx3g -Xms1g" \
-  -e AUTH_TOKEN="${AUTH_TOKEN:-}" \
-  -v "$HOST_ZAP_CONFIG_PATH:/zap/wrk/config.yaml:ro" \
+  -v "$HOST_ZAP_RUNTIME_PATH:/zap/wrk/config.yaml:ro" \
   -v "$HOST_REPORTS_DIR:/zap/wrk:rw" \
-  "zaproxy/zaproxy:${ZAP_VERSION}" \
+  "zaproxy/zap-stable:${ZAP_VERSION}" \
   zap.sh -cmd -autorun /zap/wrk/config.yaml \
   -config check.onstart=false \
   -config api.disablekey=true \

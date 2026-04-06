@@ -9,7 +9,11 @@ ENGINE_BIN="${CONTAINER_ENGINE_BIN:-docker}"
 HOOK_FILE="$(mktemp)"
 
 engine() {
-  "$ENGINE_BIN" "$@"
+  if [[ "$ENGINE_BIN" == *.exe ]]; then
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" "$ENGINE_BIN" "$@"
+  else
+    "$ENGINE_BIN" "$@"
+  fi
 }
 
 host_path() {
@@ -54,7 +58,24 @@ APP_IMAGE="$APP_IMAGE" \
 bash "$ROOT_DIR/security/run-dast-env.sh" "$APP_IMAGE"
 
 echo "[3/5] Parsing report summary"
-"C:/Users/CM/AppData/Roaming/fnm/node-versions/v22.15.0/installation/node.exe" "$ROOT_DIR/scripts/parse-zap-report.js" "$REPORTS_DIR/zap-report.json" || true
+NODE_BIN=""
+if command -v node >/dev/null 2>&1; then
+  NODE_BIN="node"
+elif [[ -x "${NODE_PATH:-}" ]]; then
+  NODE_BIN="$NODE_PATH"
+elif [[ -x "C:/Users/CM/AppData/Roaming/fnm/node-versions/v22.15.0/installation/node.exe" ]]; then
+  NODE_BIN="C:/Users/CM/AppData/Roaming/fnm/node-versions/v22.15.0/installation/node.exe"
+fi
+
+if [[ -n "$NODE_BIN" ]]; then
+  REPORT_PATH="$REPORTS_DIR/zap-report.json"
+  if [[ "$NODE_BIN" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
+    REPORT_PATH="$(cygpath -w "$REPORT_PATH")"
+  fi
+  "$NODE_BIN" "$ROOT_DIR/scripts/parse-zap-report.js" "$REPORT_PATH" || true
+else
+  echo "Warning: node not found, skipping report parsing" >&2
+fi
 
 echo "[4/5] Reports written to $REPORTS_DIR"
 

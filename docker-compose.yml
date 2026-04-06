@@ -27,7 +27,7 @@ services:
       - "8080:8080"
 
   zap:
-    image: zaproxy/zaproxy:2.16.0
+    image: zaproxy/zap-stable:2.16.0
     profiles: ["dast"]
     depends_on:
       app:

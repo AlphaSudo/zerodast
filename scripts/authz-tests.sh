@@ -6,6 +6,37 @@ EXPECT_IDOR="${EXPECT_IDOR:-true}"
 FAILURES=0
 DETECTED=0
 
+resolve_node_bin() {
+  if command -v node >/dev/null 2>&1; then
+    printf '%s\n' "node"
+    return
+  fi
+
+  local fallback="${NODE_BIN:-C:/Users/CM/AppData/Roaming/fnm/node-versions/v22.15.0/installation/node.exe}"
+  if [[ -x "$fallback" ]]; then
+    printf '%s\n' "$fallback"
+  fi
+}
+
+extract_token() {
+  local response="$1"
+  local node_bin
+  node_bin="$(resolve_node_bin || true)"
+
+  if [[ -n "$node_bin" ]]; then
+    RESPONSE_JSON="$response" "$node_bin" -e "const raw = process.env.RESPONSE_JSON || ''; try { const parsed = JSON.parse(raw); process.stdout.write(parsed.token || ''); } catch { process.exit(1); }"
+    return
+  fi
+
+  if command -v jq >/dev/null 2>&1; then
+    printf '%s' "$response" | jq -r '.token // empty'
+    return
+  fi
+
+  echo "Neither node nor jq is available for token parsing" >&2
+  return 1
+}
+
 login() {
   local email="$1"
   local response
@@ -13,7 +44,7 @@ login() {
   response=$(curl -sS "$APP_URL/api/auth/login" \
     -H 'Content-Type: application/json' \
     -d "{\"email\":\"${email}\",\"password\":\"Test123!\"}")
-  token=$(printf '%s' "$response" | jq -r '.token // empty')
+  token=$(extract_token "$response")
   if [[ -z "$token" || "$token" == "null" ]]; then
     echo "Unable to authenticate ${email}: $response" >&2
     exit 1

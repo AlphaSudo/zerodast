@@ -10,41 +10,52 @@ if [[ ! -f "$REPORT" ]]; then
   exit 1
 fi
 
-# Extract alert names without requiring jq.
-# We use Node.js first (always available in this project), then jq, then grep.
+resolve_node_bin() {
+  if command -v node >/dev/null 2>&1; then
+    printf '%s\n' "node"
+    return
+  fi
+
+  local fallback="${NODE_BIN:-C:/Users/CM/AppData/Roaming/fnm/node-versions/v22.15.0/installation/node.exe}"
+  if [[ -x "$fallback" ]]; then
+    printf '%s\n' "$fallback"
+  fi
+}
+
+node_readable_path() {
+  local path="$1"
+  local node_bin="$2"
+  if [[ "$node_bin" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "$path"
+  else
+    printf '%s\n' "$path"
+  fi
+}
+
 extract_alert_names() {
   local report_file="$1"
+  local node_bin
+  node_bin="$(resolve_node_bin || true)"
 
-  # Try Node.js (available on CI and locally)
-  if command -v node >/dev/null 2>&1; then
-    node -e "
-      const rpt = JSON.parse(require('fs').readFileSync('$report_file','utf8'));
-      (rpt.site||[]).forEach(s => (s.alerts||[]).forEach(a => console.log(a.name)));
-    "
+  if [[ -n "$node_bin" ]]; then
+    local readable_path
+    readable_path="$(node_readable_path "$report_file" "$node_bin")"
+    "$node_bin" -e "
+      const rpt = JSON.parse(require('fs').readFileSync(process.argv[1], 'utf8'));
+      (rpt.site || []).forEach((site) => (site.alerts || []).forEach((alert) => console.log(alert.name)));
+    " "$readable_path"
     return
   fi
 
-  # Try custom NODE_BIN path (Windows / local dev)
-  local NODE_BIN="${NODE_BIN:-C:/Users/CM/AppData/Roaming/fnm/node-versions/v22.15.0/installation/node.exe}"
-  if [[ -x "$NODE_BIN" ]]; then
-    "$NODE_BIN" -e "
-      const rpt = JSON.parse(require('fs').readFileSync('$report_file','utf8'));
-      (rpt.site||[]).forEach(s => (s.alerts||[]).forEach(a => console.log(a.name)));
-    "
-    return
-  fi
-
-  # Fallback to jq if available
   if command -v jq >/dev/null 2>&1; then
     jq -r '.site[].alerts[].name' "$report_file"
     return
   fi
 
-  # Last-resort grep (fragile but works for our JSON layout)
   grep -oP '"name"\s*:\s*"\K[^"]+' "$report_file"
 }
 
-ALERT_NAMES=$(extract_alert_names "$REPORT")
+ALERT_NAMES="$(extract_alert_names "$REPORT")"
 
 for vuln in "${EXPECTED[@]}"; do
   if echo "$ALERT_NAMES" | grep -qi "$vuln"; then

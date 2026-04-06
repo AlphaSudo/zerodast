@@ -473,10 +473,10 @@
 - [ ] Run `make up` — app starts, healthcheck passes
 - [ ] Run `make seed` — DB seeded without errors
 - [ ] Run `make dast` — full ZAP scan completes
-- [ ] Verify ZAP finds: SQL Injection ✅
-- [ ] Verify ZAP finds: Cross Site Scripting ✅
+- [x] Verify ZAP finds: SQL Injection ?
+- [x] Verify ZAP finds: Cross Site Scripting ?
 - [ ] Verify ZAP finds: Missing security headers ✅
-- [ ] Run `bash scripts/verify-canaries.sh` — all canaries pass
+- [x] Run `bash scripts/verify-canaries.sh` - all canaries pass
 - [ ] Run `bash scripts/authz-tests.sh` — IDOR surfaces confirmed
 
 ### 9.3 Network Isolation Verification
@@ -544,6 +544,7 @@
 | 9. Verification | 12 | ~2 hours |
 | 10. Polish | 5 | ~30 min |
 | **Total** | **111 items** | **~21 hours** |
+
 
 
 

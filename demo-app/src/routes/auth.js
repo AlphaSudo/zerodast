@@ -28,6 +28,28 @@ function signToken(user) {
  *       - Auth
  *     requestBody:
  *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - name
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: new.user@test.local
+ *               name:
+ *                 type: string
+ *                 example: New User
+ *               password:
+ *                 type: string
+ *                 example: Test123!
+ *               role:
+ *                 type: string
+ *                 example: user
  *     responses:
  *       201:
  *         description: User registered
@@ -67,6 +89,21 @@ router.post("/api/auth/register", async (req, res, next) => {
  *       - Auth
  *     requestBody:
  *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: alice@test.local
+ *               password:
+ *                 type: string
+ *                 example: Test123!
  *     responses:
  *       200:
  *         description: Authenticated
