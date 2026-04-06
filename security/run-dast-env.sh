@@ -186,6 +186,9 @@ fi
 echo "ZAP finished with exit code ${ZAP_EXIT:-0}"
 
 if [[ "$RUN_AUTHZ_NETWORK" == "true" ]]; then
+  if [[ -n "$MOCK_DATA_SQL" && -f "$MOCK_DATA_SQL" ]]; then
+    seed_sql_file "$MOCK_DATA_SQL"
+  fi
   HOST_WORKSPACE_DIR="$(host_path "$WORKSPACE_DIR")"
   engine run --rm \
     --network "$NETWORK_NAME" \
