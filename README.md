@@ -15,6 +15,9 @@ LANE 2: Trusted DAST
 
 Nightly / Mainline DAST
   push main or schedule -> build image -> full isolated scan -> report artifact -> issue on threshold breach
+
+External-Repo Demonstration (T4)
+  trigger/metadata lane -> trusted scan lane -> clone target SHA -> build target -> isolated runtime -> upload benchmark artifacts
 ```
 
 ## What ZeroDAST Does
@@ -24,6 +27,7 @@ Nightly / Mainline DAST
 - Isolates app, DB, and ZAP inside Docker `--internal` networking.
 - Uses additive SQL overlay validation to reduce poisoned-seed risk.
 - Supports delta-scoped PR scanning and full nightly scanning.
+- Can benchmark and orchestrate DAST against external public repositories from within the ZeroDAST repo itself.
 
 ## Quick Start
 
@@ -35,21 +39,26 @@ Nightly / Mainline DAST
 
 ## Benchmarking
 
-- Benchmark protocol: `docs/BENCHMARK_PROTOCOL.md`
-- Results template: `docs/BENCHMARK_RESULTS_TEMPLATE.md`
+- Benchmark protocol: [BENCHMARK_PROTOCOL.md](C:/Java%20Developer/DAST/docs/BENCHMARK_PROTOCOL.md)
+- Results template: [BENCHMARK_RESULTS_TEMPLATE.md](C:/Java%20Developer/DAST/docs/BENCHMARK_RESULTS_TEMPLATE.md)
+- Roadmap: [BENCHMARK_ROADMAP.md](C:/Java%20Developer/DAST/docs/BENCHMARK_ROADMAP.md)
+- Comparison: [BENCHMARK_COMPARISON.md](C:/Java%20Developer/DAST/docs/BENCHMARK_COMPARISON.md)
 
 ## Comparison
 | Tier | Description | Speed | Security Posture | Cost |
 | --- | --- | --- | --- | --- |
 | T1 | Basic scanner only | Fast | Weak isolation | Zero |
 | T2 | Scanner + light CI gating | Medium | Better, still broad trust | Zero/Low |
-| T3 | ZeroDAST | 5-9 min delta target, 15-30 min full | Privilege + network isolation with artifact handoff | Zero |
-| T4 | Heavier custom platform | Slower to build, potentially stronger | Highest customization | Higher engineering cost |
+| T3 | ZeroDAST-style isolated local adaptation | Medium | Strong local isolation and contained artifacts | Zero |
+| T4 | Full CI-backed ZeroDAST on a real external repo | Slower than local tiers, stronger proof | Trusted split plus isolated runtime with target-aware orchestration | Zero direct tooling cost, higher engineering effort |
 
 ## Warning
 The demo app is intentionally vulnerable. Never deploy it to production or expose it to the public internet as-is.
 
 ## Status
 - License: Apache-2.0
-- Current state: local and GitHub validation working on the self-validating demo; external two-repo benchmark protocol defined, real-repo benchmark pending
-
+- Current state:
+  - self-validating demo validated locally and on GitHub Actions
+  - two external benchmark repos completed through T1-T3
+  - first full CI-backed external ZeroDAST demonstration completed on Petclinic T4
+  - current evidence supports target-dependent value claims, not universal coverage claims

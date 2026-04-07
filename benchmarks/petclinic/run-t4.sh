@@ -81,9 +81,9 @@ env:
   contexts:
     - name: "petclinic-t4"
       urls:
-        - "${SCANNER_BASE_ROOT}"
+        - "${SCANNER_BASE_URL}"
       includePaths:
-        - "${SCANNER_BASE_ROOT}${SCANNER_BASE_PATH}.*"
+        - "${SCANNER_BASE_URL}.*"
   parameters:
     failOnError: true
     progressToStdout: true
@@ -91,7 +91,7 @@ jobs:
   - type: openapi
     parameters:
       apiUrl: "${api_url}"
-      targetUrl: "${SCANNER_BASE_ROOT}"
+      targetUrl: "${SCANNER_BASE_URL}"
       context: "petclinic-t4"
   - type: requestor
     requests:
