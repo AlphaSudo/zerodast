@@ -15,7 +15,11 @@ if (!modeConfig) {
 }
 
 const port = Number(config.target?.port || 80);
-const scannerBaseRoot = `http://zerodast-target:${port}`;
+const runtimeMode = config.target?.runtimeMode || 'artifact';
+const host = runtimeMode === 'compose'
+  ? (config.target?.compose?.appHost || 'zerodast-target')
+  : 'zerodast-target';
+const scannerBaseRoot = `http://${host}:${port}`;
 const scannerBasePath = config.target?.basePath || '';
 const rawSpec = JSON.parse(fs.readFileSync(rawSpecPath, 'utf8'));
 
@@ -53,6 +57,7 @@ for (const seed of config.scan?.requestSeeds || []) {
 fs.writeFileSync(outSpecPath, JSON.stringify(rawSpec));
 fs.writeFileSync(outRequestsPath, JSON.stringify(Array.from(requestUrls).sort(), null, 2));
 
+const apiSignalPathPrefix = config.target?.apiSignalPathPrefix || `${scannerBasePath}/api/`;
 const output = {
   target: config.target,
   zapVersion: config.scan?.zapVersion,
@@ -62,6 +67,7 @@ const output = {
   scannerBaseRoot,
   scannerBasePath,
   scannerBaseUrl: `${scannerBaseRoot}${scannerBasePath}`,
+  apiSignalPrefix: `${scannerBaseRoot}${apiSignalPathPrefix}`,
   requestSeeds: config.scan?.requestSeeds || []
 };
 

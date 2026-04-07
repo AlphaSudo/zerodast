@@ -134,6 +134,29 @@ Observed API-side alert URI:
 
 This matters because it shows the model 1 baseline did not only work in a throwaway copy. It held up on the real benchmark clone with the same tuned PR profile and nearly identical runtime.
 
+## Harder Target Extension: EventDebug
+
+The next model 1 extension was the harder EventDebug benchmark clone.
+
+That target required a second runtime class, so the model 1 runner was extended with `compose` mode while keeping the existing `artifact` mode for Petclinic-style targets.
+
+Observed result on EventDebug with compose mode:
+
+- `specMode`: `raw`
+- `zapImage`: `zaproxy/zap-stable:2.17.0`
+- `zapExitCode`: `2`
+- `coldRunSeconds`: `118`
+- `seededRequestCount`: `8`
+- `API alert URI count`: `0`
+
+What this means:
+
+- the model 1 kit now spans at least two runtime classes:
+  - single-artifact targets
+  - compose-driven multi-service targets
+- EventDebug still did **not** produce API-side alert lift, which is consistent with the earlier external benchmark result
+- the product limitation on EventDebug is currently detection/output quality, not in-repo installation or runtime orchestration
+
 ## Engineering Lessons From The Rehearsal
 
 The rehearsal exposed several adoption-relevant implementation details:
@@ -142,6 +165,8 @@ The rehearsal exposed several adoption-relevant implementation details:
 - Maven build artifacts need pattern-based lookup because versioned jar names are normal
 - Git Bash + Windows + `podman.exe` requires explicit path-conversion handling for bind mounts
 - PR-mode runtime tuning is sensitive: removing the spider entirely makes the run much faster, but loses the API-side signal we care about
+- a reusable model 1 kit needs more than one runtime mode; harder targets can require compose-native startup rather than single-artifact boot
+- extending to harder targets can still preserve the install surface even when scan output quality remains weak
 
 These are exactly the kinds of issues a model 1 prototype must absorb before it is ready for broader adoption.
 
@@ -156,18 +181,20 @@ This rehearsal supports the model 1 claim that:
 - API-side signal can survive the model 2 to model 1 transition
 - the PR profile can be tuned materially without collapsing all useful signal
 - the tuned profile holds up on a less-controlled real benchmark clone, not only a throwaway copy
+- the model 1 runner can now support more than one runtime class
 
 It does **not** yet prove:
 
 - adoption readiness for arbitrary repositories
 - broad target-agnostic config portability
 - acceptable default runtime ergonomics for all maintainer workflows
+- reliable API-side finding lift on harder multi-service targets like EventDebug
 
 ## Recommendation
 
 The next model 1 step should be:
 
 1. keep the same two-zone install rule
-2. treat the `5 minute active scan + 1 minute spider` profile as the provisional PR baseline
-3. decide whether further runtime cuts are worth the likely coverage loss
-4. only then consider transplanting model 1 into a less controlled target
+2. keep `artifact` and `compose` as the two supported prototype runtime modes
+3. treat the `5 minute active scan + 1 minute spider` profile as the provisional PR baseline for Petclinic-like targets
+4. improve EventDebug success criteria or request seeding before claiming broad harder-target effectiveness

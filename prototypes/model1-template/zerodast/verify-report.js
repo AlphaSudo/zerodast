@@ -16,7 +16,7 @@ const metrics = JSON.parse(fs.readFileSync(metricsPath, 'utf8'));
 const prepared = JSON.parse(fs.readFileSync(preparedConfigPath, 'utf8'));
 const riskCounts = { critical: 0, high: 0, medium: 0, low: 0, informational: 0 };
 const apiUris = new Set();
-const apiPrefix = `${prepared.scannerBaseUrl}/api/`;
+const apiPrefix = prepared.apiSignalPrefix || `${prepared.scannerBaseUrl}/api/`;
 
 for (const site of report.site || []) {
   for (const alert of site.alerts || []) {

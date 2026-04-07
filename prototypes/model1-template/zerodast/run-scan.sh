@@ -28,12 +28,17 @@ METRICS_PATH="${REPORT_DIR}/metrics.json"
 SUMMARY_PATH="${REPORT_DIR}/summary.md"
 
 TARGET_WORK_DIR="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.workingDirectory || '.');" "${CONFIG_PATH}")"
+TARGET_RUNTIME_MODE="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.runtimeMode || 'artifact');" "${CONFIG_PATH}")"
 TARGET_PORT="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.target.port || 80));" "${CONFIG_PATH}")"
 TARGET_HEALTH_PATH="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.healthPath || '/');" "${CONFIG_PATH}")"
 TARGET_OPENAPI_PATH="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.openApiPath || '/');" "${CONFIG_PATH}")"
 TARGET_BUILD_COMMAND="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.buildCommand || '');" "${CONFIG_PATH}")"
 TARGET_ARTIFACT_PATTERN="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.artifactPattern || '');" "${CONFIG_PATH}")"
 APP_IMAGE="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.appImage || 'eclipse-temurin:17-jre-jammy');" "${CONFIG_PATH}")"
+COMPOSE_UP_COMMAND="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.upCommand || '');" "${CONFIG_PATH}")"
+COMPOSE_DOWN_COMMAND="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.downCommand || '');" "${CONFIG_PATH}")"
+COMPOSE_NETWORK_NAME="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.networkName || '');" "${CONFIG_PATH}")"
+COMPOSE_APP_HOST="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.appHost || '');" "${CONFIG_PATH}")"
 ZAP_VERSION="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.scan?.zapVersion || '2.17.0');" "${CONFIG_PATH}")"
 HELPER_IMAGE="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.scan?.helperImage || 'node:20-alpine');" "${CONFIG_PATH}")"
 
@@ -41,61 +46,94 @@ TARGET_DIR="$(cd "${REPO_ROOT}/${TARGET_WORK_DIR}" && pwd)"
 APP_CONTAINER="zerodast-target"
 ZAP_CONTAINER="zerodast-zap"
 NETWORK_NAME="zerodast-net"
-SCANNER_BASE_ROOT="http://${APP_CONTAINER}:${TARGET_PORT}"
+APP_HOST="${APP_CONTAINER}"
+SCANNER_BASE_ROOT="http://${APP_HOST}:${TARGET_PORT}"
+APP_JAR=""
+MANAGED_RUNTIME="true"
 
-if [[ -z "${TARGET_BUILD_COMMAND}" || -z "${TARGET_ARTIFACT_PATTERN}" ]]; then
-  echo "config.json must define target.buildCommand and target.artifactPattern" >&2
+if [[ "${TARGET_RUNTIME_MODE}" == "artifact" ]]; then
+  if [[ -z "${TARGET_BUILD_COMMAND}" || -z "${TARGET_ARTIFACT_PATTERN}" ]]; then
+    echo "artifact mode requires target.buildCommand and target.artifactPattern" >&2
+    exit 1
+  fi
+elif [[ "${TARGET_RUNTIME_MODE}" == "compose" ]]; then
+  if [[ -z "${COMPOSE_UP_COMMAND}" || -z "${COMPOSE_DOWN_COMMAND}" || -z "${COMPOSE_NETWORK_NAME}" || -z "${COMPOSE_APP_HOST}" ]]; then
+    echo "compose mode requires target.compose.upCommand, downCommand, networkName, and appHost" >&2
+    exit 1
+  fi
+  NETWORK_NAME="${COMPOSE_NETWORK_NAME}"
+  APP_HOST="${COMPOSE_APP_HOST}"
+  SCANNER_BASE_ROOT="http://${APP_HOST}:${TARGET_PORT}"
+  MANAGED_RUNTIME="false"
+else
+  echo "Unsupported target.runtimeMode: ${TARGET_RUNTIME_MODE}" >&2
   exit 1
 fi
 
 cleanup() {
-  MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" rm -f "${ZAP_CONTAINER}" "${APP_CONTAINER}" >/dev/null 2>&1 || true
-  MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" network rm "${NETWORK_NAME}" >/dev/null 2>&1 || true
+  MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" rm -f "${ZAP_CONTAINER}" >/dev/null 2>&1 || true
+  if [[ "${MANAGED_RUNTIME}" == "true" ]]; then
+    MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" rm -f "${APP_CONTAINER}" >/dev/null 2>&1 || true
+    MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" network rm "${NETWORK_NAME}" >/dev/null 2>&1 || true
+  elif [[ -n "${COMPOSE_DOWN_COMMAND}" ]]; then
+    (cd "${TARGET_DIR}" && eval "${COMPOSE_DOWN_COMMAND}") >/dev/null 2>&1 || true
+  fi
 }
 trap cleanup EXIT
 cleanup
 
-(cd "${TARGET_DIR}" && eval "${TARGET_BUILD_COMMAND}")
-
-shopt -s nullglob
-artifact_matches=( "${TARGET_DIR}"/${TARGET_ARTIFACT_PATTERN} )
-shopt -u nullglob
-
-APP_JAR=""
-for candidate in "${artifact_matches[@]}"; do
-  if [[ "${candidate}" != *.original ]]; then
-    APP_JAR="${candidate}"
-    break
-  fi
-done
-
-if [[ ! -f "${APP_JAR}" ]]; then
-  echo "Expected build artifact not found for pattern: ${TARGET_ARTIFACT_PATTERN}" >&2
-  exit 1
-fi
-
-APP_JAR_MOUNT="${APP_JAR}"
+APP_JAR_MOUNT=""
 RAW_SPEC_MOUNT="${RAW_SPEC}"
 SANITIZED_SPEC_MOUNT="${SANITIZED_SPEC}"
 AUTOMATION_MOUNT="${AUTOMATION_PATH}"
 REPORT_DIR_MOUNT="${REPORT_DIR}"
 
-if [[ "${DOCKER_REQUIRES_WINDOWS_PATHS}" == "true" ]]; then
-  APP_JAR_MOUNT="$(cygpath -w "${APP_JAR}")"
-  RAW_SPEC_MOUNT="$(cygpath -w "${RAW_SPEC}")"
-  SANITIZED_SPEC_MOUNT="$(cygpath -w "${SANITIZED_SPEC}")"
-  AUTOMATION_MOUNT="$(cygpath -w "${AUTOMATION_PATH}")"
-  REPORT_DIR_MOUNT="$(cygpath -w "${REPORT_DIR}")"
+if [[ "${TARGET_RUNTIME_MODE}" == "artifact" ]]; then
+  (cd "${TARGET_DIR}" && eval "${TARGET_BUILD_COMMAND}")
+
+  shopt -s nullglob
+  artifact_matches=( "${TARGET_DIR}"/${TARGET_ARTIFACT_PATTERN} )
+  shopt -u nullglob
+
+  for candidate in "${artifact_matches[@]}"; do
+    if [[ "${candidate}" != *.original ]]; then
+      APP_JAR="${candidate}"
+      break
+    fi
+  done
+
+  if [[ ! -f "${APP_JAR}" ]]; then
+    echo "Expected build artifact not found for pattern: ${TARGET_ARTIFACT_PATTERN}" >&2
+    exit 1
+  fi
+
+  APP_JAR_MOUNT="${APP_JAR}"
+
+  if [[ "${DOCKER_REQUIRES_WINDOWS_PATHS}" == "true" ]]; then
+    APP_JAR_MOUNT="$(cygpath -w "${APP_JAR}")"
+    RAW_SPEC_MOUNT="$(cygpath -w "${RAW_SPEC}")"
+    SANITIZED_SPEC_MOUNT="$(cygpath -w "${SANITIZED_SPEC}")"
+    AUTOMATION_MOUNT="$(cygpath -w "${AUTOMATION_PATH}")"
+    REPORT_DIR_MOUNT="$(cygpath -w "${REPORT_DIR}")"
+  fi
+
+  MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" network create --internal "${NETWORK_NAME}" >/dev/null
+
+  MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" run -d --rm \
+    --network "${NETWORK_NAME}" \
+    --name "${APP_CONTAINER}" \
+    -v "${APP_JAR_MOUNT}:/app/app.jar:ro" \
+    "${APP_IMAGE}" \
+    java -jar /app/app.jar >/dev/null
+else
+  if [[ "${DOCKER_REQUIRES_WINDOWS_PATHS}" == "true" ]]; then
+    RAW_SPEC_MOUNT="$(cygpath -w "${RAW_SPEC}")"
+    SANITIZED_SPEC_MOUNT="$(cygpath -w "${SANITIZED_SPEC}")"
+    AUTOMATION_MOUNT="$(cygpath -w "${AUTOMATION_PATH}")"
+    REPORT_DIR_MOUNT="$(cygpath -w "${REPORT_DIR}")"
+  fi
+  (cd "${TARGET_DIR}" && eval "${COMPOSE_UP_COMMAND}")
 fi
-
-MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" network create --internal "${NETWORK_NAME}" >/dev/null
-
-MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" run -d --rm \
-  --network "${NETWORK_NAME}" \
-  --name "${APP_CONTAINER}" \
-  -v "${APP_JAR_MOUNT}:/app/app.jar:ro" \
-  "${APP_IMAGE}" \
-  java -jar /app/app.jar >/dev/null
 
 wait_for_health() {
   local attempts="${1:-45}"
