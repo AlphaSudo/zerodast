@@ -39,7 +39,7 @@
 | T1 | Low | ~4m 07s ZAP run after app was already up | Pending | N/A (unauthenticated baseline) | Low to moderate; report generated but findings stayed on shell/UI paths rather than `/petclinic/api/*` | Low | Partial |
 | T2 | Low | ~243s with structured artifacts and summary output | Pending | N/A (unauthenticated baseline) | Moderate operationally, still low semantically; summary/metrics/report were generated cleanly but API alert URI count remained `0` | Low to moderate | Partial |
 | T3 | Moderate | ~400s with isolated app + scanner runtime and seeded API requests | Pending | N/A (unauthenticated baseline) | Moderate; API alert URI count improved from `0` to `1`, and API-seeded request coverage produced an additional API-side signal | Moderate to high | Partial but clearly better |
-| T4 | Moderate in CI | 145s in GitHub Actions | Pending | N/A (unauthenticated baseline) | Strongest so far; CI artifact package included raw/sanitized spec copies, generated request list, automation plan, report, metrics, and verification summary | High | Successful full CI-backed demonstration |
+| T4 | Moderate in CI | 145s initial run, 209s clean rerun | Pending | N/A (unauthenticated baseline) | Strongest so far; CI artifact package included raw/sanitized spec copies, generated request list, automation plan, report, metrics, and verification summary | High | Successful full CI-backed demonstration |
 
 ## Findings Summary
 - High-level result:
@@ -47,6 +47,7 @@
   - T2 improved repeatability and artifact discipline.
   - T3 is the first local tier that improved actual API reach rather than just packaging.
   - T4 preserved that API-side signal inside a real CI-backed ZeroDAST workflow.
+  - A second T4 rerun completed cleanly with `zapExitCode: 0` and no spider-root warning.
 - Candidate findings of note across the tiers:
   - `Content Security Policy (CSP) Header Not Set`
   - `Missing Anti-clickjacking Header`
@@ -63,17 +64,19 @@
   - API-side alert instance seen on `http://petclinic-t3-app:9966/petclinic/api/owners/1/pets` locally and `http://petclinic-t4-app:9966/petclinic/api/owners/1/pets` in CI
 - T4 artifact evidence:
   - raw spec mode on ZAP `2.17.0`
-  - cold run duration: `145s`
+  - initial cold run duration: `145s`
+  - clean rerun duration: `209s`
+  - clean rerun metrics recorded `zapExitCode: 0`
   - artifact package included `zap-report.json`, `verification.md`, `metrics.json`, generated request URLs, and the resolved automation plan
 - Caveats:
   - T3 improved API reach, but only modestly; this is evidence of value, not yet evidence of strong comprehensive API coverage.
   - Real-repo findings are candidate findings until independently validated.
 
 ## Stability Notes
-- Consecutive run behavior: Not yet measured for T4.
+- Consecutive run behavior: One clean T4 rerun now exists in CI.
 - Flaky steps:
   - T1-T3 on ZAP `2.16.0` had OpenAPI import fragility.
-  - T4 still showed a non-fatal spider-root warning in the first CI run, but artifact generation and API-side signal were preserved.
+  - The first T4 CI run showed a non-fatal spider-root warning; the second run removed it after tightening the scan base path.
 - Workarounds used:
   - fetched the raw OpenAPI JSON into ZeroDAST-owned scratch space
   - removed `info.license.extensions` and downgraded the declared `openapi` version string from `3.1.0` to `3.0.3` for T1-T3

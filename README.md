@@ -61,4 +61,5 @@ The demo app is intentionally vulnerable. Never deploy it to production or expos
   - self-validating demo validated locally and on GitHub Actions
   - two external benchmark repos completed through T1-T3
   - first full CI-backed external ZeroDAST demonstration completed on Petclinic T4
+  - Petclinic T4 clean rerun succeeded with `zapExitCode: 0` while preserving the API-side benchmark signal
   - current evidence supports target-dependent value claims, not universal coverage claims
