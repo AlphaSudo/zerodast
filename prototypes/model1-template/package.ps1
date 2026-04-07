@@ -32,6 +32,7 @@ New-Item -ItemType Directory -Force -Path $kitRoot | Out-Null
 $itemsToCopy = @(
     '.github',
     'zerodast',
+    'examples',
     'install.ps1',
     'uninstall.ps1',
     'PROTOTYPE_GUIDE.md'
@@ -56,6 +57,7 @@ $manifest = [ordered]@{
         '.github/workflows/zerodast-pr.yml',
         '.github/workflows/zerodast-nightly.yml',
         'zerodast/',
+        'examples/',
         'install.ps1',
         'uninstall.ps1',
         'PROTOTYPE_GUIDE.md'

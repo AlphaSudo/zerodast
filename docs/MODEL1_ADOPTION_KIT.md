@@ -17,6 +17,7 @@ The export keeps the same two-zone install contract:
 
 It also includes:
 
+- `examples/`
 - `install.ps1`
 - `uninstall.ps1`
 - `PROTOTYPE_GUIDE.md`
@@ -35,6 +36,19 @@ Default outputs:
 - `prototypes/model1-template/dist/model1-kit/`
 - `prototypes/model1-template/dist/model1-kit.zip`
 
+## Included Examples
+
+The kit now ships with two concrete example configs:
+
+- `examples/petclinic-config.json`
+- `examples/eventdebug-config.json`
+
+These are not universal defaults.
+They are example shapes for the two runtime classes currently proven by the prototype:
+
+- `artifact`
+- `compose`
+
 ## Why This Matters
 
 Without a kit export step, model 1 still feels coupled to the ZeroDAST repo layout.
@@ -44,6 +58,7 @@ The kit export gives us:
 - a self-contained handoff directory
 - a zipped artifact for adoption rehearsals
 - a manifest tied to a specific ZeroDAST source commit
+- example configs for both supported runtime classes
 
 That makes the prototype easier to evaluate as a product surface.
 

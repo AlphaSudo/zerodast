@@ -1,0 +1,49 @@
+{
+  "name": "zerodast-petclinic-example",
+  "target": {
+    "runtimeMode": "artifact",
+    "buildCommand": "./mvnw -q -DskipTests package",
+    "artifactPattern": "target/spring-petclinic-rest-*.jar",
+    "workingDirectory": ".",
+    "port": 9966,
+    "basePath": "/petclinic",
+    "apiSignalPathPrefix": "/petclinic/api/",
+    "healthPath": "/petclinic/actuator/health",
+    "openApiPath": "/petclinic/v3/api-docs",
+    "appImage": "eclipse-temurin:17-jre-jammy",
+    "compose": {
+      "upCommand": "",
+      "downCommand": "",
+      "networkName": "",
+      "appHost": ""
+    }
+  },
+  "scan": {
+    "zapVersion": "2.17.0",
+    "helperImage": "node:20-alpine",
+    "mode": {
+      "pr": {
+        "maxDurationMinutes": 5,
+        "enableSpider": true,
+        "spiderMinutes": 1,
+        "threadPerHost": 4
+      },
+      "nightly": {
+        "maxDurationMinutes": 20,
+        "enableSpider": true,
+        "spiderMinutes": 2,
+        "threadPerHost": 4
+      }
+    },
+    "requestSeeds": [
+      "/petclinic/",
+      "/petclinic/api/owners",
+      "/petclinic/api/owners/1",
+      "/petclinic/api/owners/1/pets/1",
+      "/petclinic/api/owners?lastName=Davis"
+    ]
+  },
+  "reporting": {
+    "requireApiSignal": true
+  }
+}

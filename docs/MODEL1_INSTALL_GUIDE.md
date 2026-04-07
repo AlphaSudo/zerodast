@@ -109,43 +109,14 @@ The rule for this prototype is:
 - change config first
 - only change scripts if the target really needs new behavior
 
-## Artifact Mode Example
+## Example Configs
 
-Use `artifact` mode for targets like Petclinic:
+The template now ships with two example configs you can copy and adapt:
 
-```json
-{
-  "target": {
-    "runtimeMode": "artifact",
-    "buildCommand": "./mvnw -q -DskipTests package",
-    "artifactPattern": "target/spring-petclinic-rest-*.jar"
-  }
-}
-```
+- `examples/petclinic-config.json`
+- `examples/eventdebug-config.json`
 
-## Compose Mode Example
-
-Use `compose` mode for targets like EventDebug:
-
-```json
-{
-  "target": {
-    "runtimeMode": "compose",
-    "workingDirectory": ".",
-    "port": 9090,
-    "basePath": "/api/v1",
-    "apiSignalPathPrefix": "/api/v1/",
-    "healthPath": "/api/v1/health/ready",
-    "openApiPath": "/api/v1/openapi.json",
-    "compose": {
-      "upCommand": "<compose-up-command>",
-      "downCommand": "<compose-down-command>",
-      "networkName": "<target-network>",
-      "appHost": "<app-hostname-on-network>"
-    }
-  }
-}
-```
+Use them as starting shapes, not as drop-in universal defaults.
 
 ## Running It Locally
 
