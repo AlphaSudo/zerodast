@@ -26,6 +26,20 @@ The target repo should only need:
 - `templates/automation.yaml`
 - `reports/.gitignore`
 
+## Install Into A Controlled Target Repo
+
+From the ZeroDAST repo root:
+
+```powershell
+./prototypes/model1-template/install.ps1 -TargetRepoPath 'C:\path\to\target-repo'
+```
+
+That copies exactly two zones into the target repo:
+- `.github/workflows/zerodast-*.yml`
+- `zerodast/`
+
+Nothing else should be required for the first prototype.
+
 ## Removal
 
 Delete:
