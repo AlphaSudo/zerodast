@@ -30,7 +30,7 @@ jobs:
           node-version: 22
 
       - name: Setup Java
-        uses: actions/setup-java@3a4f6e1af504cf6a31855e63b4782e8ab1c4b9d9
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
