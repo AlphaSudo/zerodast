@@ -1,0 +1,106 @@
+name: Petclinic T4 Scan
+
+on:
+  workflow_run:
+    workflows: ["Petclinic T4 Metadata"]
+    types: [completed]
+
+concurrency:
+  group: petclinic-t4-${{ github.event.workflow_run.head_sha }}
+  cancel-in-progress: true
+
+jobs:
+  petclinic-t4:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@3a4f6e1af504cf6a31855e63b4782e8ab1c4b9d9
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Download metadata artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: petclinic-t4-input
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts
+
+      - name: Resolve target inputs
+        id: target
+        run: |
+          node -e "const fs=require('fs'); const input=JSON.parse(fs.readFileSync('artifacts/petclinic-t4-input.json','utf8')); fs.appendFileSync(process.env.GITHUB_OUTPUT, 'repo=' + input.repo + '\n'); fs.appendFileSync(process.env.GITHUB_OUTPUT, 'sha=' + input.sha + '\n'); fs.appendFileSync(process.env.GITHUB_OUTPUT, 'zap_version=' + input.zapVersion + '\n');"
+
+      - name: Clone Petclinic target
+        run: |
+          git clone --depth 1 ${{ steps.target.outputs.repo }} target-repo
+          cd target-repo
+          git fetch --depth 1 origin ${{ steps.target.outputs.sha }}
+          git checkout --detach ${{ steps.target.outputs.sha }}
+
+      - name: Build Petclinic jar from frozen SHA
+        working-directory: target-repo
+        run: |
+          chmod +x mvnw
+          ./mvnw -q -DskipTests package
+
+      - name: Resolve application jar
+        id: jar
+        run: |
+          jar_path=$(find target-repo/target -maxdepth 1 -type f -name '*.jar' ! -name '*sources.jar' ! -name '*javadoc.jar' | head -n 1)
+          if [ -z "$jar_path" ]; then
+            echo 'Petclinic jar not found after build.' >&2
+            exit 1
+          fi
+          echo "path=$jar_path" >> "$GITHUB_OUTPUT"
+
+      - name: Pre-pull runtime images
+        run: |
+          docker pull eclipse-temurin:17-jre-jammy
+          docker pull node:20-alpine
+          docker pull zaproxy/zap-stable:${{ steps.target.outputs.zap_version }}
+
+      - name: Run Petclinic T4 benchmark
+        env:
+          TARGET_DIR: ${{ github.workspace }}/target-repo
+          APP_JAR: ${{ github.workspace }}/${{ steps.jar.outputs.path }}
+          REPORTS_DIR: ${{ github.workspace }}/reports
+          ZAP_VERSION: ${{ steps.target.outputs.zap_version }}
+        run: |
+          chmod +x benchmarks/petclinic/run-t4.sh
+          benchmarks/petclinic/run-t4.sh
+
+      - name: Write step summary
+        if: always()
+        run: |
+          if [ -f reports/petclinic-t4/verification.md ]; then
+            cat reports/petclinic-t4/verification.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Petclinic T4 verification output was not produced.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload Petclinic T4 artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: petclinic-t4-report
+          path: reports/petclinic-t4
+          retention-days: 30
+          if-no-files-found: warn
