@@ -1,0 +1,56 @@
+name: ZeroDAST Nightly
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zerodast-nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run ZeroDAST nightly scan
+        env:
+          ZERODAST_MODE: nightly
+        run: |
+          chmod +x zerodast/run-scan.sh
+          zerodast/run-scan.sh
+
+      - name: Upload ZeroDAST report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zerodast-nightly-report
+          path: zerodast/reports
+          if-no-files-found: warn
+
+      - name: Write summary
+        if: always()
+        run: |
+          if [ -f zerodast/reports/summary.md ]; then
+            cat zerodast/reports/summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'ZeroDAST summary not produced.' >> "$GITHUB_STEP_SUMMARY"
+          fi

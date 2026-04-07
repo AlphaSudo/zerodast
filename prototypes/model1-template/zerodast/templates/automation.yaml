@@ -1,0 +1,43 @@
+env:
+  contexts:
+    - name: "zerodast-target"
+      urls:
+        - "__BASE_URL__"
+      includePaths:
+        - "__BASE_URL____BASE_PATH__.*"
+  parameters:
+    failOnError: true
+    progressToStdout: true
+jobs:
+  - type: openapi
+    parameters:
+      apiUrl: "__OPENAPI_URL__"
+      targetUrl: "__BASE_URL____BASE_PATH__"
+      context: "zerodast-target"
+  - type: requestor
+    requests:
+      - url: "__BASE_URL____BASE_PATH__/"
+        method: "GET"
+  - type: spider
+    parameters:
+      context: "zerodast-target"
+      url: "__BASE_URL____BASE_PATH__"
+      maxDuration: 1
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 1
+  - type: activeScan
+    parameters:
+      context: "zerodast-target"
+      maxRuleDurationInMins: 3
+      maxScanDurationInMins: 10
+      threadPerHost: 4
+      delayInMs: 50
+    policyDefinition:
+      defaultStrength: medium
+      defaultThreshold: low
+  - type: report
+    parameters:
+      template: "traditional-json"
+      reportDir: "./zerodast/reports"
+      reportFile: "zap-report.json"

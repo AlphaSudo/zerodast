@@ -1,0 +1,36 @@
+{
+  "name": "zerodast-prototype",
+  "target": {
+    "startupMode": "command",
+    "startupCommand": "./mvnw spring-boot:run",
+    "workingDirectory": ".",
+    "baseUrl": "http://127.0.0.1:9966",
+    "basePath": "/petclinic",
+    "healthPath": "/petclinic/actuator/health",
+    "openApiPath": "/petclinic/v3/api-docs"
+  },
+  "scan": {
+    "zapVersion": "2.17.0",
+    "mode": {
+      "pr": {
+        "maxDurationMinutes": 10,
+        "threadPerHost": 4
+      },
+      "nightly": {
+        "maxDurationMinutes": 20,
+        "threadPerHost": 4
+      }
+    },
+    "requestSeeds": [
+      "/petclinic/",
+      "/petclinic/api/owners",
+      "/petclinic/api/owners/1",
+      "/petclinic/api/owners/1/pets/1",
+      "/petclinic/api/owners?lastName=Davis"
+    ]
+  },
+  "reporting": {
+    "failOnMissingSummary": true,
+    "requireApiSignal": true
+  }
+}
