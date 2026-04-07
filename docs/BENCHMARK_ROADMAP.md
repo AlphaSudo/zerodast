@@ -29,9 +29,10 @@ We are optimizing for honest proof, low-noise adaptation, and reusable engineeri
   - current verdict: T3 improved API reach over T1/T2, but only modestly
 - Repo 2: `AlphaSudo/EventDebug`
   - frozen SHA: `090e249dbbb6d63f8a6d28e8c9bfe3e105b7def6`
-  - T1: not started
-  - T2: not started
-  - T3: not started
+  - T1: complete
+  - T2: complete
+  - T3: complete
+  - current verdict: T3 improved runtime quality and isolation, but not API-side findings
 
 ## Guiding Principles
 
@@ -64,9 +65,9 @@ We are optimizing for honest proof, low-noise adaptation, and reusable engineeri
 - measures whether ZeroDAST materially improves reach and usefulness
 
 ### T4
-- optional extended/full-framework port
-- only justified after T1-T3 comparison on both real repositories
-- may include full GitHub workflow separation, artifact handoff, auth/bootstrap, and repo-specific higher-order features
+- first full CI-backed real-repo ZeroDAST demonstration
+- justified now that T1-T3 are complete on both benchmark repos
+- expected to include trusted/untrusted workflow separation, artifact handling, isolated runtime orchestration, and public-friendly reporting semantics
 
 ## Phase Plan
 
@@ -77,132 +78,89 @@ Use Petclinic as the completed first benchmark repository and reference point fo
 
 ### Status
 - complete through T3
-
-### Remaining work in this phase
-1. Run one repeat T3 execution for stability confirmation.
-2. Decide whether to perform a light T3 refinement pass on Petclinic.
-3. Freeze the Petclinic result as the comparison baseline before moving into interpretation drift.
-
-### Decision Gate
-- If a repeat T3 run is materially unstable, fix T3 before comparing EventDebug.
-- If repeat T3 is stable, do not keep polishing Petclinic indefinitely.
+- ready to serve as the first T4 candidate
 
 ## Phase 2: Profile EventDebug
 
 ### Goal
 Turn EventDebug from a frozen target into a profiled benchmark target with real setup assumptions.
 
-### Deliverables
-- stack summary
-- API surface summary
-- auth model summary
-- runtime prerequisites
-- benchmark execution assumptions added to `docs/benchmarks/eventdebug.md`
-
-### Exit Criteria
-- We know how to boot it.
-- We know where the HTTP API lives.
-- We know whether auth is required.
-- We know whether secrets or local services are required.
+### Status
+- complete
 
 ## Phase 3: Execute EventDebug T1
 
 ### Goal
 Produce the plain-scanner baseline on EventDebug.
 
-### Deliverables
-- benchmark notes for T1
-- raw timing
-- route reach notes
-- first report artifacts
+### Status
+- complete
 
-### What We Are Measuring
-- fastest time to first report
-- whether scanner reaches documented routes at all
-- whether auth is a blocker
-- whether any immediate compatibility problems appear
-
-### Exit Criteria
-- T1 either completes with usable artifacts or fails with a clearly documented blocker
+### Outcome
+- operationally successful
+- API-shallow
+- required network-side access and sanitized OpenAPI
 
 ## Phase 4: Execute EventDebug T2
 
 ### Goal
 Build the lightweight harness version for EventDebug.
 
-### Deliverables
-- contained T2 runner under a benchmark folder
-- structured artifacts and summary output
-- updated `docs/benchmarks/eventdebug.md`
+### Status
+- complete
 
-### What We Are Measuring
-- engineering effort to move from manual T1 to repeatable low-overhead automation
-- artifact quality
-- whether T2 improves usability even if scanner depth does not improve yet
-
-### Exit Criteria
-- single-command T2 harness exists and produces summary + report artifacts
+### Outcome
+- operationally cleaner than T1
+- no finding-lift improvement over T1
 
 ## Phase 5: Execute EventDebug T3
 
 ### Goal
 Build the ZeroDAST-style isolated adaptation for EventDebug.
 
-### Deliverables
-- isolated runtime harness
-- target-aware route/auth/bootstrap handling as needed
-- structured T3 artifacts
-- updated benchmark result sheet
+### Status
+- complete
 
-### What We Are Measuring
-- whether ZeroDAST materially improves authenticated coverage, route reach, or output quality on EventDebug
-- how much target-specific adaptation is needed
-- whether EventDebug or Petclinic is the stronger benchmark demonstration target
-
-### Exit Criteria
-- T3 either shows measurable value over T1/T2 or we document precisely why it does not
+### Outcome
+- strongest runtime/isolation result on this repo
+- no API-side finding lift over T1/T2
 
 ## Phase 6: Compare Petclinic and EventDebug
 
 ### Goal
 Produce the first meaningful cross-repository interpretation.
 
-### Deliverables
-- side-by-side comparison section or dedicated comparison doc
-- adaptation effort comparison
-- runtime comparison
-- reach/output comparison
-- clear statement of where ZeroDAST helped and where it did not
+### Status
+- complete
 
-### Questions To Answer
-- Did T3 beat T1/T2 on both repositories?
-- Did the improvement show up in reach, output quality, or both?
-- Which repo better demonstrates the value of ZeroDAST?
-- Which repo exposed the hardest friction point?
+### Deliverable
+- [BENCHMARK_COMPARISON.md](C:/Java%20Developer/DAST/docs/BENCHMARK_COMPARISON.md)
 
-### Exit Criteria
-- We can explain the cross-repo story in a disciplined public way
+### Conclusion
+- Petclinic is the clearer value-demonstration repo.
+- EventDebug is the stronger stress-test repo.
+- T4 should be a full CI-backed demonstration on Petclinic first.
 
 ## Phase 7: Choose the CI Demonstration Target
 
 ### Goal
 Pick one repository for the first full CI demonstration.
 
-### Recommendation
-- choose the repository where T3 most clearly demonstrates value with acceptable setup effort
+### Status
+- recommended target selected: `spring-petclinic/spring-petclinic-rest`
 
 ### Why only one first
 - keeps engineering cost contained
 - avoids duplicating GitHub-specific plumbing before we know where it helps most
 - keeps the benchmark story clean
 
-### Exit Criteria
-- one repo is selected as the first CI proof target
-
 ## Phase 8: Full CI Demonstration on the Chosen Repo
 
 ### Goal
 Move one real repo beyond local T3 into an actual GitHub workflow proof path.
+
+### Recommended target
+- `spring-petclinic/spring-petclinic-rest`
 
 ### Scope
 Potential features, depending on repo needs:
@@ -213,8 +171,6 @@ Potential features, depending on repo needs:
 - report artifact upload
 - PR/nightly summary behavior
 - findings visibility without misleading hard-failure semantics
-
-### This phase is the first place where we may benchmark something close to the full ZeroDAST framework port.
 
 ### Exit Criteria
 - one real repository has a stable CI-backed ZeroDAST demonstration path
@@ -230,8 +186,9 @@ Only do this if at least one of the following is true:
 - the second repo has materially different auth/runtime characteristics that matter to the product story
 - we need broader evidence before public messaging
 
-### Exit Criteria
-- either explicitly skip T4 for now or define a second full-framework target
+### Current recommendation
+- defer full CI-backed EventDebug work for now
+- keep EventDebug as the stress-test benchmark target
 
 ## Phase 10: Publish the Initial Two-Repo Benchmark Set
 
@@ -248,6 +205,7 @@ Produce the public evidence package.
 - ZeroDAST works beyond its self-validating demo
 - ZeroDAST can be adapted to at least two real repositories
 - ZeroDAST-style adaptation can improve reach/usefulness over lighter tiers on real targets
+- the form of the improvement is target-dependent
 
 ### Claims This Stage Does Not Yet Support
 - universal ecosystem coverage
@@ -270,15 +228,12 @@ Earn stronger external claims over time.
 
 ## Immediate Next Steps
 
-1. Run one repeat Petclinic T3 stability check.
-2. Profile EventDebug and fill in its benchmark assumptions.
-3. Execute EventDebug T1.
-4. Execute EventDebug T2.
-5. Execute EventDebug T3.
-6. Compare Petclinic vs EventDebug.
-7. Choose one repo for the first full CI-backed ZeroDAST demonstration.
+1. Use [BENCHMARK_COMPARISON.md](C:/Java%20Developer/DAST/docs/BENCHMARK_COMPARISON.md) as the reference interpretation.
+2. Start `T4` on `spring-petclinic/spring-petclinic-rest` as the first full CI-backed ZeroDAST demonstration.
+3. Keep EventDebug frozen as the stress-test benchmark until we need a second CI-backed proof or better real-repo success metrics.
+4. After T4 is stable, update README/public messaging to match the benchmark evidence.
 
-## What “Done” Means For The Initial Benchmark
+## What "Done" Means For The Initial Benchmark
 
 The initial benchmark is done when all of the following are true:
 - Track A remains green and reproducible.
