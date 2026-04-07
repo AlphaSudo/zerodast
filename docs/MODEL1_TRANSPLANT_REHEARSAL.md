@@ -4,12 +4,9 @@
 
 This note records the first controlled install/remove rehearsal for the model 1 in-repo prototype.
 
-The goal was not to prove scanning depth yet.
-The goal was to prove that the prototype install shape is:
+The goal started as install-shape proof, then expanded to a second question:
 
-- concentrated
-- understandable
-- reversible
+> Can the same clean in-repo prototype also execute a real scan end to end on a controlled target repo?
 
 ## Target
 
@@ -70,6 +67,38 @@ After uninstall, the target repo returned to showing only its pre-existing local
 
 That is the key reversibility proof for the first model 1 prototype.
 
+## Real Scan Result
+
+After the runner was upgraded from install-shape proof to real scan behavior, the same controlled target copy completed a real in-repo scan run.
+
+Observed result from `zerodast/reports/`:
+
+- `specMode`: `raw`
+- `zapImage`: `zaproxy/zap-stable:2.17.0`
+- `zapExitCode`: `0`
+- `coldRunSeconds`: `453`
+- `seededRequestCount`: `15`
+- `API alert URI count`: `1`
+
+Observed API-side alert URI:
+
+- `http://zerodast-target:9966/petclinic/api/owners/1/pets`
+
+This means the model 1 prototype now proves both:
+
+- clean install and clean removal
+- real in-repo scan execution with preserved API-side signal on the controlled Petclinic target
+
+## Engineering Lessons From The Rehearsal
+
+The rehearsal exposed several adoption-relevant implementation details:
+
+- target working directories must resolve from the target repo root, not from inside `zerodast/`
+- Maven build artifacts need pattern-based lookup because versioned jar names are normal
+- Git Bash + Windows + `podman.exe` requires explicit path-conversion handling for bind mounts
+
+These are exactly the kinds of issues a model 1 prototype must absorb before it is ready for broader adoption.
+
 ## What This Proves
 
 This rehearsal supports the model 1 claim that:
@@ -77,19 +106,20 @@ This rehearsal supports the model 1 claim that:
 - ZeroDAST can be transplanted into a target repo without scattering files
 - the install shape is explainable in one short paragraph
 - removal is obvious and scriptable
+- the prototype can execute a real in-repo scan on a controlled target repo
+- API-side signal can survive the model 2 to model 1 transition
 
 It does **not** yet prove:
 
-- full in-repo scanning sophistication
-- target-agnostic config portability
 - adoption readiness for arbitrary repositories
+- broad target-agnostic config portability
+- acceptable default runtime ergonomics for all maintainer workflows
 
 ## Recommendation
 
 The next model 1 step should be:
 
 1. keep the same two-zone install rule
-2. upgrade the prototype runner from install-shape proof to real scan behavior
-3. repeat the transplant rehearsal after the runner grows more capable
-
-The install footprint should stay small even as the runner becomes more useful.
+2. tune PR-mode runtime and scan breadth so the in-repo experience is less heavy
+3. repeat the transplant rehearsal after runtime tuning
+4. only then consider transplanting model 1 into a less controlled target

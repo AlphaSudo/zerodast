@@ -1,23 +1,27 @@
 {
   "name": "zerodast-prototype",
   "target": {
-    "startupMode": "command",
-    "startupCommand": "./mvnw spring-boot:run",
+    "buildCommand": "./mvnw -q -DskipTests package",
+    "artifactPattern": "target/spring-petclinic-rest-*.jar",
     "workingDirectory": ".",
-    "baseUrl": "http://127.0.0.1:9966",
+    "port": 9966,
     "basePath": "/petclinic",
     "healthPath": "/petclinic/actuator/health",
-    "openApiPath": "/petclinic/v3/api-docs"
+    "openApiPath": "/petclinic/v3/api-docs",
+    "appImage": "eclipse-temurin:17-jre-jammy"
   },
   "scan": {
     "zapVersion": "2.17.0",
+    "helperImage": "node:20-alpine",
     "mode": {
       "pr": {
         "maxDurationMinutes": 10,
+        "spiderMinutes": 2,
         "threadPerHost": 4
       },
       "nightly": {
         "maxDurationMinutes": 20,
+        "spiderMinutes": 2,
         "threadPerHost": 4
       }
     },
@@ -30,7 +34,6 @@
     ]
   },
   "reporting": {
-    "failOnMissingSummary": true,
     "requireApiSignal": true
   }
 }

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 const fs = require('fs');
 
-const [configPath, mode] = process.argv.slice(2);
-if (!configPath || !mode) {
-  console.error('Usage: prepare-openapi.js <configPath> <mode>');
+const [configPath, mode, rawSpecPath, outSpecPath, outRequestsPath] = process.argv.slice(2);
+if (!configPath || !mode || !rawSpecPath || !outSpecPath || !outRequestsPath) {
+  console.error('Usage: prepare-openapi.js <configPath> <mode> <rawSpec> <outSpec> <outRequests>');
   process.exit(1);
 }
 
@@ -14,11 +14,54 @@ if (!modeConfig) {
   process.exit(1);
 }
 
+const port = Number(config.target?.port || 80);
+const scannerBaseRoot = `http://zerodast-target:${port}`;
+const scannerBasePath = config.target?.basePath || '';
+const rawSpec = JSON.parse(fs.readFileSync(rawSpecPath, 'utf8'));
+
+if (rawSpec.info && rawSpec.info.license && typeof rawSpec.info.license === 'object') {
+  delete rawSpec.info.license.extensions;
+}
+
+rawSpec.openapi = '3.0.3';
+rawSpec.servers = [{ url: scannerBasePath, description: 'ZeroDAST model-1 target' }];
+
+const sampleValues = {
+  ownerId: '1',
+  petId: '1',
+  vetId: '1',
+  specialtyId: '1',
+  petTypeId: '1',
+  visitId: '1'
+};
+
+const requestUrls = new Set();
+for (const [path, operations] of Object.entries(rawSpec.paths || {})) {
+  if (!operations.get) continue;
+  let resolvedPath = path;
+  for (const match of path.matchAll(/\{([^}]+)\}/g)) {
+    const paramName = match[1];
+    resolvedPath = resolvedPath.replace(`{${paramName}}`, sampleValues[paramName] || '1');
+  }
+  requestUrls.add(`${scannerBaseRoot}${scannerBasePath}${resolvedPath}`);
+}
+
+for (const seed of config.scan?.requestSeeds || []) {
+  requestUrls.add(`${scannerBaseRoot}${seed}`);
+}
+
+fs.writeFileSync(outSpecPath, JSON.stringify(rawSpec));
+fs.writeFileSync(outRequestsPath, JSON.stringify(Array.from(requestUrls).sort(), null, 2));
+
 const output = {
   target: config.target,
   zapVersion: config.scan?.zapVersion,
+  helperImage: config.scan?.helperImage,
   mode,
   modeConfig,
+  scannerBaseRoot,
+  scannerBasePath,
+  scannerBaseUrl: `${scannerBaseRoot}${scannerBasePath}`,
   requestSeeds: config.scan?.requestSeeds || []
 };
 

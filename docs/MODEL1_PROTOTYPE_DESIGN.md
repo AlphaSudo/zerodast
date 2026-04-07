@@ -30,6 +30,7 @@ The model 1 prototype should prove all of the following:
 - the maintainer can understand where ZeroDAST starts and stops
 - the workflow remains useful without spraying files everywhere
 - ZeroDAST can be removed cleanly if the maintainer changes their mind
+- the repo-local runner can execute a real scan on a controlled target
 
 ## Non-Goals
 
@@ -95,7 +96,7 @@ It should contain:
 - templates
 - docs for maintainers
 
-If a maintainer asks “what did ZeroDAST add?”, the answer should mostly be:
+If a maintainer asks "what did ZeroDAST add?", the answer should mostly be:
 - `.github/workflows/...`
 - `zerodast/...`
 
@@ -169,9 +170,8 @@ The prototype should centralize target-specific settings in one file:
 - `zerodast/config.json`
 
 Expected fields:
-- app startup command or build artifact path
-- base URL / base path
-- OpenAPI path
+- build command and artifact lookup
+- base path and OpenAPI path
 - scan mode flags
 - request seeding values
 - report thresholds
@@ -199,6 +199,7 @@ The first model 1 prototype is successful if:
 - the prototype runs end-to-end on a controlled target repo
 - the maintainer-facing README in `zerodast/` makes ownership and assumptions clear
 - the uninstall path is obvious
+- API-side signal survives the in-repo transplant on the controlled target
 
 ## Failure Criteria
 
@@ -228,10 +229,11 @@ Why:
    - number of directories touched
    - whether removal is obvious
 5. Run the first in-repo proof.
-6. Write the maintainer installation/removal guide only after the prototype feels clean.
+6. Tune runtime and portability rough edges.
+7. Write the maintainer installation/removal guide only after the prototype feels clean.
 
 ## Recommendation
 
-The first model 1 prototype should be judged primarily on **install ergonomics**, not scan sophistication.
+The first model 1 prototype should still be judged primarily on **install ergonomics**, but it should now also preserve a minimal real scan result on the controlled target.
 
-If it is not clean to install, it is not ready to claim adoption-friendliness.
+If it is not clean to install, or if it loses the API-side signal entirely, it is not ready to claim adoption-friendliness.

@@ -23,6 +23,12 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
