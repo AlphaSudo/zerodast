@@ -115,6 +115,25 @@ That profile produced a better balance:
 
 This is the current best-known PR-mode tradeoff for the controlled Petclinic transplant.
 
+## Less-Controlled Target Confirmation
+
+After the controlled rehearsal, the same tuned model 1 profile was installed into the real local Petclinic benchmark clone on an isolated branch.
+
+That less-controlled target produced essentially the same result:
+
+- `specMode`: `raw`
+- `zapImage`: `zaproxy/zap-stable:2.17.0`
+- `zapExitCode`: `0`
+- `coldRunSeconds`: `354`
+- `seededRequestCount`: `15`
+- `API alert URI count`: `1`
+
+Observed API-side alert URI:
+
+- `http://zerodast-target:9966/petclinic/api/owners/1/pets`
+
+This matters because it shows the model 1 baseline did not only work in a throwaway copy. It held up on the real benchmark clone with the same tuned PR profile and nearly identical runtime.
+
 ## Engineering Lessons From The Rehearsal
 
 The rehearsal exposed several adoption-relevant implementation details:
@@ -136,6 +155,7 @@ This rehearsal supports the model 1 claim that:
 - the prototype can execute a real in-repo scan on a controlled target repo
 - API-side signal can survive the model 2 to model 1 transition
 - the PR profile can be tuned materially without collapsing all useful signal
+- the tuned profile holds up on a less-controlled real benchmark clone, not only a throwaway copy
 
 It does **not** yet prove:
 
