@@ -118,6 +118,7 @@ MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" run --rm --network "${NETWORK_NAME}" "${HELPE
 node "${ROOT_DIR}/prepare-openapi.js" "${CONFIG_PATH}" "${MODE}" "${RAW_SPEC}" "${SANITIZED_SPEC}" "${REQUESTS_JSON}" > "${PREPARED_CONFIG}"
 
 SCANNER_BASE_URL="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.scannerBaseUrl);" "${PREPARED_CONFIG}")"
+ENABLE_SPIDER="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.enableSpider !== false));" "${PREPARED_CONFIG}")"
 SPIDER_MINUTES="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.spiderMinutes || 2));" "${PREPARED_CONFIG}")"
 SCAN_MINUTES="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.maxDurationMinutes || 15));" "${PREPARED_CONFIG}")"
 THREAD_PER_HOST="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.threadPerHost || 4));" "${PREPARED_CONFIG}")"
@@ -148,7 +149,8 @@ jobs:
     requests:
 EOF
     node -e "const fs=require('fs'); const requests=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); for (const url of requests) { console.log('      - url: \"' + url + '\"'); console.log('        method: \"GET\"'); }" "${REQUESTS_JSON}"
-    cat <<EOF
+    if [[ "${ENABLE_SPIDER}" == "true" ]]; then
+      cat <<EOF
   - type: spider
     parameters:
       context: "zerodast-model1"
@@ -156,6 +158,9 @@ EOF
       maxDuration: ${SPIDER_MINUTES}
       maxDepth: 5
       maxChildren: 50
+EOF
+    fi
+    cat <<EOF
   - type: passiveScan-wait
     parameters:
       maxDuration: 2

@@ -15,12 +15,14 @@
     "helperImage": "node:20-alpine",
     "mode": {
       "pr": {
-        "maxDurationMinutes": 10,
-        "spiderMinutes": 2,
+        "maxDurationMinutes": 5,
+        "enableSpider": true,
+        "spiderMinutes": 1,
         "threadPerHost": 4
       },
       "nightly": {
         "maxDurationMinutes": 20,
+        "enableSpider": true,
         "spiderMinutes": 2,
         "threadPerHost": 4
       }
