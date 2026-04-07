@@ -15,11 +15,11 @@
 - Mock/seed assumptions: Repository ships with built-in sample data through its default H2 startup path
 
 ## Adaptation Summary
-- Files created: Temporary runner-side scratch files only in the ZeroDAST workspace during T1 (`tmp-petclinic/` raw and sanitized OpenAPI files plus a temporary automation YAML)
-- Files modified: Pending benchmark execution
-- Auth/bootstrap changes: Expected to be minimal in the first pass because the default path is unauthenticated; basic-auth variant can be benchmarked later as an extension scenario
-- Scan policy changes: T1 used a minimal Automation Framework plan with `/petclinic` base-path scoping, short spider/passive wait, and a bounded active scan
-- Any repo-specific compromises: Older cached ZAP `2.16.0` could not cleanly consume Petclinic's generated OpenAPI `3.1.0` document, so T1 required a runner-side sanitized copy of the spec instead of using the raw `/v3/api-docs` output directly
+- Files created: `benchmarks/petclinic/run-t2.ps1` plus a git-ignored `benchmarks/petclinic/out/` artifact folder for runner output
+- Files modified: No target-repository files modified; benchmark result sheet updated in ZeroDAST only
+- Auth/bootstrap changes: None in T1/T2 because the default path is unauthenticated; basic-auth variant remains a later extension scenario
+- Scan policy changes: T1 and T2 both used a minimal Automation Framework plan with `/petclinic` base-path scoping, short spider/passive wait, bounded active scan, and a runner-side OpenAPI compatibility shim for cached ZAP `2.16.0`
+- Any repo-specific compromises: Older cached ZAP `2.16.0` could not cleanly consume Petclinic's generated OpenAPI `3.1.0` document, so both T1 and T2 required a runner-side sanitized copy of the spec instead of using the raw `/v3/api-docs` output directly
 
 ## Execution Plan
 
@@ -71,23 +71,24 @@ Expected T3 focus:
 | Tier | Setup Time | Cold Run | Warm Run | Auth Coverage | Output Quality | Isolation Posture | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | T1 | Low | ~4m 07s ZAP run after app was already up | Pending | N/A (unauthenticated baseline) | Low to moderate; report generated but findings stayed on shell/UI paths rather than `/petclinic/api/*` | Low | Partial |
-| T2 | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+| T2 | Low | ~243s with structured artifacts and summary output | Pending | N/A (unauthenticated baseline) | Moderate operationally, still low semantically; summary/metrics/report were generated cleanly but API alert URI count remained `0` | Low to moderate | Partial |
 | T3 | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 | T4 | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 
 ## Findings Summary
-- High-level result: T1 is an operational success but a semantic partial. The target booted, docs were reachable, and ZAP generated a report, but the cached older scanner did not achieve useful API-centric coverage from the OpenAPI route.
+- High-level result: T1 and T2 both succeeded operationally. T2 clearly improved repeatability and artifact discipline, but neither tier achieved meaningful API-centric coverage with the cached old scanner.
 - Candidate findings of note:
   - `Content Security Policy (CSP) Header Not Set`
   - `Timestamp Disclosure - Unix`
   - `X-Content-Type-Options Header Missing`
   - `Information Disclosure - Suspicious Comments`
+  - `Modern Web Application`
   - `User Agent Fuzzer`
 - Confirmed findings (if any): None yet
 - Caveats:
   - The raw Petclinic OpenAPI document exposed a compatibility problem with ZAP `2.16.0` (`info.license.extensions` under OpenAPI `3.1.0`).
-  - A runner-side sanitized OpenAPI copy removed the importer failure, but the importer still added `0` URLs in T1.
-  - Alert instances in the generated report did not land on `/petclinic/api/*`, so T1 output should be treated as shallow coverage rather than meaningful REST API assessment.
+  - A runner-side sanitized OpenAPI copy removed the hard importer failure, but the importer still added `0` URLs in both T1 and T2.
+  - Alert instances in the generated reports did not land on `/petclinic/api/*`, so both tiers should be treated as shallow coverage rather than meaningful REST API assessment.
   - Real-repo findings are candidate findings until independently validated.
 
 ## Stability Notes
@@ -100,8 +101,9 @@ Expected T3 focus:
   - removed `info.license.extensions`
   - downgraded the declared `openapi` version string from `3.1.0` to `3.0.3`
   - reran the scan using the sanitized local spec copy while leaving the target repository untouched
+  - packaged the runner into a single T2 PowerShell harness that emits `zap-report.json`, `summary.md`, `metrics.json`, and `zap-run.log`
 
 ## Final Assessment
 - Suitable / Suitable with caveats / Not suitable: Suitable with caveats
-- Recommendation: Execute this repository first because it is the cleaner external adaptation target and gives us a strong Java/Spring data point with low setup friction
-- What this repo should teach us about ZeroDAST: How much real value ZeroDAST adds beyond plain scanner execution when the target is well documented but the scanner/version coupling still causes shallow coverage and OpenAPI import friction
+- Recommendation: Petclinic remains a strong external benchmark target because it is easy to boot and well documented, but it already demonstrates that plain old-scanner execution can look healthier than it really is. This makes it a good candidate for showing ZeroDAST's value at T3.
+- What this repo should teach us about ZeroDAST: How much real value ZeroDAST adds beyond plain scanner execution when the target is well documented but scanner/version coupling still causes shallow coverage and OpenAPI import friction
