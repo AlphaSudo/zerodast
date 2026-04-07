@@ -31,9 +31,11 @@ jobs:
           fetch-depth: 1
 
       - name: Prepare metadata artifact
+        env:
+          TARGET_SHA_INPUT: ${{ inputs.target_sha }}
         run: |
           mkdir -p artifacts
-          TARGET_SHA="${{ inputs.target_sha }}"
+          TARGET_SHA="$TARGET_SHA_INPUT"
           if [ -z "$TARGET_SHA" ]; then
             TARGET_SHA="155f89a08828386493c27b5584cd2a93d0dcfc39"
           fi
