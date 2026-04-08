@@ -34,6 +34,12 @@ We are optimizing for honest proof, low-noise adaptation, and reusable engineeri
   - T3: complete
   - current verdict: T3 improved runtime quality and isolation, but not API-side findings
 
+
+### Track C: Authenticated Public Repository Validation
+- Repo 3: `fastapi/full-stack-fastapi-template`
+  - frozen SHA: `bba8d07c0cb4ac0e38a99d1de38090048fab8dee`
+  - current role: first authenticated showcase candidate
+  - benchmark goal: prove ZeroDAST on a non-Java auth-protected target with documented Docker/OpenAPI/JWT flows
 ## Guiding Principles
 
 - Keep target repositories clean.
@@ -242,3 +248,4 @@ The initial benchmark is done when all of the following are true:
 - A cross-repo comparison exists.
 - At least one real repository has a credible CI-backed ZeroDAST demonstration path or we explicitly document why that step is deferred.
 - Public messaging is updated to match the real evidence and its limits.
+
