@@ -1,0 +1,55 @@
+name: Fullstack FastAPI T4 Metadata
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: Optional override for the FastAPI template commit SHA
+        required: false
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fullstack-fastapi-t4-*'
+      - 'benchmarks/fullstack-fastapi-template/**'
+      - 'docs/benchmarks/full-stack-fastapi-template.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fullstack-fastapi-t4-metadata-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare-metadata:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          fetch-depth: 1
+
+      - name: Prepare metadata artifact
+        env:
+          TARGET_SHA_INPUT: ${{ inputs.target_sha }}
+        run: |
+          mkdir -p artifacts
+          TARGET_SHA="$TARGET_SHA_INPUT"
+          if [ -z "$TARGET_SHA" ]; then
+            TARGET_SHA="bba8d07c0cb4ac0e38a99d1de38090048fab8dee"
+          fi
+          cat > artifacts/fullstack-fastapi-t4-input.json <<EOF
+          {
+            "repo": "https://github.com/fastapi/full-stack-fastapi-template.git",
+            "sha": "${TARGET_SHA}",
+            "zapVersion": "2.17.0"
+          }
+          EOF
+
+      - name: Upload metadata artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fullstack-fastapi-t4-input
+          path: artifacts/fullstack-fastapi-t4-input.json
+          retention-days: 1
