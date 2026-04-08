@@ -142,12 +142,25 @@ That target required a second runtime class, so the model 1 runner was extended 
 
 Observed result on EventDebug with compose mode:
 
-- `specMode`: `raw`
-- `zapImage`: `zaproxy/zap-stable:2.17.0`
-- `zapExitCode`: `2`
-- `coldRunSeconds`: `118`
-- `seededRequestCount`: `8`
-- `API alert URI count`: `0`
+- first compose-mode pass:
+  - `specMode`: `raw`
+  - `zapImage`: `zaproxy/zap-stable:2.17.0`
+  - `zapExitCode`: `2`
+  - `coldRunSeconds`: `118`
+  - `seededRequestCount`: `8`
+  - `API alert URI count`: `0`
+- route-exercise rerun after adding model 1 summary metrics:
+  - `specMode`: `raw`
+  - `zapImage`: `zaproxy/zap-stable:2.17.0`
+  - `zapExitCode`: `2`
+  - `coldRunSeconds`: `128`
+  - `seededRequestCount`: `8`
+  - `API alert URI count`: `0`
+  - `Observed requestor URL count`: `8`
+  - `Observed API requestor URL count`: `8`
+  - `Configured API seed URL count`: `8`
+  - `OpenAPI imported URL count`: `0`
+  - `Spider discovered URL count`: `14`
 
 What this means:
 
@@ -155,6 +168,7 @@ What this means:
   - single-artifact targets
   - compose-driven multi-service targets
 - EventDebug still did **not** produce API-side alert lift, which is consistent with the earlier external benchmark result
+- the route-exercise rerun proved the weakness is **not** simply that the API was never reached
 - the product limitation on EventDebug is currently detection/output quality, not in-repo installation or runtime orchestration
 
 ## Engineering Lessons From The Rehearsal
@@ -198,3 +212,4 @@ The next model 1 step should be:
 2. keep `artifact` and `compose` as the two supported prototype runtime modes
 3. treat the `5 minute active scan + 1 minute spider` profile as the provisional PR baseline for Petclinic-like targets
 4. improve EventDebug success criteria or request seeding before claiming broad harder-target effectiveness
+

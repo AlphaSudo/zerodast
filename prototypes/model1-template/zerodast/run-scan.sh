@@ -9,9 +9,17 @@ MODE="${ZERODAST_MODE:-pr}"
 DOCKER_CMD="${ZERODAST_DOCKER_CMD:-docker}"
 HELPER_SCRIPT='fetch(process.argv[1]).then(async r => { if (!r.ok) process.exit(1); process.stdout.write(await r.text()); }).catch((err) => { console.error(err.message); process.exit(1); });'
 DOCKER_REQUIRES_WINDOWS_PATHS="false"
+NODE_REQUIRES_WINDOWS_PATHS="false"
 
 if [[ "${DOCKER_CMD}" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
   DOCKER_REQUIRES_WINDOWS_PATHS="true"
+fi
+
+if command -v node >/dev/null 2>&1 && command -v cygpath >/dev/null 2>&1; then
+  NODE_EXEC_PATH="$(node -p "process.execPath" 2>/dev/null || true)"
+  if [[ "${NODE_EXEC_PATH}" == *.exe ]]; then
+    NODE_REQUIRES_WINDOWS_PATHS="true"
+  fi
 fi
 
 mkdir -p "${REPORT_DIR}"
@@ -26,21 +34,47 @@ REPORT_PATH="${REPORT_DIR}/zap-report.json"
 LOG_PATH="${REPORT_DIR}/zap-run.log"
 METRICS_PATH="${REPORT_DIR}/metrics.json"
 SUMMARY_PATH="${REPORT_DIR}/summary.md"
+PREPARE_OPENAPI_SCRIPT="${ROOT_DIR}/prepare-openapi.js"
+VERIFY_REPORT_SCRIPT="${ROOT_DIR}/verify-report.js"
 
-TARGET_WORK_DIR="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.workingDirectory || '.');" "${CONFIG_PATH}")"
-TARGET_RUNTIME_MODE="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.runtimeMode || 'artifact');" "${CONFIG_PATH}")"
-TARGET_PORT="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.target.port || 80));" "${CONFIG_PATH}")"
-TARGET_HEALTH_PATH="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.healthPath || '/');" "${CONFIG_PATH}")"
-TARGET_OPENAPI_PATH="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.openApiPath || '/');" "${CONFIG_PATH}")"
-TARGET_BUILD_COMMAND="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.buildCommand || '');" "${CONFIG_PATH}")"
-TARGET_ARTIFACT_PATTERN="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.artifactPattern || '');" "${CONFIG_PATH}")"
-APP_IMAGE="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.appImage || 'eclipse-temurin:17-jre-jammy');" "${CONFIG_PATH}")"
-COMPOSE_UP_COMMAND="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.upCommand || '');" "${CONFIG_PATH}")"
-COMPOSE_DOWN_COMMAND="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.downCommand || '');" "${CONFIG_PATH}")"
-COMPOSE_NETWORK_NAME="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.networkName || '');" "${CONFIG_PATH}")"
-COMPOSE_APP_HOST="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.appHost || '');" "${CONFIG_PATH}")"
-ZAP_VERSION="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.scan?.zapVersion || '2.17.0');" "${CONFIG_PATH}")"
-HELPER_IMAGE="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.scan?.helperImage || 'node:20-alpine');" "${CONFIG_PATH}")"
+CONFIG_PATH_NODE="${CONFIG_PATH}"
+PREPARED_CONFIG_NODE="${PREPARED_CONFIG}"
+RAW_SPEC_NODE="${RAW_SPEC}"
+SANITIZED_SPEC_NODE="${SANITIZED_SPEC}"
+REQUESTS_JSON_NODE="${REQUESTS_JSON}"
+REPORT_PATH_NODE="${REPORT_PATH}"
+LOG_PATH_NODE="${LOG_PATH}"
+METRICS_PATH_NODE="${METRICS_PATH}"
+PREPARE_OPENAPI_SCRIPT_NODE="${PREPARE_OPENAPI_SCRIPT}"
+VERIFY_REPORT_SCRIPT_NODE="${VERIFY_REPORT_SCRIPT}"
+
+if [[ "${NODE_REQUIRES_WINDOWS_PATHS}" == "true" ]]; then
+  CONFIG_PATH_NODE="$(cygpath -w "${CONFIG_PATH}")"
+  PREPARED_CONFIG_NODE="$(cygpath -w "${PREPARED_CONFIG}")"
+  RAW_SPEC_NODE="$(cygpath -w "${RAW_SPEC}")"
+  SANITIZED_SPEC_NODE="$(cygpath -w "${SANITIZED_SPEC}")"
+  REQUESTS_JSON_NODE="$(cygpath -w "${REQUESTS_JSON}")"
+  REPORT_PATH_NODE="$(cygpath -w "${REPORT_PATH}")"
+  LOG_PATH_NODE="$(cygpath -w "${LOG_PATH}")"
+  METRICS_PATH_NODE="$(cygpath -w "${METRICS_PATH}")"
+  PREPARE_OPENAPI_SCRIPT_NODE="$(cygpath -w "${PREPARE_OPENAPI_SCRIPT}")"
+  VERIFY_REPORT_SCRIPT_NODE="$(cygpath -w "${VERIFY_REPORT_SCRIPT}")"
+fi
+
+TARGET_WORK_DIR="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.workingDirectory || '.');" "${CONFIG_PATH_NODE}")"
+TARGET_RUNTIME_MODE="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.runtimeMode || 'artifact');" "${CONFIG_PATH_NODE}")"
+TARGET_PORT="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.target.port || 80));" "${CONFIG_PATH_NODE}")"
+TARGET_HEALTH_PATH="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.healthPath || '/');" "${CONFIG_PATH_NODE}")"
+TARGET_OPENAPI_PATH="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.openApiPath || '/');" "${CONFIG_PATH_NODE}")"
+TARGET_BUILD_COMMAND="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.buildCommand || '');" "${CONFIG_PATH_NODE}")"
+TARGET_ARTIFACT_PATTERN="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.artifactPattern || '');" "${CONFIG_PATH_NODE}")"
+APP_IMAGE="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.appImage || 'eclipse-temurin:17-jre-jammy');" "${CONFIG_PATH_NODE}")"
+COMPOSE_UP_COMMAND="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.upCommand || '');" "${CONFIG_PATH_NODE}")"
+COMPOSE_DOWN_COMMAND="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.downCommand || '');" "${CONFIG_PATH_NODE}")"
+COMPOSE_NETWORK_NAME="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.networkName || '');" "${CONFIG_PATH_NODE}")"
+COMPOSE_APP_HOST="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.appHost || '');" "${CONFIG_PATH_NODE}")"
+ZAP_VERSION="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.scan?.zapVersion || '2.17.0');" "${CONFIG_PATH_NODE}")"
+HELPER_IMAGE="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.scan?.helperImage || 'node:20-alpine');" "${CONFIG_PATH_NODE}")"
 
 TARGET_DIR="$(cd "${REPO_ROOT}/${TARGET_WORK_DIR}" && pwd)"
 APP_CONTAINER="zerodast-target"
@@ -153,13 +187,13 @@ fi
 
 MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e "${HELPER_SCRIPT}" "${SCANNER_BASE_ROOT}${TARGET_OPENAPI_PATH}" > "${RAW_SPEC}"
 
-node "${ROOT_DIR}/prepare-openapi.js" "${CONFIG_PATH}" "${MODE}" "${RAW_SPEC}" "${SANITIZED_SPEC}" "${REQUESTS_JSON}" > "${PREPARED_CONFIG}"
+node "${PREPARE_OPENAPI_SCRIPT_NODE}" "${CONFIG_PATH_NODE}" "${MODE}" "${RAW_SPEC_NODE}" "${SANITIZED_SPEC_NODE}" "${REQUESTS_JSON_NODE}" > "${PREPARED_CONFIG}"
 
-SCANNER_BASE_URL="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.scannerBaseUrl);" "${PREPARED_CONFIG}")"
-ENABLE_SPIDER="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.enableSpider !== false));" "${PREPARED_CONFIG}")"
-SPIDER_MINUTES="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.spiderMinutes || 2));" "${PREPARED_CONFIG}")"
-SCAN_MINUTES="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.maxDurationMinutes || 15));" "${PREPARED_CONFIG}")"
-THREAD_PER_HOST="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.threadPerHost || 4));" "${PREPARED_CONFIG}")"
+SCANNER_BASE_URL="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.scannerBaseUrl);" "${PREPARED_CONFIG_NODE}")"
+ENABLE_SPIDER="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.enableSpider !== false));" "${PREPARED_CONFIG_NODE}")"
+SPIDER_MINUTES="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.spiderMinutes || 2));" "${PREPARED_CONFIG_NODE}")"
+SCAN_MINUTES="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.maxDurationMinutes || 15));" "${PREPARED_CONFIG_NODE}")"
+THREAD_PER_HOST="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.threadPerHost || 4));" "${PREPARED_CONFIG_NODE}")"
 ZAP_IMAGE="zaproxy/zap-stable:${ZAP_VERSION}"
 SPEC_MODE="raw"
 
@@ -186,7 +220,7 @@ jobs:
   - type: requestor
     requests:
 EOF
-    node -e "const fs=require('fs'); const requests=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); for (const url of requests) { console.log('      - url: \"' + url + '\"'); console.log('        method: \"GET\"'); }" "${REQUESTS_JSON}"
+    node -e "const fs=require('fs'); const requests=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); for (const url of requests) { console.log('      - url: \"' + url + '\"'); console.log('        method: \"GET\"'); }" "${REQUESTS_JSON_NODE}"
     if [[ "${ENABLE_SPIDER}" == "true" ]]; then
       cat <<EOF
   - type: spider
@@ -253,7 +287,7 @@ if [[ ! -f "${REPORT_PATH}" ]]; then
   exit 1
 fi
 
-seeded_count=$(node -e "const fs=require('fs'); console.log(JSON.parse(fs.readFileSync(process.argv[1],'utf8')).length);" "${REQUESTS_JSON}")
+seeded_count=$(node -e "const fs=require('fs'); console.log(JSON.parse(fs.readFileSync(process.argv[1],'utf8')).length);" "${REQUESTS_JSON_NODE}")
 cold_run_seconds="${SECONDS}"
 cat > "${METRICS_PATH}" <<EOF
 {
@@ -265,5 +299,5 @@ cat > "${METRICS_PATH}" <<EOF
 }
 EOF
 
-node "${ROOT_DIR}/verify-report.js" "${REPORT_PATH}" "${METRICS_PATH}" "${PREPARED_CONFIG}" "${LOG_PATH}" "${REQUESTS_JSON}" | tee "${SUMMARY_PATH}"
+node "${VERIFY_REPORT_SCRIPT_NODE}" "${REPORT_PATH_NODE}" "${METRICS_PATH_NODE}" "${PREPARED_CONFIG_NODE}" "${LOG_PATH_NODE}" "${REQUESTS_JSON_NODE}" | tee "${SUMMARY_PATH}"
 

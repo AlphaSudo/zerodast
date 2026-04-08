@@ -93,6 +93,39 @@ The next EventDebug pass should answer these questions in order:
 3. If no, can richer seeding or scope controls materially improve route exercise?
 4. If route exercise improves but alerts still do not, is EventDebug better treated as an operational benchmark than a finding-lift benchmark?
 
+
+## Experiment 1 Outcome
+
+Experiment 1 is now complete for the current model 1 EventDebug pass.
+
+Observed rerun result:
+
+- `specMode`: `raw`
+- `zapImage`: `zaproxy/zap-stable:2.17.0`
+- `zapExitCode`: `2`
+- `coldRunSeconds`: `128`
+- `seededRequestCount`: `8`
+- `API alert URI count`: `0`
+- `Observed requestor URL count`: `8`
+- `Observed API requestor URL count`: `8`
+- `Configured API seed URL count`: `8`
+- `OpenAPI imported URL count`: `0`
+- `Spider discovered URL count`: `14`
+
+Observed conclusion:
+
+- this is **not** a "no API exercise" case
+- all configured API seed URLs were observed by the requestor phase
+- the current weakness is therefore downstream of basic route exercise
+
+This narrows the problem materially.
+The next investigation should assume:
+
+- runtime boot works
+- route exercise exists
+- alert generation remains weak
+
+That makes `H2`, `H3`, and `H4` more likely than a simple "the API was never reached" explanation.
 ## Proposed Experiments
 
 These should be small and isolated.
@@ -221,3 +254,4 @@ That is the smallest serious step that can tell us whether the weakness is mostl
 - target nature
 - metric choice
 - or adaptation depth
+
