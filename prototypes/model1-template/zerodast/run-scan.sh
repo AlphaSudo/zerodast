@@ -265,4 +265,5 @@ cat > "${METRICS_PATH}" <<EOF
 }
 EOF
 
-node "${ROOT_DIR}/verify-report.js" "${REPORT_PATH}" "${METRICS_PATH}" "${PREPARED_CONFIG}" | tee "${SUMMARY_PATH}"
+node "${ROOT_DIR}/verify-report.js" "${REPORT_PATH}" "${METRICS_PATH}" "${PREPARED_CONFIG}" "${LOG_PATH}" "${REQUESTS_JSON}" | tee "${SUMMARY_PATH}"
+

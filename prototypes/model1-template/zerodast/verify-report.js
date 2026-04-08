@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 const fs = require('fs');
 
-const [reportPath, metricsPath, preparedConfigPath] = process.argv.slice(2);
+const [reportPath, metricsPath, preparedConfigPath, logPath, requestsPath] = process.argv.slice(2);
 if (!reportPath || !metricsPath || !preparedConfigPath) {
-  console.error('Usage: verify-report.js <reportPath> <metricsPath> <preparedConfigPath>');
+  console.error('Usage: verify-report.js <reportPath> <metricsPath> <preparedConfigPath> [logPath] [requestsPath]');
   process.exit(1);
 }
 if (!fs.existsSync(reportPath)) {
@@ -34,6 +34,35 @@ for (const site of report.site || []) {
   }
 }
 
+const configuredSeedUrls = new Set();
+if (requestsPath && fs.existsSync(requestsPath)) {
+  for (const url of JSON.parse(fs.readFileSync(requestsPath, 'utf8'))) {
+    configuredSeedUrls.add(String(url));
+  }
+}
+
+const observedRequestorUrls = new Set();
+let spiderFoundCount = null;
+let openApiAddedCount = null;
+if (logPath && fs.existsSync(logPath)) {
+  const log = fs.readFileSync(logPath, 'utf8');
+  for (const match of log.matchAll(/^Job requestor requesting URL (.+)$/gm)) {
+    observedRequestorUrls.add(match[1].trim());
+  }
+  const spiderMatch = log.match(/Job spider found (\d+) URLs/);
+  if (spiderMatch) spiderFoundCount = Number(spiderMatch[1]);
+  const openApiMatch = log.match(/Job openapi added (\d+) URLs/);
+  if (openApiMatch) openApiAddedCount = Number(openApiMatch[1]);
+}
+
+const observedApiRequestorUrls = new Set(
+  Array.from(observedRequestorUrls).filter((uri) => uri.startsWith(apiPrefix))
+);
+const configuredSeedApiUrls = new Set(
+  Array.from(configuredSeedUrls).filter((uri) => uri.startsWith(apiPrefix))
+);
+const missingSeedUrls = Array.from(configuredSeedUrls).filter((uri) => !observedRequestorUrls.has(uri));
+
 const lines = [
   '# ZeroDAST Model 1 Summary',
   '',
@@ -43,6 +72,11 @@ const lines = [
   `- Cold run duration: ${metrics.coldRunSeconds ?? 'unknown'}s`,
   `- Seeded request count: ${metrics.seededRequestCount ?? 'unknown'}`,
   `- API alert URI count: ${apiUris.size}`,
+  `- Observed requestor URL count: ${observedRequestorUrls.size}`,
+  `- Observed API requestor URL count: ${observedApiRequestorUrls.size}`,
+  `- Configured API seed URL count: ${configuredSeedApiUrls.size}`,
+  `- OpenAPI imported URL count: ${openApiAddedCount ?? 'unknown'}`,
+  `- Spider discovered URL count: ${spiderFoundCount ?? 'unknown'}`,
   '',
   '| Risk | Count |',
   '| --- | ---: |',
@@ -52,6 +86,20 @@ const lines = [
   `| Low | ${riskCounts.low} |`,
   `| Informational | ${riskCounts.informational} |`
 ];
+
+if (configuredSeedUrls.size > 0) {
+  lines.push('', '## Route Exercise', '');
+  lines.push(`- Configured seed URLs observed by requestor: ${configuredSeedUrls.size - missingSeedUrls.length}/${configuredSeedUrls.size}`);
+  if (missingSeedUrls.length > 0) {
+    lines.push('', '### Seed URLs not observed in requestor logs', '');
+    for (const uri of missingSeedUrls.sort()) lines.push(`- ${uri}`);
+  }
+}
+
+if (observedApiRequestorUrls.size > 0) {
+  lines.push('', '## Observed API Requestor URLs', '');
+  for (const uri of Array.from(observedApiRequestorUrls).sort()) lines.push(`- ${uri}`);
+}
 
 if (apiUris.size > 0) {
   lines.push('', '## API URIs with Alert Instances', '');
