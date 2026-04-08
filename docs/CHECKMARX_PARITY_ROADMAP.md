@@ -38,7 +38,7 @@ The biggest current gaps are:
 - admin/role-aware scan coverage
 - richer auth handling beyond simple seeded token flows
 - better API breadth and discovery
-- stronger result-management and operational control-plane features
+- stronger environment, result-management, and operational control-plane features
 
 ## Time Budget Constraint
 
@@ -80,6 +80,7 @@ Turn ZeroDAST from "authenticated user coverage" into "role-aware authenticated 
 ### What this adds
 - closes the biggest credibility gap in the current CI DAST model
 - moves ZeroDAST much closer to enterprise-style authenticated scanning
+- makes the repo materially more credible against role-aware enterprise DAST expectations
 
 ### Time estimate
 - `2-4 weeks`
@@ -152,6 +153,7 @@ Expand beyond simple seeded bearer-token login.
 - refresh-token/session-refresh handling
 - target-specific auth profiles
 - better protected-route validation before scan launch
+- explicit separation between simple seeded auth and richer enterprise-style auth adapters
 
 ### What this adds
 - support for many more real public repos
@@ -221,27 +223,31 @@ Reduce the current gap around API coverage breadth.
 - **Overall:** `+5-8%`
 - **Target niche:** `+6-10%`
 
-## Phase 5: Lightweight Control Plane and Operational Maturity
+## Phase 5: Lightweight Environment Model and Control Plane Maturity
 
 ### Goal
-Approach enterprise usability without becoming enterprise-bloated.
+Approach enterprise usability without becoming enterprise-bloated, especially around environment management, triage, and operator workflow.
 
 ### What to build
+- lightweight environment model for onboarded targets
 - better suppression and baseline management
 - cleaner diff-aware result comparison
 - richer issue/comment/report policies
 - simple repo-fleet tracking for multiple onboarded targets
+- explicit result-state / triage workflow model
 - remediation + retest workflow guidance
 - operational reliability tracking
 
 ### What this adds
 - stronger day-2 usability
 - a more serious product surface for maintainers and teams
+- closer alignment with the environment-centric and triage-centric shape visible in enterprise DAST products
 
 ### What it still does not add
 - full ASPM parity
 - enterprise compliance mapping parity
 - full RBAC/governance platform parity
+- full enterprise organization model parity
 
 ### Time estimate
 - `4-8 weeks`
@@ -320,4 +326,5 @@ So the roadmap is:
 - actionable
 
 but not based on proprietary internal knowledge.
+
 
