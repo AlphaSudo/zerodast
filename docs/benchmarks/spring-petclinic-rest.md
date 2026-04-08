@@ -41,7 +41,7 @@
 | T2 | Low | ~243s with structured artifacts and summary output | Pending | N/A (unauthenticated baseline) | Moderate operationally, still low semantically; summary/metrics/report were generated cleanly but API alert URI count remained `0` | Low to moderate | Partial |
 | T3 | Moderate | ~400s with isolated app + scanner runtime and seeded API requests | Pending | N/A (unauthenticated baseline) | Moderate; API alert URI count improved from `0` to `1`, and API-seeded request coverage produced an additional API-side signal | Moderate to high | Partial but clearly better |
 | T4 | Moderate in CI | 145s initial run, 209s clean rerun | Pending | N/A (unauthenticated baseline) | Strongest so far; CI artifact package included raw/sanitized spec copies, generated request list, automation plan, report, metrics, and verification summary | High | Successful full CI-backed demonstration |
-| T5 | Low to moderate | Pending | Pending | N/A (unauthenticated baseline) | Pending; benchmark-only conventional baseline implemented as a target-repo-local GitHub Actions ZAP API scan workflow | Moderate | Implemented, run pending |
+| T5 | Low to moderate | Not captured in artifact bundle | Pending | N/A (unauthenticated baseline) | Conventional in-repo GitHub Actions baseline produced broad API-bearing output and standard ZAP HTML/JSON/Markdown reports, but with materially noisier findings than `T4` | Moderate | Successful conventional baseline |
 
 ## Findings Summary
 - High-level result:
@@ -50,6 +50,7 @@
   - T3 is the first local tier that improved actual API reach rather than just packaging.
   - T4 preserved that API-side signal inside a real CI-backed ZeroDAST workflow.
   - A second T4 rerun completed cleanly with `zapExitCode: 0` and no spider-root warning.
+  - T5 succeeded as a benchmark-only conventional in-repo baseline and produced much broader `/petclinic/api/*` alert-bearing URI coverage than `T4`, but with significantly noisier output.
 - Candidate findings of note across the tiers:
   - `Content Security Policy (CSP) Header Not Set`
   - `Missing Anti-clickjacking Header`
@@ -68,6 +69,32 @@
   - benchmark-only conventional baseline is implemented in a fresh Petclinic clone
   - baseline shape is a single in-repo workflow using the official ZAP API Scan action
   - local sanity validation passed for the repo's normal `./mvnw ... package -> java -jar target/*.jar` startup path and OpenAPI endpoint
+  - first GitHub fork run succeeded and produced:
+    - `petclinic-t5-zap-api-scan`
+    - `petclinic-t5-app-log`
+- T5 result evidence:
+  - report bundle contained `report_html.html`, `report_json.json`, and `report_md.md`
+  - summary counts:
+    - High: `0`
+    - Medium: `4`
+    - Low: `6`
+    - Informational: `8`
+  - API alert URI count observed from the JSON report: `43`
+  - broad API-bearing URIs included:
+    - `/petclinic/api/owners`
+    - `/petclinic/api/owners/10/pets`
+    - `/petclinic/api/pets/10`
+    - `/petclinic/api/pettypes/10`
+    - `/petclinic/api/specialties/10`
+    - `/petclinic/api/vets/10`
+    - `/petclinic/api/visits`
+  - notable candidate findings included:
+    - `Buffer Overflow`
+    - `Content Security Policy (CSP) Header Not Set`
+    - `Missing Anti-clickjacking Header`
+    - `Spring Actuator Information Leak`
+    - `Application Error Disclosure`
+    - `X-Content-Type-Options Header Missing`
 - T4 artifact evidence:
   - raw spec mode on ZAP `2.17.0`
   - initial cold run duration: `145s`
@@ -77,6 +104,7 @@
 - Caveats:
   - T3 improved API reach, but only modestly; this is evidence of value, not yet evidence of strong comprehensive API coverage.
   - Real-repo findings are candidate findings until independently validated.
+  - T5's higher API URI count does not automatically mean it is a better benchmark outcome than `T4`; much of the extra signal is tied to noisier active-attack behavior, large 4xx/5xx churn, and a conventional in-repo trust model.
 
 ## Stability Notes
 - Consecutive run behavior: One clean T4 rerun now exists in CI.
@@ -94,4 +122,4 @@
 ## Final Assessment
 - Suitable / Suitable with caveats / Not suitable: Suitable with caveats
 - Recommendation: Petclinic is now the strongest external benchmark target and the first successful full CI-backed ZeroDAST demonstration. It is the right repo to use when explaining the practical value of ZeroDAST beyond the self-validating demo.
-- What this repo should teach us about ZeroDAST: ZeroDAST can move from local benchmark harnesses into a real CI-backed external-repo demonstration while keeping target-repo noise low and preserving meaningful API-side signal.
+- What this repo should teach us about ZeroDAST: ZeroDAST can move from local benchmark harnesses into a real CI-backed external-repo demonstration while keeping target-repo noise low and preserving meaningful API-side signal. The new `T5` result makes the benchmark sharper: conventional in-repo DAST can generate broader raw API-bearing output, but `T4` achieves cleaner trust posture, richer benchmark artifacts, and lower repo coupling.
