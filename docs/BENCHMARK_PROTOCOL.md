@@ -70,7 +70,7 @@ Avoid repositories that are:
 
 ## Tier Definitions
 
-The four tiers must be run using the same target repository snapshot and documented setup assumptions.
+The five tiers must be run using the same target repository snapshot and documented setup assumptions.
 
 ### T1: Basic Scanner Only
 
@@ -98,7 +98,7 @@ Measures:
 - moderate repeatability
 - moderate safety posture
 
-### T3: ZeroDAST
+### T3: ZeroDAST-Style Local Adaptation
 
 Definition:
 - trusted/untrusted workflow separation
@@ -110,19 +110,36 @@ Definition:
 - canary or capability verification where applicable
 
 Measures:
-- strongest benchmarked posture in this repository
+- strongest local ZeroDAST posture in this repository
 - moderate/high engineering complexity with zero software licensing cost
 
-### T4: Heavy Custom Platform
+### T4: Full CI-Backed ZeroDAST
 
 Definition:
-- highly customized, repository-specific DAST platforming
-- extra orchestration, bespoke brokers, or organization-level controls
-- intentionally outside the baseline ZeroDAST scope
+- trusted/untrusted workflow separation
+- artifact handoff between workflow lanes
+- isolated runtime orchestration in CI
+- auth/bootstrap automation where needed
+- benchmark artifacts and maintainer-friendly reporting
 
 Measures:
-- upper bound reference for control and customization
-- highest engineering cost
+- strongest proven ZeroDAST posture
+- stronger proof than local tiers
+- higher engineering cost than T1-T3, but still zero direct tooling license cost
+
+### T5: Conventional Public-Repo DAST Baseline
+
+Definition:
+- the fair, competent normal way a serious engineer would add DAST to the target repo today without ZeroDAST
+- scanner/workflow logic lives in the target repository
+- no ZeroDAST-specific trusted orchestrator repo
+- may use the target repo's normal CI, conventional marketplace actions, or a mainstream enterprise-style pattern
+- must be implemented honestly, not as a strawman
+
+Measures:
+- setup burden in the repo maintainers' normal world
+- typical trust assumptions for in-repo/public-repo DAST
+- whether ZeroDAST is near-lossless in signal while reducing setup noise and operational overhead
 
 ## Benchmark Metrics
 
@@ -175,7 +192,7 @@ Ground truth exists only for Track A unless a real repository maintainer explici
 For Track B:
 - treat findings as candidate findings, not confirmed vulnerabilities
 - measure stability, reach, and usefulness
-- do not score “missed vulns” unless there is external evidence of a known issue
+- do not score "missed vulns" unless there is external evidence of a known issue
 - do not turn unverified alerts into marketing claims
 
 ## Execution Rules
@@ -183,7 +200,7 @@ For Track B:
 For each real repository:
 1. Freeze a target commit SHA.
 2. Record prerequisites and local run assumptions.
-3. Run T1 through T4 against the same snapshot where feasible.
+3. Run T1 through T5 against the same snapshot where feasible.
 4. Capture exact runtime logs, artifact outputs, and configuration deltas.
 5. Record failures honestly, including setup dead ends.
 6. Repeat the best-performing tier at least once to check reproducibility.

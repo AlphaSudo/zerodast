@@ -34,12 +34,12 @@ We are optimizing for honest proof, low-noise adaptation, and reusable engineeri
   - T3: complete
   - current verdict: T3 improved runtime quality and isolation, but not API-side findings
 
-
 ### Track C: Authenticated Public Repository Validation
 - Repo 3: `fastapi/full-stack-fastapi-template`
   - frozen SHA: `bba8d07c0cb4ac0e38a99d1de38090048fab8dee`
   - current role: first authenticated showcase candidate
   - benchmark goal: prove ZeroDAST on a non-Java auth-protected target with documented Docker/OpenAPI/JWT flows
+
 ## Guiding Principles
 
 - Keep target repositories clean.
@@ -64,7 +64,7 @@ We are optimizing for honest proof, low-noise adaptation, and reusable engineeri
 - measures low-overhead maintainable automation
 
 ### T3
-- ZeroDAST-style isolated adaptation
+- ZeroDAST-style isolated local adaptation
 - dedicated runtime isolation
 - repo-aware request seeding and route handling
 - contained artifacts
@@ -72,8 +72,14 @@ We are optimizing for honest proof, low-noise adaptation, and reusable engineeri
 
 ### T4
 - first full CI-backed real-repo ZeroDAST demonstration
-- justified now that T1-T3 are complete on both benchmark repos
+- justified now that T1-T3 are complete on benchmark repos
 - expected to include trusted/untrusted workflow separation, artifact handling, isolated runtime orchestration, and public-friendly reporting semantics
+
+### T5
+- fair conventional public-repo DAST baseline
+- scanner/workflows live in the target repo or follow the normal in-repo or enterprise-style pattern
+- used to test the actual product thesis:
+- whether ZeroDAST is near-lossless in signal while being easier to set up and lower-noise to maintain
 
 ## Phase Plan
 
@@ -153,63 +159,47 @@ Produce the first meaningful cross-repository interpretation.
 Pick one repository for the first full CI demonstration.
 
 ### Status
-- recommended target selected: `spring-petclinic/spring-petclinic-rest`
+- completed on `spring-petclinic/spring-petclinic-rest`
+- completed on `fastapi/full-stack-fastapi-template`
 
-### Why only one first
-- keeps engineering cost contained
-- avoids duplicating GitHub-specific plumbing before we know where it helps most
-- keeps the benchmark story clean
+### Why this mattered
+- it established the strongest ZeroDAST proof tier on both an unauthenticated Java target and an authenticated non-Java target
 
-## Phase 8: Full CI Demonstration on the Chosen Repo
+## Phase 8: Full CI Demonstration on Chosen Repos
 
 ### Goal
-Move one real repo beyond local T3 into an actual GitHub workflow proof path.
+Move real repos beyond local T3 into actual GitHub workflow proof paths.
 
-### Recommended target
-- `spring-petclinic/spring-petclinic-rest`
-
-### Scope
-Potential features, depending on repo needs:
-- trusted/untrusted workflow separation
-- artifact handoff between lanes
-- isolated app + scanner runtime
-- auth/bootstrap automation if needed
-- report artifact upload
-- PR/nightly summary behavior
-- findings visibility without misleading hard-failure semantics
+### Status
+- complete for Petclinic T4
+- complete for authenticated FastAPI T4
 
 ### Exit Criteria
-- one real repository has a stable CI-backed ZeroDAST demonstration path
+- at least one real repository has a stable CI-backed ZeroDAST demonstration path
 
-## Phase 9: Decide Whether We Need T4 / Full Framework Port on the Second Repo
+## Phase 9: Keep EventDebug as the Stress-Test Benchmark
 
 ### Goal
-Avoid accidental overengineering.
-
-### Decision Rule
-Only do this if at least one of the following is true:
-- the first CI-backed repo is not enough to demonstrate the value convincingly
-- the second repo has materially different auth/runtime characteristics that matter to the product story
-- we need broader evidence before public messaging
+Avoid accidental overengineering while preserving a hard target in the benchmark set.
 
 ### Current recommendation
 - defer full CI-backed EventDebug work for now
 - keep EventDebug as the stress-test benchmark target
 
-## Phase 10: Publish the Initial Two-Repo Benchmark Set
+## Phase 10: Publish the Initial External Benchmark Set
 
 ### Goal
 Produce the public evidence package.
 
 ### Deliverables
-- completed benchmark result sheets for both repos
+- completed benchmark result sheets for benchmark repos
 - side-by-side comparison summary
 - concise benchmark narrative in README or docs
 - explicit caveats on scope and validation limits
 
 ### Claims This Stage Supports
 - ZeroDAST works beyond its self-validating demo
-- ZeroDAST can be adapted to at least two real repositories
+- ZeroDAST can be adapted to multiple real repositories
 - ZeroDAST-style adaptation can improve reach/usefulness over lighter tiers on real targets
 - the form of the improvement is target-dependent
 
@@ -219,7 +209,25 @@ Produce the public evidence package.
 - fully validated accuracy across arbitrary repos
 - production readiness for all organizations
 
-## Phase 11: Expand Beyond the Initial Two Repos
+## Phase 11: Add the T5 Comparison Layer
+
+### Goal
+Make the benchmark answer “is ZeroDAST better than the normal way?” instead of only “does ZeroDAST work?”
+
+### First T5 candidates
+- `spring-petclinic/spring-petclinic-rest`
+- `fastapi/full-stack-fastapi-template`
+
+### Exit Criteria
+- a fair T5 baseline exists for at least one Java target and one authenticated non-Java target
+- T4 vs T5 comparison is documented with:
+  - setup time
+  - repo footprint
+  - trust posture
+  - runtime
+  - signal/output comparison
+
+## Phase 12: Expand Beyond the Initial Repo Set
 
 ### Goal
 Earn stronger external claims over time.
@@ -235,17 +243,17 @@ Earn stronger external claims over time.
 ## Immediate Next Steps
 
 1. Use [BENCHMARK_COMPARISON.md](C:/Java%20Developer/DAST/docs/BENCHMARK_COMPARISON.md) as the reference interpretation.
-2. Start `T4` on `spring-petclinic/spring-petclinic-rest` as the first full CI-backed ZeroDAST demonstration.
+2. Add `T5` as the fair conventional comparison layer for Petclinic and the authenticated FastAPI target.
 3. Keep EventDebug frozen as the stress-test benchmark until we need a second CI-backed proof or better real-repo success metrics.
-4. After T4 is stable, update README/public messaging to match the benchmark evidence.
+4. After T4/T5 comparisons exist, update README/public messaging to match the benchmark evidence.
 
 ## What "Done" Means For The Initial Benchmark
 
 The initial benchmark is done when all of the following are true:
 - Track A remains green and reproducible.
-- Petclinic has completed T1-T3 with published results.
-- EventDebug has completed T1-T3 with published results.
+- Petclinic has completed T1-T4 with published results.
+- FastAPI has completed T1-T4 with published results.
+- EventDebug remains documented as the stress-test benchmark.
 - A cross-repo comparison exists.
-- At least one real repository has a credible CI-backed ZeroDAST demonstration path or we explicitly document why that step is deferred.
+- At least one fair T5 baseline has been implemented for comparison.
 - Public messaging is updated to match the real evidence and its limits.
-

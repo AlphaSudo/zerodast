@@ -71,6 +71,7 @@ Model 1 Prototype
 | T2 | Scanner + light CI gating | Medium | Better, still broad trust | Zero/Low |
 | T3 | ZeroDAST-style isolated local adaptation | Medium | Strong local isolation and contained artifacts | Zero |
 | T4 | Full CI-backed ZeroDAST on a real external repo | Slower than local tiers, stronger proof | Trusted split plus isolated runtime with target-aware orchestration | Zero direct tooling cost, higher engineering effort |
+| T5 | Fair conventional public-repo or enterprise-style DAST baseline | Varies; often slower setup and noisier repo impact | Typical in-repo trust assumptions | Often low direct cost to start, but higher setup and maintenance overhead |
 
 ## Warning
 The demo app is intentionally vulnerable. Never deploy it to production or expose it to the public internet as-is.
