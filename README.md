@@ -83,6 +83,8 @@ The demo app is intentionally vulnerable. Never deploy it to production or expos
   - two external benchmark repos completed through T1-T3
   - first full CI-backed external ZeroDAST demonstration completed on Petclinic T4
   - Petclinic T4 clean rerun succeeded with `zapExitCode: 0` while preserving the API-side benchmark signal
+  - first authenticated non-Java external T4 demonstration completed on `fastapi/full-stack-fastapi-template`
+  - FastAPI T4 improved authenticated API signal to `11` alert-bearing API URIs and surfaced reflected JSON XSS-style weakness in CI on ZAP `2.17.0`
   - Model 1 prototype proved clean install/removal, real Petclinic in-repo execution, and a two-runtime-class adoption kit
   - EventDebug now has a route-exercise success contract for hard-target operational benchmarking, but still does not show alert-bearing API lift
   - current evidence supports target-dependent value claims, not universal coverage claims
