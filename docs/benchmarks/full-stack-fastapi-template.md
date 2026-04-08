@@ -24,35 +24,46 @@
   - alert-bearing API signal success
 
 ## Adaptation Summary
-- Files created: pending
+- Files created: benchmark-local harness only, in [run-t1.ps1](C:/Java%20Developer/DAST/benchmarks/fullstack-fastapi-template/run-t1.ps1) and [out/.gitignore](C:/Java%20Developer/DAST/benchmarks/fullstack-fastapi-template/out/.gitignore)
 - Files modified: none yet
-- Auth/bootstrap changes: pending
-- Scan policy changes: pending
-- Any repo-specific compromises: pending
+- Auth/bootstrap changes: local-only token bootstrap using the seeded superuser from `.env`, with bearer-token injection baked into the ZAP automation config
+- Scan policy changes: minimal T1 authenticated request seeding for `login/test-token`, `users/me`, `items/`, and `users/`
+- Any repo-specific compromises:
+  - local-only creation of `backend/htmlcov/` was required so `compose.override.yml` could start cleanly under Podman
+  - cached ZAP `2.16.0` was used to avoid a local image pull, which matters when interpreting OpenAPI importer behavior
 
 ## Tier Results
 
 | Tier | Setup Time | Cold Run | Warm Run | Auth Coverage | Output Quality | Isolation Posture | Result |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| T1 | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+| T1 | Moderate | 270.8s | Pending | Login bootstrap succeeded; protected route validation and authenticated request seeding succeeded | Meaningful but limited: API-side findings landed, but OpenAPI import added `0` URLs and findings stayed low/informational | Compose-network local scan, no trusted split yet | Partial success |
 | T2 | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 | T3 | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 | T4 | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 
 ## Findings Summary
-- High-level result: profiling complete, execution pending
-- Candidate findings of note: pending
-- Confirmed findings (if any): pending
+- High-level result: the first authenticated T1 baseline worked operationally and produced authenticated API-side signal
+- Candidate findings of note:
+  - `X-Content-Type-Options Header Missing`
+  - `User Agent Fuzzer`
+- Confirmed findings (if any):
+  - API-side low-severity header issue on authenticated endpoints such as `/api/v1/users/me`, `/api/v1/items/`, and `/api/v1/users/`
 - Caveats:
-  - this repo is the first authenticated showcase candidate, so auth bootstrap itself is part of the benchmark difficulty
-  - default credentials exist, but we still need to verify how reliably they appear in the running stack and whether compose networking changes the effective base URL shape
+  - this repo is the first authenticated showcase candidate, so auth bootstrap remains part of the benchmark difficulty, not just setup noise
+  - cached ZAP `2.16.0` imported `0` URLs from the OpenAPI document even though the raw spec was reachable and request seeding worked
+  - the spider still started from the backend root and logged the familiar root-path `404` warning
+  - T1 was completed locally with an elevated direct Podman run because the current Windows PowerShell harness still needs a cleaner Podman execution wrapper
 
 ## Stability Notes
-- Consecutive run behavior: pending
-- Flaky steps: pending
-- Workarounds used: pending
+- Consecutive run behavior: not measured yet
+- Flaky steps:
+  - local Podman execution from inside the PowerShell harness hit Windows `podman.exe` invocation issues
+  - OpenAPI importer behavior on ZAP `2.16.0` remains weak even when auth/bootstrap is healthy
+- Workarounds used:
+  - created `backend/htmlcov/` locally before startup
+  - ran the final ZAP container invocation directly with Podman outside the script after the harness had already generated config/spec/token artifacts
 
 ## Final Assessment
 - Suitable / Suitable with caveats / Not suitable: Suitable with caveats
-- Recommendation: proceed to T1 with explicit auth-bootstrap instrumentation rather than pretending this is another unauthenticated target
-- What this repo should teach us about ZeroDAST: Whether ZeroDAST can bring together authenticated bootstrap, protected-route exercise, and trusted DAST orchestration on a non-Java public repo without losing the low-noise adaptation story.
+- Recommendation: proceed to T2, but keep auth-bootstrap instrumentation as a first-class success signal and do not overread the current low/informational finding set as “auth problem solved”
+- What this repo should teach us about ZeroDAST: Whether ZeroDAST can bring together authenticated bootstrap, protected-route exercise, and trusted DAST orchestration on a non-Java public repo without losing the low-noise adaptation story. T1 already suggests the answer is “yes operationally, but scanner-depth still needs help.”
