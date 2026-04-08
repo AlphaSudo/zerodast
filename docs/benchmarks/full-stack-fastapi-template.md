@@ -5,14 +5,23 @@
 - URL: https://github.com/fastapi/full-stack-fastapi-template
 - Commit SHA: bba8d07c0cb4ac0e38a99d1de38090048fab8dee
 - Stack summary: FastAPI backend with SQLModel/PostgreSQL, React frontend, Docker Compose, and JWT-based authentication
-- API surface summary: FastAPI backend with OpenAPI/interactive API docs, frontend + backend compose stack, and documented generated API client flow
-- Auth model: JWT authentication with password-based login; this repo should become the first authenticated showcase benchmark for ZeroDAST rather than another unauthenticated baseline
+- API surface summary: backend API at `http://localhost:8000`, interactive docs at `/docs`, alternative docs at `/redoc`, and versioned API routes under `/api/v1/*`
+- Auth model: JWT authentication with password-based login via `POST /api/v1/login/access-token`; protected routes include `users/me`, item CRUD, and superuser-only user-management routes
 
 ## Setup Assumptions
-- Local runtime assumptions: Docker Compose-capable environment, backend + database + supporting services started from the template's documented compose flow
-- CI/runtime assumptions: target can be built and run from its own compose stack; backend OpenAPI should be reachable from the internal runtime once the stack is up
-- Required secrets: none for the first benchmark pass if the template defaults and seeded local bootstrap path are used
-- Mock/seed assumptions: the template should provide enough local user/bootstrap state to exercise login and authenticated route access without third-party identity infrastructure
+- Local runtime assumptions: Docker Compose-capable environment, stack started through the documented compose path in [development.md](C:/Java%20Developer/fullstack-fastapi-benchmark/development.md)
+- CI/runtime assumptions: target can be built and run from its own compose stack; backend OpenAPI should be reachable from the internal runtime at `/openapi.json` or via FastAPI docs paths once the stack is up
+- Required secrets: no external identity-provider secrets for the first benchmark pass; local defaults exist in `.env`
+- Mock/seed assumptions: `.env` provides `FIRST_SUPERUSER=admin@example.com` and `FIRST_SUPERUSER_PASSWORD=changethis`, and [initial_data.py](C:/Java%20Developer/fullstack-fastapi-benchmark/backend/app/initial_data.py) indicates local bootstrap goes through the normal DB initialization path
+
+## Auth Success Criteria
+- login bootstrap succeeds against `POST /api/v1/login/access-token`
+- obtained token is accepted by `POST /api/v1/login/test-token` or an equivalent protected route
+- authenticated route exercise is measured separately from alert-bearing API findings
+- benchmark notes distinguish:
+  - auth bootstrap success
+  - protected-route exercise success
+  - alert-bearing API signal success
 
 ## Adaptation Summary
 - Files created: pending
@@ -31,10 +40,12 @@
 | T4 | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 
 ## Findings Summary
-- High-level result: pending
+- High-level result: profiling complete, execution pending
 - Candidate findings of note: pending
 - Confirmed findings (if any): pending
-- Caveats: pending
+- Caveats:
+  - this repo is the first authenticated showcase candidate, so auth bootstrap itself is part of the benchmark difficulty
+  - default credentials exist, but we still need to verify how reliably they appear in the running stack and whether compose networking changes the effective base URL shape
 
 ## Stability Notes
 - Consecutive run behavior: pending
@@ -42,6 +53,6 @@
 - Workarounds used: pending
 
 ## Final Assessment
-- Suitable / Suitable with caveats / Not suitable: pending
-- Recommendation: pending
-- What this repo should teach us about ZeroDAST: Whether ZeroDAST can bring together authenticated bootstrap, route exercise, and trusted DAST orchestration on a non-Java public repo without losing the low-noise adaptation story.
+- Suitable / Suitable with caveats / Not suitable: Suitable with caveats
+- Recommendation: proceed to T1 with explicit auth-bootstrap instrumentation rather than pretending this is another unauthenticated target
+- What this repo should teach us about ZeroDAST: Whether ZeroDAST can bring together authenticated bootstrap, protected-route exercise, and trusted DAST orchestration on a non-Java public repo without losing the low-noise adaptation story.
