@@ -86,9 +86,11 @@ Turn ZeroDAST from "authenticated user coverage" into "role-aware authenticated 
 
 ### PR impact
 - likely `+15s` to `+60s`
+- central estimate: `+25s` to `+40s`
 
 ### Nightly impact
 - likely `+15s` to `+90s`
+- central estimate: `+30s` to `+60s`
 
 ### Exit criteria
 - PR and nightly both preserve timing budgets
@@ -122,10 +124,12 @@ Improve signal quality without turning the PR lane into a slow full scan.
 - `3-5 weeks`
 
 ### PR impact
-- neutral to slightly positive if delta and seeding get smarter
+- likely net impact: `0s` to `+45s`
+- central estimate: `+15s` to `+30s`
 
 ### Nightly impact
-- low to moderate
+- likely net impact: `+10s` to `+90s`
+- central estimate: `+30s` to `+60s`
 
 ### Exit criteria
 - better benchmark outcomes on at least two external targets
@@ -161,11 +165,13 @@ Expand beyond simple seeded bearer-token login.
 - `4-8 weeks`
 
 ### PR impact
-- low if adapters are bounded and validated before scan
-- medium if browser-grade auth is attempted in PR, which should be avoided
+- likely `+20s` to `+75s`
+- central estimate: `+30s` to `+50s`
+- browser-grade auth in PR should be avoided because it could exceed this
 
 ### Nightly impact
-- moderate
+- likely `+45s` to `+180s`
+- central estimate: `+60s` to `+120s`
 
 ### Exit criteria
 - at least 3 auth styles supported cleanly
@@ -198,11 +204,13 @@ Reduce the current gap around API coverage breadth.
 - `6-10 weeks`
 
 ### PR impact
-- medium risk if discovery is allowed to grow unbounded
+- likely `+20s` to `+90s`
+- central estimate: `+30s` to `+60s`
 - must be tightly budgeted in PR
 
 ### Nightly impact
-- medium to high, but should still stay inside the `15 min` cap
+- likely `+60s` to `+240s`
+- central estimate: `+90s` to `+180s`, while still staying inside the `15 min` cap
 
 ### Exit criteria
 - API discovery quality improves on hard targets
@@ -239,10 +247,12 @@ Approach enterprise usability without becoming enterprise-bloated.
 - `4-8 weeks`
 
 ### PR impact
-- low
+- likely `+5s` to `+25s`
+- central estimate: `+10s` to `+15s`
 
 ### Nightly impact
-- low to moderate
+- likely `+15s` to `+60s`
+- central estimate: `+20s` to `+40s`
 
 ### Exit criteria
 - multiple repos can be managed without ad hoc manual triage
@@ -310,3 +320,4 @@ So the roadmap is:
 - actionable
 
 but not based on proprietary internal knowledge.
+
