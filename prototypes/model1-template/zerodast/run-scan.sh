@@ -190,10 +190,16 @@ MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" run --rm --network "${NETWORK_NAME}" "${HELPE
 node "${PREPARE_OPENAPI_SCRIPT_NODE}" "${CONFIG_PATH_NODE}" "${MODE}" "${RAW_SPEC_NODE}" "${SANITIZED_SPEC_NODE}" "${REQUESTS_JSON_NODE}" > "${PREPARED_CONFIG}"
 
 SCANNER_BASE_URL="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.scannerBaseUrl);" "${PREPARED_CONFIG_NODE}")"
+SPIDER_TARGET_URL="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.spiderTargetUrl || (c.scannerBaseUrl + '/swagger-ui/index.html'));" "${PREPARED_CONFIG_NODE}")"
 ENABLE_SPIDER="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.enableSpider !== false));" "${PREPARED_CONFIG_NODE}")"
 SPIDER_MINUTES="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.spiderMinutes || 2));" "${PREPARED_CONFIG_NODE}")"
+SPIDER_MAX_DEPTH="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.spiderMaxDepth || 5));" "${PREPARED_CONFIG_NODE}")"
+SPIDER_MAX_CHILDREN="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.spiderMaxChildren || 50));" "${PREPARED_CONFIG_NODE}")"
+PASSIVE_WAIT_MINUTES="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.passiveWaitMinutes || 2));" "${PREPARED_CONFIG_NODE}")"
 SCAN_MINUTES="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.maxDurationMinutes || 15));" "${PREPARED_CONFIG_NODE}")"
 THREAD_PER_HOST="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.threadPerHost || 4));" "${PREPARED_CONFIG_NODE}")"
+DEFAULT_STRENGTH="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.defaultStrength || 'medium'));" "${PREPARED_CONFIG_NODE}")"
+DEFAULT_THRESHOLD="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.defaultThreshold || 'low'));" "${PREPARED_CONFIG_NODE}")"
 ZAP_IMAGE="zaproxy/zap-stable:${ZAP_VERSION}"
 SPEC_MODE="raw"
 
@@ -226,16 +232,16 @@ EOF
   - type: spider
     parameters:
       context: "zerodast-model1"
-      url: "${SCANNER_BASE_URL}/swagger-ui/index.html"
+      url: "${SPIDER_TARGET_URL}"
       maxDuration: ${SPIDER_MINUTES}
-      maxDepth: 5
-      maxChildren: 50
+      maxDepth: ${SPIDER_MAX_DEPTH}
+      maxChildren: ${SPIDER_MAX_CHILDREN}
 EOF
     fi
     cat <<EOF
   - type: passiveScan-wait
     parameters:
-      maxDuration: 2
+      maxDuration: ${PASSIVE_WAIT_MINUTES}
   - type: activeScan
     parameters:
       context: "zerodast-model1"
@@ -244,8 +250,8 @@ EOF
       threadPerHost: ${THREAD_PER_HOST}
       delayInMs: 50
     policyDefinition:
-      defaultStrength: medium
-      defaultThreshold: low
+      defaultStrength: ${DEFAULT_STRENGTH}
+      defaultThreshold: ${DEFAULT_THRESHOLD}
   - type: report
     parameters:
       template: "traditional-json"
@@ -300,4 +306,5 @@ cat > "${METRICS_PATH}" <<EOF
 EOF
 
 node "${VERIFY_REPORT_SCRIPT_NODE}" "${REPORT_PATH_NODE}" "${METRICS_PATH_NODE}" "${PREPARED_CONFIG_NODE}" "${LOG_PATH_NODE}" "${REQUESTS_JSON_NODE}" | tee "${SUMMARY_PATH}"
+
 

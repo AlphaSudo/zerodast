@@ -21,18 +21,29 @@
   "scan": {
     "zapVersion": "2.17.0",
     "helperImage": "node:20-alpine",
+    "spiderPath": "/petclinic/swagger-ui/index.html",
     "mode": {
       "pr": {
         "maxDurationMinutes": 5,
         "enableSpider": true,
         "spiderMinutes": 1,
-        "threadPerHost": 4
+        "spiderMaxDepth": 5,
+        "spiderMaxChildren": 50,
+        "passiveWaitMinutes": 2,
+        "threadPerHost": 4,
+        "defaultStrength": "medium",
+        "defaultThreshold": "low"
       },
       "nightly": {
         "maxDurationMinutes": 20,
         "enableSpider": true,
         "spiderMinutes": 2,
-        "threadPerHost": 4
+        "spiderMaxDepth": 5,
+        "spiderMaxChildren": 50,
+        "passiveWaitMinutes": 2,
+        "threadPerHost": 4,
+        "defaultStrength": "medium",
+        "defaultThreshold": "low"
       }
     },
     "requestSeeds": [

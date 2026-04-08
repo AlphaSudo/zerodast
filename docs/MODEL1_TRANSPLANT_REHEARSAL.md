@@ -169,6 +169,7 @@ What this means:
   - compose-driven multi-service targets
 - EventDebug still did **not** produce API-side alert lift, which is consistent with the earlier external benchmark result
 - the route-exercise rerun proved the weakness is **not** simply that the API was never reached
+- a config-only tuning pass also failed to improve signal, which means the next EventDebug work should focus on importer behavior or success-metric design rather than just adding more knobs
 - the product limitation on EventDebug is currently detection/output quality, not in-repo installation or runtime orchestration
 
 ## Engineering Lessons From The Rehearsal
@@ -212,4 +213,6 @@ The next model 1 step should be:
 2. keep `artifact` and `compose` as the two supported prototype runtime modes
 3. treat the `5 minute active scan + 1 minute spider` profile as the provisional PR baseline for Petclinic-like targets
 4. improve EventDebug success criteria or request seeding before claiming broad harder-target effectiveness
+
+
 

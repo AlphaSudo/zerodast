@@ -203,6 +203,34 @@ Why this matters:
 
 - EventDebug already demonstrates one kind of value even if it does not yet demonstrate the other
 
+
+## Experiment 2 Outcome
+
+Experiment 2 is now complete for the current model 1 EventDebug pass.
+
+Changes made:
+
+- exposed `scan.spiderPath` in config
+- exposed per-mode `spiderMaxDepth` and `spiderMaxChildren`
+- exposed per-mode `passiveWaitMinutes`
+- exposed per-mode `defaultStrength` and `defaultThreshold`
+- expanded the EventDebug example seeds to include both bare and query-string variants for `events/recent` and `aggregates/search`, plus the stable `aggregates/1/timeline` path
+
+Observed rerun result:
+
+- `coldRunSeconds`: `115`
+- `API alert URI count`: `0`
+- `Observed API requestor URL count`: `8`
+- `Configured API seed URL count`: `8`
+- `OpenAPI imported URL count`: `0`
+- `Spider discovered URL count`: `14`
+
+Observed conclusion:
+
+- the new scan controls are now part of the product surface, which is a real model 1 improvement
+- the richer EventDebug config did **not** materially improve API-side signal
+- `openapi added 0 URLs` remains one of the strongest indicators that imported route discovery is still weak on this target
+- EventDebug now looks more like a target where ZeroDAST can prove execution and route exercise, but not yet alert lift
 ## Proposed Exit Criteria
 
 We should stop the EventDebug investigation loop when one of these becomes true:
@@ -254,4 +282,5 @@ That is the smallest serious step that can tell us whether the weakness is mostl
 - target nature
 - metric choice
 - or adaptation depth
+
 

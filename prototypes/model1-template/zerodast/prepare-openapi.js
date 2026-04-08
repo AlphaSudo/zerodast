@@ -21,6 +21,7 @@ const host = runtimeMode === 'compose'
   : 'zerodast-target';
 const scannerBaseRoot = `http://${host}:${port}`;
 const scannerBasePath = config.target?.basePath || '';
+const scannerBaseUrl = `${scannerBaseRoot}${scannerBasePath}`;
 const rawSpec = JSON.parse(fs.readFileSync(rawSpecPath, 'utf8'));
 
 if (rawSpec.info && rawSpec.info.license && typeof rawSpec.info.license === 'object') {
@@ -58,17 +59,20 @@ fs.writeFileSync(outSpecPath, JSON.stringify(rawSpec));
 fs.writeFileSync(outRequestsPath, JSON.stringify(Array.from(requestUrls).sort(), null, 2));
 
 const apiSignalPathPrefix = config.target?.apiSignalPathPrefix || `${scannerBasePath}/api/`;
+const scanConfig = config.scan || {};
+const spiderPath = modeConfig.spiderPath || scanConfig.spiderPath || `${scannerBasePath}/swagger-ui/index.html`;
 const output = {
   target: config.target,
-  zapVersion: config.scan?.zapVersion,
-  helperImage: config.scan?.helperImage,
+  zapVersion: scanConfig?.zapVersion,
+  helperImage: scanConfig?.helperImage,
   mode,
   modeConfig,
   scannerBaseRoot,
   scannerBasePath,
-  scannerBaseUrl: `${scannerBaseRoot}${scannerBasePath}`,
+  scannerBaseUrl,
+  spiderTargetUrl: `${scannerBaseRoot}${spiderPath}`,
   apiSignalPrefix: `${scannerBaseRoot}${apiSignalPathPrefix}`,
-  requestSeeds: config.scan?.requestSeeds || []
+  requestSeeds: scanConfig?.requestSeeds || []
 };
 
 process.stdout.write(JSON.stringify(output, null, 2));
