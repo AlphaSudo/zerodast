@@ -59,3 +59,5 @@
 - Suitable / Suitable with caveats / Not suitable: Suitable with caveats
 - Recommendation: Keep EventDebug as the more demanding real-repo benchmark target. It demonstrates that ZeroDAST can make execution cleaner and faster on a multi-service app, but it does not yet demonstrate a finding lift on this target.
 - What this repo should teach us about ZeroDAST: Whether we need a better real-repo success metric than alert-bearing API URIs alone, because execution quality improved materially while detection output stayed flat.
+- Follow-up: See [EVENTDEBUG_INVESTIGATION_PLAN.md](C:/Java%20Developer/DAST/docs/EVENTDEBUG_INVESTIGATION_PLAN.md) for the bounded next-step plan that separates runtime success, route exercise, and finding-lift questions.
+
