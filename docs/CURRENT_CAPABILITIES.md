@@ -1,0 +1,441 @@
+# ZeroDAST Current Coverage, Scope, and Capabilities
+
+## Purpose
+
+This document is the **current-state inventory** of the ZeroDAST repository.
+
+It describes what the codebase supports **today**, based on the implementation that exists in this repository right now.
+It is intentionally different from:
+- roadmap documents
+- benchmark aspirations
+- parity estimates against commercial tools
+
+If a capability is not implemented or not proven in the current repo, it should not be treated as present here.
+
+## What ZeroDAST Is Today
+
+ZeroDAST currently provides three related but distinct things:
+
+1. **A self-validating CI DAST system for the built-in demo app**
+2. **An external-orchestrator DAST benchmark and adaptation framework for public repositories**
+3. **An alpha in-repo adoption prototype (Model 1)**
+
+That means the repository is not just "a ZAP wrapper" and not just "a benchmark folder."
+It already contains:
+- real CI workflows
+- real isolated scan runtime orchestration
+- real auth-aware scan support
+- real post-scan verification logic
+- external-repo T4 demonstrations
+- an installable in-repo prototype
+
+## High-Level Coverage Map
+
+| Area | Current State |
+| --- | --- |
+| Demo app + intentional vuln canaries | Implemented |
+| Two-profile CI DAST | Implemented |
+| Trusted/untrusted workflow split | Implemented |
+| Isolated scan runtime | Implemented |
+| Throwaway seeded DB runtime | Implemented |
+| Authenticated scan support | Implemented |
+| Scripted authz regression checks | Implemented |
+| Canary verification | Implemented |
+| Delta-scoped PR scanning | Implemented |
+| Full nightly scanning | Implemented |
+| External-repo T4 demonstrations | Implemented |
+| Model 1 in-repo prototype | Implemented |
+| Admin-path coverage in core repo | Not fully implemented |
+| Complex enterprise auth (SSO/MFA/browser flows) | Not implemented |
+| GraphQL/SOAP/gRPC support | Not implemented |
+| Shadow API discovery | Not implemented |
+| ASPM/compliance/RBAC platform features | Not implemented |
+
+## Repository Surfaces
+
+### 1. CI Workflows
+
+Current workflow set under [.github/workflows](C:/Java%20Developer/DAST/.github/workflows):
+
+- [ci.yml](C:/Java%20Developer/DAST/.github/workflows/ci.yml)
+- [dast-pr.yml](C:/Java%20Developer/DAST/.github/workflows/dast-pr.yml)
+- [dast-nightly.yml](C:/Java%20Developer/DAST/.github/workflows/dast-nightly.yml)
+- [petclinic-t4-metadata.yml](C:/Java%20Developer/DAST/.github/workflows/petclinic-t4-metadata.yml)
+- [petclinic-t4-scan.yml](C:/Java%20Developer/DAST/.github/workflows/petclinic-t4-scan.yml)
+- [fullstack-fastapi-t4-metadata.yml](C:/Java%20Developer/DAST/.github/workflows/fullstack-fastapi-t4-metadata.yml)
+- [fullstack-fastapi-t4-scan.yml](C:/Java%20Developer/DAST/.github/workflows/fullstack-fastapi-t4-scan.yml)
+
+### 2. Scan Runtime and Security Scripts
+
+Current script/runtime surface:
+
+- [run-dast-env.sh](C:/Java%20Developer/DAST/security/run-dast-env.sh)
+- [automation.yaml](C:/Java%20Developer/DAST/security/zap/automation.yaml)
+- [bootstrap-auth.sh](C:/Java%20Developer/DAST/scripts/bootstrap-auth.sh)
+- [authz-tests.sh](C:/Java%20Developer/DAST/scripts/authz-tests.sh)
+- [authz-tests.js](C:/Java%20Developer/DAST/scripts/authz-tests.js)
+- [verify-canaries.sh](C:/Java%20Developer/DAST/scripts/verify-canaries.sh)
+- [delta-detect.sh](C:/Java%20Developer/DAST/scripts/delta-detect.sh)
+- [generate-delta-scan.sh](C:/Java%20Developer/DAST/scripts/generate-delta-scan.sh)
+- [parse-zap-report.js](C:/Java%20Developer/DAST/scripts/parse-zap-report.js)
+- [run-dast-local.sh](C:/Java%20Developer/DAST/scripts/run-dast-local.sh)
+
+### 3. Model 1 Prototype Surface
+
+Current in-repo prototype payload lives under [prototypes/model1-template](C:/Java%20Developer/DAST/prototypes/model1-template), especially:
+
+- [config.json](C:/Java%20Developer/DAST/prototypes/model1-template/zerodast/config.json)
+- [run-scan.sh](C:/Java%20Developer/DAST/prototypes/model1-template/zerodast/run-scan.sh)
+- [prepare-openapi.js](C:/Java%20Developer/DAST/prototypes/model1-template/zerodast/prepare-openapi.js)
+- [verify-report.js](C:/Java%20Developer/DAST/prototypes/model1-template/zerodast/verify-report.js)
+- [zerodast-pr.yml](C:/Java%20Developer/DAST/prototypes/model1-template/.github/workflows/zerodast-pr.yml)
+- [zerodast-nightly.yml](C:/Java%20Developer/DAST/prototypes/model1-template/.github/workflows/zerodast-nightly.yml)
+
+## Current Capability Details
+
+## A. Two-Profile CI DAST
+
+### Status
+Implemented.
+
+### What exists
+ZeroDAST currently supports a genuine two-profile CI scan model:
+
+- **PR / delta-oriented scan path** in [dast-pr.yml](C:/Java%20Developer/DAST/.github/workflows/dast-pr.yml)
+- **Nightly / full scan path** in [dast-nightly.yml](C:/Java%20Developer/DAST/.github/workflows/dast-nightly.yml)
+
+### What the PR profile does
+- waits for trusted CI completion using `workflow_run`
+- downloads the artifactized image and delta metadata from the untrusted lane
+- validates optional overlay SQL before scan
+- generates a delta-scoped ZAP config from changed endpoints
+- runs the isolated scan runtime
+- uploads report artifacts and comments summary on the PR
+
+### What the nightly profile does
+- builds from trusted mainline state
+- runs the full isolated scan runtime
+- uploads reports
+- parses threshold output
+- opens an issue when findings exceed the configured threshold
+
+### What this means
+ZeroDAST already satisfies the core requirement of **two-profile CI DAST** in its own repo.
+
+## B. Trusted / Untrusted Separation
+
+### Status
+Implemented.
+
+### What exists
+The core demo-app pipeline is intentionally split:
+
+- untrusted PR lane in [ci.yml](C:/Java%20Developer/DAST/.github/workflows/ci.yml)
+- trusted DAST lane in [dast-pr.yml](C:/Java%20Developer/DAST/.github/workflows/dast-pr.yml)
+
+### Security properties implemented today
+- PR code does not directly run the trusted scan lane
+- trusted lane consumes artifacts rather than directly trusting PR execution state
+- report commenting happens in a separate reporting step with scoped permissions
+
+### What this gives ZeroDAST today
+This is one of the strongest parts of the current system and a real differentiator from many ordinary in-repo DAST setups.
+
+## C. Isolated Scan Runtime
+
+### Status
+Implemented.
+
+### What exists
+The scan runtime in [run-dast-env.sh](C:/Java%20Developer/DAST/security/run-dast-env.sh) currently provides:
+
+- internal container network via `--internal`
+- isolated app, DB, and ZAP containers
+- read-only root filesystem for app container
+- `tmpfs` writable scratch area
+- dropped capabilities
+- `no-new-privileges`
+- memory and PID constraints
+- post-run cleanup trap
+
+### What this means
+ZeroDAST already has a real isolated runtime model, not just a loose scanner invocation.
+
+## D. Seeded Database and Throwaway Data Model
+
+### Status
+Implemented.
+
+### What exists
+The scan environment supports:
+- schema SQL seeding
+- mock data seeding
+- optional overlay SQL seeding
+- overlay validation in the trusted DAST lane before execution
+
+### What this means
+The repo already supports controlled seeded test state for scans and post-scan checks.
+
+## E. ZAP Automation and Scan Policy
+
+### Status
+Implemented.
+
+### What exists today in [automation.yaml](C:/Java%20Developer/DAST/security/zap/automation.yaml):
+- OpenAPI import
+- auth header replacer injection
+- requestor jobs for known canary routes
+- spider phase
+- passive scan wait
+- active scan phase
+- JSON and HTML reporting
+- tuned active rules for SQLi and XSS canaries
+
+### ZAP version state
+Current core runtime defaults to ZAP `2.17.0` via [run-dast-env.sh](C:/Java%20Developer/DAST/security/run-dast-env.sh).
+
+### What this means
+The repo already has a real scanner policy layer with repeatable configuration and report output.
+
+## F. Authenticated Scan Support
+
+### Status
+Implemented.
+
+### What exists today
+The core runtime supports auth bootstrap and token injection:
+
+- default bootstrap credentials in [run-dast-env.sh](C:/Java%20Developer/DAST/security/run-dast-env.sh)
+- auth bootstrap script in [bootstrap-auth.sh](C:/Java%20Developer/DAST/scripts/bootstrap-auth.sh)
+- in-container auth bootstrap mode in [run-dast-env.sh](C:/Java%20Developer/DAST/security/run-dast-env.sh)
+- bearer token injection into ZAP config in [automation.yaml](C:/Java%20Developer/DAST/security/zap/automation.yaml)
+
+### What is proven in the repo's broader work
+- authenticated user-path scanning exists
+- external authenticated T4 work exists for FastAPI
+- auth bootstrap and protected-route validation have already been exercised in benchmark code paths
+
+### Important limitation
+This is **token-bootstrap-friendly authenticated coverage**, not full enterprise auth parity.
+It does **not** currently mean:
+- SSO
+- SAML
+- OIDC enterprise federation
+- MFA/TOTP
+- browser-recorded login flows
+
+## G. AuthZ / Ownership Regression Checks
+
+### Status
+Implemented.
+
+### What exists
+The repo contains scripted authz/IDOR-style validation:
+
+- shell version: [authz-tests.sh](C:/Java%20Developer/DAST/scripts/authz-tests.sh)
+- Node/network-safe version: [authz-tests.js](C:/Java%20Developer/DAST/scripts/authz-tests.js)
+
+### What these do
+They obtain multiple user tokens and test cross-user access attempts.
+
+### Important limitation
+These scripts validate user-to-user ownership / authz behavior, but they do **not** currently implement full admin-role scan coverage in the core repo.
+
+## H. Admin / Role-Aware Coverage
+
+### Status
+Partially present in app code, not fully implemented end to end in the DAST system.
+
+### What exists today
+The demo app contains role-aware logic:
+- user role is carried in auth payloads in [demo-app/src/routes/auth.js](C:/Java%20Developer/DAST/demo-app/src/routes/auth.js)
+- admin-only route exists in [demo-app/src/routes/users.js](C:/Java%20Developer/DAST/demo-app/src/routes/users.js)
+
+### What is missing in the core DAST implementation
+ZeroDAST does **not** yet fully implement:
+- dedicated admin token bootstrap in core scan workflows
+- admin-specific ZAP request seeding
+- admin-route exercise verification in the core PR/nightly scan path
+- multi-role scan contracts in the main repo's current workflows
+
+### Current conclusion
+The repo currently has:
+- authenticated path coverage: **yes**
+- role-aware app surfaces: **yes**
+- end-to-end admin path coverage in the core DAST implementation: **not yet**
+
+## I. Canary Verification
+
+### Status
+Implemented.
+
+### What exists
+Post-scan canary verification lives in [verify-canaries.sh](C:/Java%20Developer/DAST/scripts/verify-canaries.sh).
+
+### What it currently checks
+It validates that expected benchmark findings are still present in the report.
+
+### What this means
+The repo already has a self-checking scan confidence layer rather than relying only on raw scanner completion.
+
+## J. Delta Detection and Delta-Scoped Scanning
+
+### Status
+Implemented.
+
+### What exists
+- changed-file route extraction in [delta-detect.sh](C:/Java%20Developer/DAST/scripts/delta-detect.sh)
+- delta-scan config generation in [generate-delta-scan.sh](C:/Java%20Developer/DAST/scripts/generate-delta-scan.sh)
+
+### What it supports today
+- route regex extraction from common route/controller file patterns
+- fail-safe fallback to FULL scan when changes are too broad or unclear
+- PR lane generation of reduced-scope scan configs
+
+### Current limitation
+This is useful and real, but not a full AST-grade route analysis system.
+
+## K. Report Parsing and Thresholding
+
+### Status
+Implemented.
+
+### What exists
+- threshold parser in [parse-zap-report.js](C:/Java%20Developer/DAST/scripts/parse-zap-report.js)
+- PR summary artifact upload and comment flow in [dast-pr.yml](C:/Java%20Developer/DAST/.github/workflows/dast-pr.yml)
+- nightly issue creation when threshold is exceeded in [dast-nightly.yml](C:/Java%20Developer/DAST/.github/workflows/dast-nightly.yml)
+
+### What this means
+ZeroDAST already has result interpretation and GitHub feedback loops, not just report files.
+
+## L. External-Repo T4 Demonstrations
+
+### Status
+Implemented.
+
+### What exists
+The repo contains CI-backed external demonstration workflows for:
+- Petclinic
+- authenticated FastAPI
+
+Current workflow files:
+- [petclinic-t4-metadata.yml](C:/Java%20Developer/DAST/.github/workflows/petclinic-t4-metadata.yml)
+- [petclinic-t4-scan.yml](C:/Java%20Developer/DAST/.github/workflows/petclinic-t4-scan.yml)
+- [fullstack-fastapi-t4-metadata.yml](C:/Java%20Developer/DAST/.github/workflows/fullstack-fastapi-t4-metadata.yml)
+- [fullstack-fastapi-t4-scan.yml](C:/Java%20Developer/DAST/.github/workflows/fullstack-fastapi-t4-scan.yml)
+
+### What these prove about current repo capability
+- ZeroDAST can clone a frozen external target SHA
+- build the target inside CI
+- bootstrap auth when needed
+- run isolated scans in a trusted second-stage workflow
+- upload benchmark artifacts
+
+### Current limitation
+This is benchmark-oriented orchestration, not yet a general turnkey multi-repo SaaS/platform control plane.
+
+## M. Model 1 In-Repo Adoption Prototype
+
+### Status
+Implemented as alpha prototype.
+
+### What exists
+The Model 1 prototype supports:
+- thin workflows in target repo
+- contained `zerodast/` payload
+- config-driven target adaptation
+- PR and nightly scan profiles
+- artifact runtime mode
+- compose runtime mode
+- install/uninstall flow
+- package/export flow
+
+### What this means
+The repo already contains a real in-repo adoption model, but it is still alpha.
+
+### Current limitation
+This is not yet a hardened, broad-compatibility product for arbitrary repos.
+
+## N. Benchmarking Capability
+
+### Status
+Implemented.
+
+### What exists
+The repo contains:
+- benchmark protocol
+- benchmark results template
+- roadmap
+- comparison docs
+- per-target benchmark result files
+- T1-T5 benchmark framing
+
+### What this means
+ZeroDAST is already instrumented to compare itself honestly against lighter and more conventional baselines.
+
+## O. Supported Target Classes Today
+
+### Strongest current fit
+ZeroDAST is strongest today for:
+- small/medium documented REST APIs
+- targets that can run in CI without paid infrastructure
+- token-bootstrap-friendly authenticated APIs
+- repos where OpenAPI exists or route seeding can be made explicit
+- public-repo or OSS-friendly workflows where low-noise setup matters
+
+### Moderate fit
+- multi-service local stacks with explicit setup and request seeding
+- harder benchmark targets where route exercise matters more than alert lift
+
+### Weak or unsupported fit today
+- browser-heavy auth flows
+- MFA/SSO/SAML/OIDC enterprise identity flows
+- GraphQL-first targets
+- SOAP/gRPC targets
+- large enterprise governance/compliance programs
+- shadow API discovery / production traffic discovery
+
+## P. What ZeroDAST Does Not Currently Provide
+
+The current repo does **not** yet provide:
+
+- full admin-role scan coverage in the core demo-app CI path
+- full enterprise authentication handling
+- browser automation or recorded login replay
+- SSO/SAML/OIDC/MFA support
+- GraphQL scanning support
+- SOAP or gRPC scanning support
+- shadow API / undocumented API discovery from live traffic
+- ASPM-style cross-signal correlation
+- compliance reporting / policy mapping
+- enterprise RBAC/governance control plane
+- universal target support across arbitrary stacks
+
+## Q. Practical Summary
+
+### Current-state bottom line
+ZeroDAST currently **does** implement:
+- two-profile CI DAST
+- trusted/untrusted workflow separation
+- isolated scan runtime
+- authenticated scan support
+- authz regression checks
+- canary verification
+- delta and full scan modes
+- external-repo CI-backed demonstrations
+- alpha in-repo adoption prototype
+
+### Current-state bottom line on auth/admin
+ZeroDAST currently **does** support:
+- authenticated path coverage
+
+ZeroDAST currently **does not yet fully support**:
+- end-to-end admin path coverage in the core repo implementation
+
+### Current-state bottom line on scope
+ZeroDAST is already a serious alpha security engineering system for:
+- CI-first DAST on documented REST-style targets
+- low-noise OSS/public-repo adaptation
+- trusted/isolated scan execution
+
+It is **not yet** a full enterprise DAST platform, and the codebase does not currently justify that claim.
