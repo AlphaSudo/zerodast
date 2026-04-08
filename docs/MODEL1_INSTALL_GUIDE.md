@@ -208,3 +208,15 @@ Use this guide for:
 - exercising the kit across different runtime classes
 
 Do not treat it yet as a universal one-command installer for arbitrary repositories.
+## Reporting Modes
+
+The prototype currently supports two success contracts:
+
+- `api_alerts`
+  - intended for targets like Petclinic where alert-bearing API signal is the desired proof
+- `route_exercise`
+  - intended for harder targets like EventDebug where the current scanner strategy may exercise API routes without producing meaningful API alerts
+
+Use `route_exercise` carefully.
+It should be a conscious choice for hard targets, not the default for every repo.
+

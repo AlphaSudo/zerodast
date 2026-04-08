@@ -231,6 +231,55 @@ Observed conclusion:
 - the richer EventDebug config did **not** materially improve API-side signal
 - `openapi added 0 URLs` remains one of the strongest indicators that imported route discovery is still weak on this target
 - EventDebug now looks more like a target where ZeroDAST can prove execution and route exercise, but not yet alert lift
+
+## Experiment 3 Outcome
+
+Experiment 3 is complete enough to inform the next product decision.
+
+What changed:
+
+- EventDebug now has a richer example seed set in the model 1 kit
+- the kit now supports an explicit `reporting.successMode`
+- EventDebug can declare success via `route_exercise` instead of only `api_alerts`
+
+Why this is justified:
+
+- EventDebug already proved `8/8` configured API seeds were exercised
+- repeated reruns still produced `0` API alert URIs
+- that means EventDebug is a poor fit for an alert-only success contract right now, but still a valid operational benchmark target
+
+Current recommendation:
+
+- keep Petclinic on `successMode: api_alerts`
+- allow EventDebug to use `successMode: route_exercise`
+- continue treating EventDebug as a hard-target operational benchmark unless importer behavior or target-specific tuning later produces alert-bearing API signal
+
+## Experiment 4 Outcome
+
+Experiment 4 is now complete for the current model 1 EventDebug pass.
+
+What changed:
+
+- the model 1 kit now supports `reporting.successMode`
+- Petclinic stays on `api_alerts`
+- EventDebug can opt into `route_exercise`
+
+Observed route-exercise rerun result:
+
+- `Success mode`: `route_exercise`
+- `Success result`: `pass`
+- `Success reason`: `Route exercise thresholds satisfied (8 observed API requestor URLs, seed observation ratio 1.00)`
+- `coldRunSeconds`: `124`
+- `API alert URI count`: `0`
+- `Observed API requestor URL count`: `8`
+- `Seed observation ratio`: `1.00`
+- `OpenAPI imported URL count`: `0`
+
+Observed conclusion:
+
+- EventDebug still does **not** demonstrate alert-bearing API lift
+- but it now has a success contract that matches the value it is actually proving: reproducible API route exercise on a harder multi-service target
+- this is a product-shape improvement, not a detection breakthrough
 ## Proposed Exit Criteria
 
 We should stop the EventDebug investigation loop when one of these becomes true:
@@ -282,5 +331,7 @@ That is the smallest serious step that can tell us whether the weakness is mostl
 - target nature
 - metric choice
 - or adaptation depth
+
+
 
 

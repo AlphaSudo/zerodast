@@ -55,6 +55,7 @@
     ]
   },
   "reporting": {
-    "requireApiSignal": true
+    "successMode": "api_alerts",
+    "minApiAlertUris": 1
   }
 }

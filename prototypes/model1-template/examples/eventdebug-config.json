@@ -55,6 +55,8 @@
     ]
   },
   "reporting": {
-    "requireApiSignal": true
+    "successMode": "route_exercise",
+    "minObservedApiRequestorUrls": 5,
+    "minSeedObservationRatio": 1.0
   }
 }

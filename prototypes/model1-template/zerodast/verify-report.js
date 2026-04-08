@@ -62,11 +62,39 @@ const configuredSeedApiUrls = new Set(
   Array.from(configuredSeedUrls).filter((uri) => uri.startsWith(apiPrefix))
 );
 const missingSeedUrls = Array.from(configuredSeedUrls).filter((uri) => !observedRequestorUrls.has(uri));
+const observedSeedRatio = configuredSeedUrls.size > 0
+  ? (configuredSeedUrls.size - missingSeedUrls.length) / configuredSeedUrls.size
+  : null;
+
+const reporting = prepared.reporting || {};
+const successMode = reporting.successMode || (reporting.requireApiSignal === false ? 'route_exercise' : 'api_alerts');
+const minApiAlertUris = Number(reporting.minApiAlertUris ?? 1);
+const minObservedApiRequestorUrls = Number(reporting.minObservedApiRequestorUrls ?? 1);
+const minSeedObservationRatio = Number(reporting.minSeedObservationRatio ?? 1);
+
+let success = false;
+let successReason = '';
+if (successMode === 'route_exercise') {
+  const apiRequestorOk = observedApiRequestorUrls.size >= minObservedApiRequestorUrls;
+  const seedRatioOk = observedSeedRatio === null ? true : observedSeedRatio >= minSeedObservationRatio;
+  success = apiRequestorOk && seedRatioOk;
+  successReason = success
+    ? `Route exercise thresholds satisfied (${observedApiRequestorUrls.size} observed API requestor URLs, seed observation ratio ${observedSeedRatio === null ? 'n/a' : observedSeedRatio.toFixed(2)})`
+    : `Route exercise thresholds not met (observed API requestor URLs ${observedApiRequestorUrls.size}/${minObservedApiRequestorUrls}, seed observation ratio ${observedSeedRatio === null ? 'n/a' : observedSeedRatio.toFixed(2)}/${minSeedObservationRatio})`;
+} else {
+  success = apiUris.size >= minApiAlertUris;
+  successReason = success
+    ? `API alert threshold satisfied (${apiUris.size} >= ${minApiAlertUris})`
+    : `API alert threshold not met (${apiUris.size} < ${minApiAlertUris})`;
+}
 
 const lines = [
   '# ZeroDAST Model 1 Summary',
   '',
   `- Mode: ${prepared.mode}`,
+  `- Success mode: ${successMode}`,
+  `- Success result: ${success ? 'pass' : 'fail'}`,
+  `- Success reason: ${successReason}`,
   `- Spec mode: ${metrics.specMode || 'unknown'}`,
   `- ZAP image: ${metrics.zapImage || 'unknown'}`,
   `- Cold run duration: ${metrics.coldRunSeconds ?? 'unknown'}s`,
@@ -75,6 +103,7 @@ const lines = [
   `- Observed requestor URL count: ${observedRequestorUrls.size}`,
   `- Observed API requestor URL count: ${observedApiRequestorUrls.size}`,
   `- Configured API seed URL count: ${configuredSeedApiUrls.size}`,
+  `- Seed observation ratio: ${observedSeedRatio === null ? 'n/a' : observedSeedRatio.toFixed(2)}`,
   `- OpenAPI imported URL count: ${openApiAddedCount ?? 'unknown'}`,
   `- Spider discovered URL count: ${spiderFoundCount ?? 'unknown'}`,
   '',
@@ -108,4 +137,4 @@ if (apiUris.size > 0) {
 
 const body = lines.join('\n');
 process.stdout.write(body);
-process.exit(apiUris.size >= 1 ? 0 : 1);
+process.exit(success ? 0 : 1);

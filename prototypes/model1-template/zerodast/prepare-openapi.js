@@ -67,6 +67,7 @@ const output = {
   helperImage: scanConfig?.helperImage,
   mode,
   modeConfig,
+  reporting: config.reporting || {},
   scannerBaseRoot,
   scannerBasePath,
   scannerBaseUrl,
