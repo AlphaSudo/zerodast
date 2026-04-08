@@ -23,6 +23,7 @@
   - `benchmarks/petclinic/verify-t4.js`
   - git-ignored `benchmarks/petclinic/out/` artifact folder for runner output
 - Files modified: No target-repository files modified; benchmark result sheet updated in ZeroDAST only
+- Conventional baseline runbook: `docs/benchmarks/petclinic-t5-runbook.md`
 - Auth/bootstrap changes: None in T1/T2/T3/T4 because the default path is unauthenticated; basic-auth variant remains a later extension scenario
 - Scan policy changes:
   - T1 and T2 used a minimal Automation Framework plan with `/petclinic` base-path scoping, short spider/passive wait, bounded active scan, and a runner-side OpenAPI compatibility shim for cached ZAP `2.16.0`
