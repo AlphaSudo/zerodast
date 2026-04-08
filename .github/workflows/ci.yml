@@ -19,6 +19,7 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
         with:
           fetch-depth: 0
+          filter: blob:none
 
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -61,8 +62,17 @@ jobs:
             cp db/seed/overlay.sql artifacts/overlay.sql
           fi
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build demo image
-        run: docker build -t zerodast-demo-app:${{ github.event.pull_request.head.sha }} demo-app
+        uses: docker/build-push-action@v6
+        with:
+          context: ./demo-app
+          load: true
+          tags: zerodast-demo-app:${{ github.event.pull_request.head.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Save demo image
         run: docker save zerodast-demo-app:${{ github.event.pull_request.head.sha }} -o artifacts/demo-app.tar

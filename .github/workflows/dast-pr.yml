@@ -49,6 +49,12 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: artifacts
 
+      - name: Cache pglast wheel
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pglast-7.13-${{ runner.os }}
+
       - name: Install overlay validator dependency
         run: python3 -m pip install pglast==7.13
 
@@ -60,8 +66,10 @@ jobs:
 
       - name: Pre-pull trusted images
         run: |
-          docker pull postgres:16-alpine
-          docker pull zaproxy/zap-stable:2.17.0
+          docker pull postgres:16-alpine &
+          docker pull zaproxy/zap-stable:2.17.0 &
+          docker pull node:20-alpine &
+          wait
 
       - name: Load demo image
         run: docker load -i artifacts/demo-app.tar
@@ -187,10 +195,3 @@ jobs:
                 body,
               });
             }
-
-
-
-
-
-
-

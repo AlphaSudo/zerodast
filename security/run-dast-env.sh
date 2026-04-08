@@ -51,6 +51,10 @@ host_path() {
   fi
 }
 
+next_delay() {
+  awk -v value="$1" 'BEGIN { value = value * 1.5; if (value > 3) value = 3; printf "%.3f", value }'
+}
+
 bootstrap_auth_inside_app() {
   engine exec \
     -e BOOTSTRAP_EMAIL="$AUTH_BOOTSTRAP_EMAIL" \
@@ -67,12 +71,13 @@ cleanup() {
 trap cleanup EXIT
 
 wait_for_db() {
-  local attempt
+  local attempt delay=0.2
   for attempt in $(seq 1 "$DB_WAIT_ATTEMPTS"); do
     if engine exec "$DB_CONTAINER" pg_isready -U testuser -d testdb >/dev/null 2>&1; then
       return 0
     fi
-    sleep 2
+    sleep "$delay"
+    delay="$(next_delay "$delay")"
   done
   echo "Database did not become ready in time" >&2
   return 1
@@ -86,12 +91,13 @@ seed_sql_file() {
 }
 
 wait_for_app() {
-  local attempt
+  local attempt delay=0.2
   for attempt in $(seq 1 "$APP_WAIT_ATTEMPTS"); do
     if engine exec "$APP_CONTAINER" wget -qO- "http://127.0.0.1:8080${APP_HEALTH_PATH}" >/dev/null 2>&1; then
       return 0
     fi
-    sleep 2
+    sleep "$delay"
+    delay="$(next_delay "$delay")"
   done
   echo "Application did not become healthy in time" >&2
   return 1
@@ -161,7 +167,7 @@ if [[ -n "${AUTH_TOKEN:-}" ]]; then
   echo "Auth token obtained (${#AUTH_TOKEN} chars), baking into ZAP config"
   sed "s|\${AUTH_TOKEN}|${AUTH_TOKEN}|g" "$ZAP_CONFIG_PATH" > "$ZAP_RUNTIME_CONFIG"
 else
-  echo "WARNING: AUTH_TOKEN is empty — authenticated endpoints will return 401" >&2
+  echo "WARNING: AUTH_TOKEN is empty - authenticated endpoints will return 401" >&2
   cp "$ZAP_CONFIG_PATH" "$ZAP_RUNTIME_CONFIG"
 fi
 HOST_ZAP_RUNTIME_PATH="$(host_path "$ZAP_RUNTIME_CONFIG")"
@@ -202,4 +208,3 @@ fi
 if [[ -n "$POST_SCAN_SCRIPT" ]]; then
   APP_URL="$POST_SCAN_APP_URL" bash "$POST_SCAN_SCRIPT"
 fi
-
