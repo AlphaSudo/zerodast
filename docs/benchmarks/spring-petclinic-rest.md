@@ -40,6 +40,7 @@
 | T2 | Low | ~243s with structured artifacts and summary output | Pending | N/A (unauthenticated baseline) | Moderate operationally, still low semantically; summary/metrics/report were generated cleanly but API alert URI count remained `0` | Low to moderate | Partial |
 | T3 | Moderate | ~400s with isolated app + scanner runtime and seeded API requests | Pending | N/A (unauthenticated baseline) | Moderate; API alert URI count improved from `0` to `1`, and API-seeded request coverage produced an additional API-side signal | Moderate to high | Partial but clearly better |
 | T4 | Moderate in CI | 145s initial run, 209s clean rerun | Pending | N/A (unauthenticated baseline) | Strongest so far; CI artifact package included raw/sanitized spec copies, generated request list, automation plan, report, metrics, and verification summary | High | Successful full CI-backed demonstration |
+| T5 | Low to moderate | Pending | Pending | N/A (unauthenticated baseline) | Pending; benchmark-only conventional baseline implemented as a target-repo-local GitHub Actions ZAP API scan workflow | Moderate | Implemented, run pending |
 
 ## Findings Summary
 - High-level result:
@@ -62,6 +63,10 @@
   - seeded request count: `15`
   - API alert URIs observed: `1`
   - API-side alert instance seen on `http://petclinic-t3-app:9966/petclinic/api/owners/1/pets` locally and `http://petclinic-t4-app:9966/petclinic/api/owners/1/pets` in CI
+- T5 implementation evidence:
+  - benchmark-only conventional baseline is implemented in a fresh Petclinic clone
+  - baseline shape is a single in-repo workflow using the official ZAP API Scan action
+  - local sanity validation passed for the repo's normal `./mvnw ... package -> java -jar target/*.jar` startup path and OpenAPI endpoint
 - T4 artifact evidence:
   - raw spec mode on ZAP `2.17.0`
   - initial cold run duration: `145s`

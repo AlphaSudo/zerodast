@@ -94,6 +94,22 @@ This is a recognizable mainstream baseline:
 - easy to compare against `T4`
 - not artificially weak
 
+## Implementation Choice
+
+The first concrete Petclinic `T5` implementation uses:
+- a fresh benchmark-only clone at the frozen Petclinic SHA
+- a single target-repo-local GitHub Actions workflow: `.github/workflows/zap-api-scan.yml`
+- the documented Maven/JAR startup path
+- the official ZAP API Scan GitHub Action against `http://localhost:9966/petclinic/v3/api-docs`
+
+This keeps the baseline conventional:
+- no external orchestrator repo
+- no trusted/untrusted workflow split
+- no ZeroDAST helper folder inside the target repo
+- no benchmark-specific runner abstraction disguised as “normal CI”
+
+The workflow footprint is intentionally small so the comparison against `T4` remains about real tradeoffs, not about us padding the baseline.
+
 ## What T5 Should Measure Against T4
 
 The benchmark comparison should focus on:
