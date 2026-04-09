@@ -61,6 +61,7 @@ Current workflow set under [.github/workflows](C:/Java%20Developer/DAST/.github/
 - [dast-pr.yml](C:/Java%20Developer/DAST/.github/workflows/dast-pr.yml)
 - [dast-nightly.yml](C:/Java%20Developer/DAST/.github/workflows/dast-nightly.yml)
 - [auth-adapter-smoke.yml](C:/Java%20Developer/DAST/.github/workflows/auth-adapter-smoke.yml)
+- [django-auth-profile.yml](C:/Java%20Developer/DAST/.github/workflows/django-auth-profile.yml)
 - [petclinic-t4-metadata.yml](C:/Java%20Developer/DAST/.github/workflows/petclinic-t4-metadata.yml)
 - [petclinic-t4-scan.yml](C:/Java%20Developer/DAST/.github/workflows/petclinic-t4-scan.yml)
 - [fullstack-fastapi-t4-metadata.yml](C:/Java%20Developer/DAST/.github/workflows/fullstack-fastapi-t4-metadata.yml)

@@ -112,6 +112,7 @@ This target should answer:
 - auth/profile review: initial pass complete
 - benchmark implementation: started
 - external auth-profile proof: complete
+- CI auth-profile workflow: implemented, not yet proven
 
 ## Current Proof
 

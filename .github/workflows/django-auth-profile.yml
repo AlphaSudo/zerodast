@@ -1,0 +1,51 @@
+name: Django Auth Profile
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/django-auth-profile.yml'
+      - 'benchmarks/django-styleguide-example/**'
+      - 'docs/benchmarks/django-styleguide-example.md'
+      - 'docs/CHECKMARX_PARITY_CHECKLIST.md'
+      - 'docs/CURRENT_CAPABILITIES.md'
+      - 'scripts/auth-adapters/json-session-login.sh'
+
+jobs:
+  django-auth-profile:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout ZeroDAST
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          fetch-depth: 1
+
+      - name: Clone frozen Django target
+        env:
+          TARGET_SHA: a70ef43d7df03706c1211d4fcfd70b4b0120ba1e
+        run: |
+          git init django-styleguide-benchmark
+          cd django-styleguide-benchmark
+          git remote add origin https://github.com/HackSoftware/Django-Styleguide-Example.git
+          git fetch --depth 1 origin "$TARGET_SHA"
+          git checkout --detach FETCH_HEAD
+
+      - name: Run Django auth profile
+        env:
+          TARGET_DIR: ${{ github.workspace }}/django-styleguide-benchmark
+          CONTAINER_ENGINE_BIN: docker
+        run: bash benchmarks/django-styleguide-example/run-auth-profile.sh
+
+      - name: Write step summary
+        run: cat benchmarks/django-styleguide-example/out/auth-profile/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Django auth profile artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: django-auth-profile
+          path: |
+            benchmarks/django-styleguide-example/out/auth-profile/summary.md
+            benchmarks/django-styleguide-example/out/auth-profile/metrics.json
