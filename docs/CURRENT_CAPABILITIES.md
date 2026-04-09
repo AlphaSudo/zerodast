@@ -79,6 +79,7 @@ Current script/runtime surface:
 - [delta-detect.sh](C:/Java%20Developer/DAST/scripts/delta-detect.sh)
 - [generate-delta-scan.sh](C:/Java%20Developer/DAST/scripts/generate-delta-scan.sh)
 - [parse-zap-report.js](C:/Java%20Developer/DAST/scripts/parse-zap-report.js)
+- [build-request-seeds.js](C:/Java%20Developer/DAST/scripts/build-request-seeds.js)
 - [run-dast-local.sh](C:/Java%20Developer/DAST/scripts/run-dast-local.sh)
 
 ### 3. Model 1 Prototype Surface
@@ -290,12 +291,33 @@ Implemented.
 
 ### What exists
 - changed-file route extraction in [delta-detect.sh](C:/Java%20Developer/DAST/scripts/delta-detect.sh)
+- route-aware request seed generation in [build-request-seeds.js](C:/Java%20Developer/DAST/scripts/build-request-seeds.js)
 - delta-scan config generation in [generate-delta-scan.sh](C:/Java%20Developer/DAST/scripts/generate-delta-scan.sh)
 
 ### What it supports today
 - route regex extraction from common route/controller file patterns
+- whole-file route extraction when a route/controller file changes
+- scope-aware request seeding for:
+  - public routes
+  - authenticated user routes
+  - admin routes when the delta surface calls for them
 - fail-safe fallback to FULL scan when changes are too broad or unclear
 - PR lane generation of reduced-scope scan configs
+
+### What is proven today
+The core repo now has GitHub-side evidence that a route-file PR delta can:
+- run in `DELTA` mode
+- generate bounded requestor traffic for the changed surface
+- observe all reported delta endpoints in the PR summary artifact
+
+Most recent proof point:
+- search-route smoke PR reported:
+  - `Delta endpoint count: 2`
+  - `Delta endpoints observed: 2`
+  - `Delta endpoints not observed: 0`
+  - observed endpoints:
+    - `/api/search`
+    - `/api/search/preview`
 
 ### Current limitation
 This is useful and real, but not a full AST-grade route analysis system.
@@ -312,6 +334,13 @@ Implemented.
 
 ### What this means
 ZeroDAST already has result interpretation and GitHub feedback loops, not just report files.
+
+### What the current summaries include
+The PR/nightly summary path now distinguishes:
+- route exercise vs alert-bearing signal
+- authenticated requestor reach vs public requestor reach
+- admin requestor reach when present
+- delta endpoint observation when delta metadata is available
 
 ## L. External-Repo T4 Demonstrations
 

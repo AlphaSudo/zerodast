@@ -31,15 +31,28 @@ It is scoped to the realistic target already defined there:
 
 ## Phase 2: Scan-Quality Uplift Without PR Regression
 
-- [ ] Improve delta-to-route mapping quality
-- [ ] Improve request seeding from OpenAPI and changed endpoints
+- [x] Improve delta-to-route mapping quality
+- [x] Improve request seeding from OpenAPI and changed endpoints
 - [ ] Add stronger per-profile scan budget controls
-- [ ] Distinguish route exercise from alert-bearing signal in summaries
-- [ ] Distinguish authenticated route exercise from unauthenticated reach
-- [ ] Improve artifact summaries for fast PR triage
+- [x] Distinguish route exercise from alert-bearing signal in summaries
+- [x] Distinguish authenticated route exercise from unauthenticated reach
+- [x] Improve artifact summaries for fast PR triage
 - [ ] Re-run at least two external targets with the new scan-quality model
 - [ ] Compare signal uplift vs timing impact
 - [ ] Update benchmark docs with the new evidence
+
+### Phase 2 progress note
+- Proven on PR #39 smoke run:
+  - `Delta mode: DELTA`
+  - `Delta endpoint count: 2`
+  - `Delta endpoints observed: 2`
+  - `Delta endpoints not observed: 0`
+  - observed delta endpoints:
+    - `/api/search`
+    - `/api/search/preview`
+  - PR duration remained bounded:
+    - `CI Tests`: `1m 4s`
+    - `DAST PR Scan`: `2m 43s`
 
 ### Phase 2 exit
 - [x] PR remains under 10 minutes
