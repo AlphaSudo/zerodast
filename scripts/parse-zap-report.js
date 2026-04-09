@@ -13,6 +13,7 @@ const counts = {
 };
 const reportDir = path.dirname(reportPath);
 const logPath = path.join(reportDir, "zap-run.log");
+const inventoryJsonPath = path.join(reportDir, "api-inventory.json");
 const deltaPath = path.join("artifacts", "delta-endpoints.txt");
 const alertUris = new Set();
 const requestorUrls = new Set();
@@ -178,6 +179,19 @@ const markdown = [
 ].join("\n");
 
 console.log(markdown);
+
+if (fs.existsSync(inventoryJsonPath)) {
+  const inventory = JSON.parse(fs.readFileSync(inventoryJsonPath, "utf8"));
+  console.log("");
+  console.log("## API Inventory");
+  console.log("");
+  console.log(`- OpenAPI route count: ${inventory.counts.openApiRouteCount}`);
+  console.log(`- OpenAPI operation count: ${inventory.counts.openApiOperationCount}`);
+  console.log(`- OpenAPI imported URL count: ${inventory.counts.openApiImportedUrlCount}`);
+  console.log(`- Spider discovered URL count: ${inventory.counts.spiderDiscoveredUrlCount}`);
+  console.log(`- Observed OpenAPI routes: ${inventory.counts.observedSpecRouteCount}`);
+  console.log(`- Unobserved OpenAPI routes: ${inventory.counts.unobservedSpecRouteCount}`);
+}
 
 if (delta.mode === "DELTA") {
   if (delta.endpoints.length > 0) {

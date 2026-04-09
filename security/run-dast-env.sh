@@ -47,6 +47,10 @@ DB_WAIT_ATTEMPTS="${DB_WAIT_ATTEMPTS:-30}"
 APP_WAIT_ATTEMPTS="${APP_WAIT_ATTEMPTS:-30}"
 SKIP_ZAP_RUN="${SKIP_ZAP_RUN:-false}"
 ZAP_EXIT=0
+OPENAPI_SPEC_URL="${OPENAPI_SPEC_URL:-${AUTH_BOOTSTRAP_URL:-http://127.0.0.1:8080}/v3/api-docs}"
+OPENAPI_SPEC_PATH="${OPENAPI_SPEC_PATH:-$REPORTS_DIR/openapi-spec.json}"
+API_INVENTORY_JSON_PATH="${API_INVENTORY_JSON_PATH:-$REPORTS_DIR/api-inventory.json}"
+API_INVENTORY_MD_PATH="${API_INVENTORY_MD_PATH:-$REPORTS_DIR/api-inventory.md}"
 
 engine() {
   if [[ "$ENGINE_BIN" == *.exe ]]; then
@@ -67,6 +71,13 @@ host_path() {
 
 next_delay() {
   awk -v value="$1" 'BEGIN { value = value * 1.5; if (value > 3) value = 3; printf "%.3f", value }'
+}
+
+capture_openapi_spec_inside_app() {
+  local spec_path="$1"
+  local route_path="$2"
+
+  engine exec "$APP_CONTAINER" sh -lc "wget -qO- 'http://127.0.0.1:8080${route_path}'" > "$spec_path"
 }
 
 bootstrap_auth_token_inside_app() {
@@ -195,6 +206,13 @@ engine run -d --rm \
 echo "Started hardened app container: $APP_CONTAINER"
 wait_for_app
 
+if [[ -n "${OPENAPI_SPEC_URL:-}" ]]; then
+  openapi_route_path="$(printf '%s' "$OPENAPI_SPEC_URL" | sed -E 's#^https?://[^/]+##')"
+  if [[ -n "${openapi_route_path:-}" ]]; then
+    capture_openapi_spec_inside_app "$OPENAPI_SPEC_PATH" "$openapi_route_path" >/dev/null 2>&1 || true
+  fi
+fi
+
 if [[ "$AUTH_BOOTSTRAP_MODE" == "app_container" ]]; then
   AUTH_HEADER_VALUE="Bearer $(bootstrap_auth_token_inside_app "$AUTH_BOOTSTRAP_EMAIL" "$AUTH_BOOTSTRAP_PASSWORD")"
   ADMIN_AUTH_HEADER_VALUE="Bearer $(bootstrap_auth_token_inside_app "$ADMIN_AUTH_BOOTSTRAP_EMAIL" "$ADMIN_AUTH_BOOTSTRAP_PASSWORD")"
@@ -301,6 +319,15 @@ if [[ "${ZAP_EXIT:-0}" -gt 3 ]]; then
 fi
 
 echo "ZAP finished with exit code ${ZAP_EXIT:-0}"
+
+if [[ -f "$REPORTS_DIR/zap-report.json" && -f "$REPORTS_DIR/zap-run.log" ]]; then
+  node "$WORKSPACE_DIR/scripts/build-api-inventory.js" \
+    "$REPORTS_DIR/zap-report.json" \
+    "$REPORTS_DIR/zap-run.log" \
+    "$OPENAPI_SPEC_PATH" \
+    "$API_INVENTORY_JSON_PATH" \
+    "$API_INVENTORY_MD_PATH"
+fi
 
 if [[ "$RUN_AUTHZ_NETWORK" == "true" ]]; then
   if [[ -n "$MOCK_DATA_SQL" && -f "$MOCK_DATA_SQL" ]]; then
