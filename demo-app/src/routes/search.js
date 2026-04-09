@@ -6,6 +6,7 @@ const { requireAuth } = require("../middleware/auth");
 const router = express.Router();
 
 
+
 /**
  * @openapi
  * /api/search:
