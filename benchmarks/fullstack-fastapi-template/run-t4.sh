@@ -16,6 +16,7 @@ HEALTH_URL="${API_BASE_URL}/utils/health-check/"
 API_DOCS_URL="${API_BASE_URL}/openapi.json"
 LOGIN_URL="${API_BASE_URL}/login/access-token"
 PROTECTED_URL="${API_BASE_URL}/users/me"
+ADMIN_ROUTE_URL="${API_BASE_URL}/users/?skip=0&limit=10"
 DOCS_URL="${SCANNER_BASE_ROOT}/docs"
 WORK_DIR="${REPORTS_DIR}/fullstack-fastapi-t4"
 RAW_SPEC="${WORK_DIR}/fullstack-fastapi-openapi-raw.json"
@@ -107,6 +108,21 @@ docker run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e "
     process.exit(1);
   });
 " "${PROTECTED_URL}" "${AUTH_TOKEN}" >/dev/null
+
+docker run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e "
+  const [url, token] = process.argv.slice(1);
+  fetch(url, { headers: { Authorization: 'Bearer ' + token } }).then(async (r) => {
+    if (!r.ok) {
+      const text = await r.text();
+      console.error(text);
+      process.exit(r.status || 1);
+    }
+    process.stdout.write(String(r.status));
+  }).catch((err) => {
+    console.error(err.message);
+    process.exit(1);
+  });
+" "${ADMIN_ROUTE_URL}" "${AUTH_TOKEN}" >/dev/null
 
 node "${GITHUB_WORKSPACE}/benchmarks/fullstack-fastapi-template/prepare-openapi.js" \
   "${RAW_SPEC}" \
@@ -221,10 +237,12 @@ cat > "${METRICS_PATH}" <<EOF
   "coldRunSeconds": ${cold_run_seconds},
   "authBootstrapStatus": 200,
   "protectedValidationStatus": 200,
+  "adminValidationStatus": 200,
   "seededRequestCount": ${seeded_count},
   "openApiImportedUrlCount": ${openapi_imported},
-  "spiderDiscoveredUrlCount": ${spider_found}
+  "spiderDiscoveredUrlCount": ${spider_found},
+  "adminRouteUrl": "${ADMIN_ROUTE_URL}"
 }
 EOF
 
-node "${GITHUB_WORKSPACE}/benchmarks/fullstack-fastapi-template/verify-t4.js" "${REPORT_PATH}" "${METRICS_PATH}" | tee "${VERIFY_PATH}"
+node "${GITHUB_WORKSPACE}/benchmarks/fullstack-fastapi-template/verify-t4.js" "${REPORT_PATH}" "${METRICS_PATH}" "${LOG_PATH}" | tee "${VERIFY_PATH}"

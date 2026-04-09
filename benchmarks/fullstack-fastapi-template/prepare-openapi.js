@@ -27,6 +27,7 @@ const requests = [
   { url: `${base}/login/test-token`, method: "POST" },
   { url: `${base}/users/me`, method: "GET" },
   { url: `${base}/users/?skip=0&limit=10`, method: "GET" },
+  { url: `${base}/users/?skip=10&limit=5`, method: "GET" },
   { url: `${base}/items/?skip=0&limit=10`, method: "GET" },
 ];
 

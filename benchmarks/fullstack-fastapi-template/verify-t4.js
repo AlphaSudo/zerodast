@@ -1,17 +1,20 @@
 const fs = require("fs");
 
-const [reportPath, metricsPath] = process.argv.slice(2);
+const [reportPath, metricsPath, logPath] = process.argv.slice(2);
 
 if (!reportPath || !metricsPath) {
-  console.error("Usage: node verify-t4.js <reportPath> <metricsPath>");
+  console.error("Usage: node verify-t4.js <reportPath> <metricsPath> [logPath]");
   process.exit(1);
 }
 
 const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
 const metrics = JSON.parse(fs.readFileSync(metricsPath, "utf8"));
+const logText = logPath && fs.existsSync(logPath) ? fs.readFileSync(logPath, "utf8") : "";
 
 const alerts = [];
 const apiUris = new Set();
+const adminRouteUrl = metrics.adminRouteUrl || "";
+const adminRouteEvidence = new Set();
 
 for (const site of report.site || []) {
   for (const alert of site.alerts || []) {
@@ -24,6 +27,17 @@ for (const site of report.site || []) {
       if ((instance.uri || "").includes("/api/v1/")) {
         apiUris.add(instance.uri);
       }
+      if (adminRouteUrl && (instance.uri || "").includes(adminRouteUrl)) {
+        adminRouteEvidence.add(instance.uri);
+      }
+    }
+  }
+}
+
+if (adminRouteUrl) {
+  for (const line of logText.split(/\r?\n/)) {
+    if (line.includes("Job requestor requesting URL") && line.includes(adminRouteUrl)) {
+      adminRouteEvidence.add(line.trim());
     }
   }
 }
@@ -41,10 +55,12 @@ const lines = [
   `- Cold run seconds: ${metrics.coldRunSeconds}`,
   `- Auth bootstrap status: ${metrics.authBootstrapStatus}`,
   `- Protected route validation status: ${metrics.protectedValidationStatus}`,
+  `- Admin route validation status: ${metrics.adminValidationStatus ?? "unknown"}`,
   `- Seeded request count: ${metrics.seededRequestCount}`,
   `- OpenAPI imported URL count: ${metrics.openApiImportedUrlCount}`,
   `- Spider discovered URL count: ${metrics.spiderDiscoveredUrlCount}`,
   `- API alert URI count: ${apiUris.size}`,
+  `- Admin route exercised: ${adminRouteEvidence.size > 0 ? "yes" : "no"}`,
   "",
   "## Alerts",
   "",
@@ -58,6 +74,13 @@ if (apiUris.size > 0) {
   lines.push("", "## API URIs with Alert Instances", "");
   for (const uri of [...apiUris].sort()) {
     lines.push(`- ${uri}`);
+  }
+}
+
+if (adminRouteEvidence.size > 0) {
+  lines.push("", "## Admin Route Evidence", "");
+  for (const entry of [...adminRouteEvidence].sort()) {
+    lines.push(`- ${entry}`);
   }
 }
 
