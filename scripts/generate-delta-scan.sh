@@ -52,10 +52,9 @@ function printReplacer(description, tokenVar) {
   console.log('      deleteAllRules: true');
   console.log('    rules:');
   console.log(`      - description: "${description}"`);
-  console.log('        matchType: "REQ_HEADER_ADD"');
+  console.log('        matchType: "REQ_HEADER"');
   console.log('        matchString: "Authorization"');
-  console.log(`        replacement: "Bearer \${${tokenVar}}"`);
-  console.log('        enabled: true');
+  console.log(`        replacementString: "Bearer \${${tokenVar}}"`);
 }
 
 function printRequest(seed) {
