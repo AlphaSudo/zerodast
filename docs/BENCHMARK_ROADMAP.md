@@ -40,6 +40,12 @@ We are optimizing for honest proof, low-noise adaptation, and reusable engineeri
   - current role: first authenticated showcase candidate
   - benchmark goal: prove ZeroDAST on a non-Java auth-protected target with documented Docker/OpenAPI/JWT flows
 
+### Track D: Richer Auth Adapter Validation
+- Repo 4: `HackSoftware/Django-Styleguide-Example`
+  - frozen SHA: `a70ef43d7df03706c1211d4fcfd70b4b0120ba1e`
+  - current role: first external session/cookie auth adapter target
+  - benchmark goal: prove ZeroDAST beyond bearer-token-first flows on a public Django/DRF target with documented session, session-header, and JWT auth paths
+
 ## Guiding Principles
 
 - Keep target repositories clean.
@@ -246,6 +252,7 @@ Earn stronger external claims over time.
 2. Add `T5` as the fair conventional comparison layer for Petclinic and the authenticated FastAPI target.
 3. Keep EventDebug frozen as the stress-test benchmark until we need a second CI-backed proof or better real-repo success metrics.
 4. After T4/T5 comparisons exist, update README/public messaging to match the benchmark evidence.
+5. Start Repo 4 profiling and implementation as the first external Phase 3 auth-adapter benchmark.
 
 ## What "Done" Means For The Initial Benchmark
 
