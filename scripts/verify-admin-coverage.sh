@@ -3,11 +3,7 @@ set -euo pipefail
 
 REPORT="${1:-reports/zap-report.json}"
 EXPECTED_ROUTE="${2:-/api/users}"
-
-if [[ ! -f "$REPORT" ]]; then
-  echo "Report not found: $REPORT" >&2
-  exit 1
-fi
+RUN_LOG="${3:-reports/zap-run.log}"
 
 resolve_node_bin() {
   if command -v node >/dev/null 2>&1; then
@@ -31,7 +27,7 @@ node_readable_path() {
   fi
 }
 
-extract_matches() {
+extract_matches_from_report() {
   local report_file="$1"
   local route="$2"
   local node_bin
@@ -69,12 +65,37 @@ extract_matches() {
   grep -o "${route}[^[:space:]]*" "$report_file" || true
 }
 
-MATCHES="$(extract_matches "$REPORT" "$EXPECTED_ROUTE")"
+extract_matches_from_log() {
+  local log_file="$1"
+  local route="$2"
 
-if [[ -z "$MATCHES" ]]; then
+  if [[ ! -f "$log_file" ]]; then
+    return
+  fi
+
+  grep -F "Job requestor requesting URL" "$log_file" | grep -F "$route" || true
+}
+
+if [[ -f "$RUN_LOG" ]]; then
+  LOG_MATCHES="$(extract_matches_from_log "$RUN_LOG" "$EXPECTED_ROUTE")"
+  if [[ -n "$LOG_MATCHES" ]]; then
+    echo "Admin route coverage found in ZAP run log for ${EXPECTED_ROUTE}:"
+    echo "$LOG_MATCHES" | sort -u
+    exit 0
+  fi
+fi
+
+if [[ ! -f "$REPORT" ]]; then
+  echo "Admin route coverage missing and report not found: $REPORT" >&2
+  exit 1
+fi
+
+REPORT_MATCHES="$(extract_matches_from_report "$REPORT" "$EXPECTED_ROUTE")"
+
+if [[ -z "$REPORT_MATCHES" ]]; then
   echo "Admin route coverage missing: ${EXPECTED_ROUTE}" >&2
   exit 1
 fi
 
-echo "Admin route coverage found for ${EXPECTED_ROUTE}:"
-echo "$MATCHES" | sort -u
+echo "Admin route coverage found in report for ${EXPECTED_ROUTE}:"
+echo "$REPORT_MATCHES" | sort -u

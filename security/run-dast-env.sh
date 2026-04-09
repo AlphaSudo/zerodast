@@ -198,7 +198,10 @@ else
   cp "$ZAP_CONFIG_PATH" "$ZAP_RUNTIME_CONFIG"
 fi
 HOST_ZAP_RUNTIME_PATH="$(host_path "$ZAP_RUNTIME_CONFIG")"
+ZAP_RUN_LOG="$REPORTS_DIR/zap-run.log"
+rm -f "$ZAP_RUN_LOG" 2>/dev/null || true
 
+set +e
 engine run --rm \
   --network "$NETWORK_NAME" \
   --name "$ZAP_CONTAINER" \
@@ -209,7 +212,9 @@ engine run --rm \
   zap.sh -cmd -autorun /zap/wrk/config.yaml \
   -config check.onstart=false \
   -config api.disablekey=true \
-  || ZAP_EXIT=$?
+  2>&1 | tee "$ZAP_RUN_LOG"
+ZAP_EXIT=${PIPESTATUS[0]}
+set -e
 
 if [[ "${ZAP_EXIT:-0}" -gt 3 ]]; then
   echo "ZAP crashed with exit code $ZAP_EXIT" >&2
