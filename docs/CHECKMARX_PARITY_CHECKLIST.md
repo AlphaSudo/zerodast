@@ -17,7 +17,7 @@ It is scoped to the realistic target already defined there:
 - [x] Update PR profile to include bounded role-aware auth proof
 - [x] Update nightly profile to include richer role-aware coverage
 - [x] Prove the feature on the built-in demo app
-- [ ] Prove the feature on at least one external target with privileged/admin routes
+- [x] Prove the feature on at least one external target with privileged/admin routes
 - [x] Re-measure PR timing impact
 - [x] Re-measure nightly timing impact
 - [x] Update capability docs after implementation
@@ -25,7 +25,7 @@ It is scoped to the realistic target already defined there:
 ### Phase 1 exit
 - [x] PR remains under 10 minutes
 - [x] Nightly remains under 15 minutes
-- [ ] Authenticated + admin path coverage is proven, not assumed
+- [x] Authenticated + admin path coverage is proven, not assumed
 
 ---
 
