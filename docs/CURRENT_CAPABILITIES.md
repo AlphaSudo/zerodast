@@ -243,6 +243,10 @@ The core runtime supports auth bootstrap and auth-header injection:
   - `GET /api/auth/me/`
   - `GET /api/users/`
   on a public non-demo repo in about `26s`
+- that same external auth profile is now also proven in CI:
+  - `Django Auth Profile #1`
+  - `92s`
+  - bootstrap, protected-route validation, and admin-route validation all returned `200`
 
 ### Important limitation
 This is still **adapter-shaped authenticated coverage**, not full enterprise auth parity.

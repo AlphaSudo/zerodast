@@ -112,7 +112,7 @@ This target should answer:
 - auth/profile review: initial pass complete
 - benchmark implementation: started
 - external auth-profile proof: complete
-- CI auth-profile workflow: implemented, not yet proven
+- CI auth-profile workflow: proven
 
 ## Current Proof
 
@@ -142,6 +142,14 @@ Measured result from the first successful local run:
 - protected route validation status: `200`
 - admin route validation status: `200`
 - cold run seconds: `26`
+
+Measured result from the first successful CI run:
+
+- workflow: `Django Auth Profile #1`
+- auth bootstrap status: `200`
+- protected route validation status: `200`
+- admin route validation status: `200`
+- cold run seconds: `92`
 
 What this does and does not mean:
 

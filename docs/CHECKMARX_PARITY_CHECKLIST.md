@@ -107,6 +107,11 @@ It is scoped to the realistic target already defined there:
     - `Authorization: Session <sessionid>`
   - local cold run:
     - `26s`
+  - CI proof:
+    - `Django Auth Profile #1`: `92s`
+    - auth bootstrap status: `200`
+    - protected route validation status: `200`
+    - admin route validation status: `200`
   - this proves one non-demo external richer-auth path, but not yet two
 
 ### Phase 3 exit
