@@ -80,11 +80,23 @@ jobs:
       - name: Prepare post-scan hook
         run: |
           first_line=$(head -n 1 artifacts/delta-endpoints.txt | tr -d '\r')
+          require_admin=false
+          if [ "$first_line" = "FULL" ] || grep -Eq '^/api/users(/|$|:)' artifacts/delta-endpoints.txt; then
+            require_admin=true
+          fi
           cat <<'EOF' > /tmp/post-scan.sh
           #!/usr/bin/env bash
           set -euo pipefail
+          EOF
+          if [ "$require_admin" = "true" ]; then
+            cat <<'EOF' >> /tmp/post-scan.sh
           bash scripts/verify-admin-coverage.sh reports/zap-report.json
           EOF
+          else
+            cat <<'EOF' >> /tmp/post-scan.sh
+          echo "Skipping admin route coverage verification for non-admin delta scope"
+          EOF
+          fi
           if [ "$first_line" = "FULL" ]; then
             cat <<'EOF' >> /tmp/post-scan.sh
             bash scripts/verify-canaries.sh reports/zap-report.json
