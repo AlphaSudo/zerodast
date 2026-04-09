@@ -8,6 +8,10 @@ ZAP_CONFIG_PATH="${ZAP_CONFIG_PATH:-${ROOT_DIR}/security/zap/automation.yaml}"
 ENGINE_BIN="${CONTAINER_ENGINE_BIN:-docker}"
 HOOK_FILE="$(mktemp)"
 
+if [[ "${FAST_AUTH_SMOKE:-false}" == "true" ]]; then
+  exec bash "$ROOT_DIR/scripts/run-auth-adapter-smoke.sh"
+fi
+
 engine() {
   if [[ "$ENGINE_BIN" == *.exe ]]; then
     MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" "$ENGINE_BIN" "$@"

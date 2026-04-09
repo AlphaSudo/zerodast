@@ -45,6 +45,7 @@ AUTHZ_SCRIPT_PATH="${AUTHZ_SCRIPT_PATH:-scripts/authz-tests.js}"
 EXPECT_IDOR="${EXPECT_IDOR:-true}"
 DB_WAIT_ATTEMPTS="${DB_WAIT_ATTEMPTS:-30}"
 APP_WAIT_ATTEMPTS="${APP_WAIT_ATTEMPTS:-30}"
+SKIP_ZAP_RUN="${SKIP_ZAP_RUN:-false}"
 ZAP_EXIT=0
 
 engine() {
@@ -207,6 +208,8 @@ elif [[ -n "$AUTH_BOOTSTRAP_SCRIPT" ]]; then
   fi
 elif [[ -n "$AUTH_ADAPTER_SCRIPT" ]]; then
   APP_URL="$AUTH_BOOTSTRAP_URL" \
+  ENGINE_BIN="$ENGINE_BIN" \
+  APP_CONTAINER="$APP_CONTAINER" \
   AUTH_OUTPUT_PATH="$AUTH_OUTPUT_PATH" \
   AUTH_BOOTSTRAP_EMAIL="$AUTH_BOOTSTRAP_EMAIL" \
   AUTH_BOOTSTRAP_PASSWORD="$AUTH_BOOTSTRAP_PASSWORD" \
@@ -245,6 +248,11 @@ fi
 if [[ ! -f "$ZAP_CONFIG_PATH" ]]; then
   echo "ZAP config not found: $ZAP_CONFIG_PATH" >&2
   exit 1
+fi
+
+if [[ "$SKIP_ZAP_RUN" == "true" ]]; then
+  echo "Skipping ZAP run after successful auth/bootstrap validation"
+  exit 0
 fi
 
 ZAP_RUNTIME_CONFIG="/tmp/zap-runtime-config.yaml"
