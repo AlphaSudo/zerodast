@@ -63,16 +63,32 @@ It is scoped to the realistic target already defined there:
 
 ## Phase 3: Richer Authentication Adapters
 
-- [ ] Define a reusable auth adapter interface
-- [ ] Add cookie/session auth support
+- [x] Define a reusable auth adapter interface
+- [x] Add cookie/session auth support
 - [ ] Add multi-step login scripting support
 - [ ] Add refresh-token/session-refresh handling
-- [ ] Separate simple seeded auth from richer enterprise-style auth adapters in config/docs
-- [ ] Improve protected-route validation before scan launch
+- [x] Separate simple seeded auth from richer enterprise-style auth adapters in config/docs
+- [x] Improve protected-route validation before scan launch
 - [ ] Prove at least three auth styles cleanly
 - [ ] Prove at least two non-demo external repos with nontrivial auth adapters
 - [ ] Keep browser-grade auth out of PR unless timing proves acceptable
 - [ ] Update capabilities and roadmap docs after implementation
+
+### Phase 3 progress note
+- Foundation proven in core CI:
+  - reusable auth header/value adapter contract added
+  - default JSON token adapter wired into PR/nightly/local runtime
+  - initial form/cookie adapter added as a first richer auth shape
+  - protected-route validation moved to adapter-provided headers
+  - admin-route validation moved to adapter-provided headers
+- CI proof:
+  - `CI Tests #13`: `1m 6s`
+  - `DAST PR Scan #13`: `3m 5s`
+  - `DAST Nightly #33`: `3m 8s`
+  - `DAST Nightly #34`: `4m 46s`
+- local developer-loop proof:
+  - fast auth-adapter smoke completed in about `46s`
+  - validates protected route bootstrap and admin route bootstrap without running ZAP
 
 ### Phase 3 exit
 - [x] PR remains under 10 minutes

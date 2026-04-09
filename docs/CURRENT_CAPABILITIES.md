@@ -72,6 +72,8 @@ Current script/runtime surface:
 - [run-dast-env.sh](C:/Java%20Developer/DAST/security/run-dast-env.sh)
 - [automation.yaml](C:/Java%20Developer/DAST/security/zap/automation.yaml)
 - [bootstrap-auth.sh](C:/Java%20Developer/DAST/scripts/bootstrap-auth.sh)
+- [json-token-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/json-token-login.sh)
+- [form-cookie-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/form-cookie-login.sh)
 - [authz-tests.sh](C:/Java%20Developer/DAST/scripts/authz-tests.sh)
 - [authz-tests.js](C:/Java%20Developer/DAST/scripts/authz-tests.js)
 - [verify-canaries.sh](C:/Java%20Developer/DAST/scripts/verify-canaries.sh)
@@ -81,6 +83,7 @@ Current script/runtime surface:
 - [parse-zap-report.js](C:/Java%20Developer/DAST/scripts/parse-zap-report.js)
 - [build-request-seeds.js](C:/Java%20Developer/DAST/scripts/build-request-seeds.js)
 - [run-dast-local.sh](C:/Java%20Developer/DAST/scripts/run-dast-local.sh)
+- [run-auth-adapter-smoke.sh](C:/Java%20Developer/DAST/scripts/run-auth-adapter-smoke.sh)
 
 ### 3. Model 1 Prototype Surface
 
@@ -205,26 +208,40 @@ The repo already has a real scanner policy layer with repeatable configuration a
 Implemented.
 
 ### What exists today
-The core runtime supports auth bootstrap and token injection:
+The core runtime supports auth bootstrap and auth-header injection:
 
 - default bootstrap credentials in [run-dast-env.sh](C:/Java%20Developer/DAST/security/run-dast-env.sh)
 - auth bootstrap script in [bootstrap-auth.sh](C:/Java%20Developer/DAST/scripts/bootstrap-auth.sh)
 - in-container auth bootstrap mode in [run-dast-env.sh](C:/Java%20Developer/DAST/security/run-dast-env.sh)
-- bearer token injection into ZAP config in [automation.yaml](C:/Java%20Developer/DAST/security/zap/automation.yaml)
+- adapter-driven auth header injection into ZAP config in [automation.yaml](C:/Java%20Developer/DAST/security/zap/automation.yaml)
+- default JSON token adapter in [json-token-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/json-token-login.sh)
+- initial form/cookie adapter in [form-cookie-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/form-cookie-login.sh)
+- fast local adapter smoke in [run-auth-adapter-smoke.sh](C:/Java%20Developer/DAST/scripts/run-auth-adapter-smoke.sh)
 
 ### What is proven in the repo's broader work
 - authenticated user-path scanning exists
 - external authenticated T4 work exists for FastAPI
 - auth bootstrap and protected-route validation have already been exercised in benchmark code paths
+- adapter-based PR/nightly CI execution is proven for the core demo app
+- local fast auth-adapter smoke is proven for the core demo app
 
 ### Important limitation
-This is **token-bootstrap-friendly authenticated coverage**, not full enterprise auth parity.
+This is still **adapter-shaped authenticated coverage**, not full enterprise auth parity.
 It does **not** currently mean:
 - SSO
 - SAML
 - OIDC enterprise federation
 - MFA/TOTP
 - browser-recorded login flows
+
+### What the adapter foundation means today
+The repo is no longer hardwired to only `Authorization: Bearer <token>` semantics in the runtime.
+Instead, the current runtime can:
+- obtain auth material from an adapter
+- pass header name/value pairs into ZAP replacers
+- validate protected/admin routes using adapter-provided headers
+
+That is a real Phase 3 foundation, but it is not yet the same as broad enterprise auth coverage.
 
 ## G. AuthZ / Ownership Regression Checks
 
