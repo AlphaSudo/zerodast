@@ -1,0 +1,41 @@
+name: Auth Adapter Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'demo-app/**'
+      - 'scripts/auth-adapters/**'
+      - 'scripts/run-auth-adapter-smoke.sh'
+      - 'scripts/run-cookie-adapter-smoke.sh'
+      - 'security/run-dast-env.sh'
+
+jobs:
+  auth-adapter-smoke:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        adapter:
+          - json-token-login.sh
+          - form-cookie-login.sh
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          fetch-depth: 1
+
+      - name: Pre-pull smoke images
+        run: |
+          docker pull postgres:16-alpine &
+          docker pull node:20-alpine &
+          wait
+
+      - name: Run auth adapter smoke
+        env:
+          CONTAINER_ENGINE_BIN: docker
+          AUTH_ADAPTER_SCRIPT: ${{ github.workspace }}/scripts/auth-adapters/${{ matrix.adapter }}
+        run: bash scripts/run-auth-adapter-smoke.sh
