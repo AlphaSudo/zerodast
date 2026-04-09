@@ -45,7 +45,7 @@ It already contains:
 | Full nightly scanning | Implemented |
 | External-repo T4 demonstrations | Implemented |
 | Model 1 in-repo prototype | Implemented |
-| Admin-path coverage in core repo | Not fully implemented |
+| Admin-path coverage in core repo | Implemented for the core demo-app CI path |
 | Complex enterprise auth (SSO/MFA/browser flows) | Not implemented |
 | GraphQL/SOAP/gRPC support | Not implemented |
 | Shadow API discovery | Not implemented |
@@ -75,6 +75,7 @@ Current script/runtime surface:
 - [authz-tests.sh](C:/Java%20Developer/DAST/scripts/authz-tests.sh)
 - [authz-tests.js](C:/Java%20Developer/DAST/scripts/authz-tests.js)
 - [verify-canaries.sh](C:/Java%20Developer/DAST/scripts/verify-canaries.sh)
+- [verify-admin-coverage.sh](C:/Java%20Developer/DAST/scripts/verify-admin-coverage.sh)
 - [delta-detect.sh](C:/Java%20Developer/DAST/scripts/delta-detect.sh)
 - [generate-delta-scan.sh](C:/Java%20Developer/DAST/scripts/generate-delta-scan.sh)
 - [parse-zap-report.js](C:/Java%20Developer/DAST/scripts/parse-zap-report.js)
@@ -244,25 +245,29 @@ These scripts validate user-to-user ownership / authz behavior, but they do **no
 ## H. Admin / Role-Aware Coverage
 
 ### Status
-Partially present in app code, not fully implemented end to end in the DAST system.
+Implemented for the core demo-app CI path.
 
 ### What exists today
 The demo app contains role-aware logic:
 - user role is carried in auth payloads in [demo-app/src/routes/auth.js](C:/Java%20Developer/DAST/demo-app/src/routes/auth.js)
 - admin-only route exists in [demo-app/src/routes/users.js](C:/Java%20Developer/DAST/demo-app/src/routes/users.js)
 
-### What is missing in the core DAST implementation
-ZeroDAST does **not** yet fully implement:
-- dedicated admin token bootstrap in core scan workflows
-- admin-specific ZAP request seeding
-- admin-route exercise verification in the core PR/nightly scan path
-- multi-role scan contracts in the main repo's current workflows
+The core DAST implementation now also includes:
+- dedicated admin token bootstrap in [run-dast-env.sh](C:/Java%20Developer/DAST/security/run-dast-env.sh)
+- admin token bootstrap in [bootstrap-auth.sh](C:/Java%20Developer/DAST/scripts/bootstrap-auth.sh)
+- admin-specific ZAP request seeding in [automation.yaml](C:/Java%20Developer/DAST/security/zap/automation.yaml)
+- bounded PR delta config support for the admin route in [generate-delta-scan.sh](C:/Java%20Developer/DAST/scripts/generate-delta-scan.sh)
+- post-scan admin-route exercise verification in [verify-admin-coverage.sh](C:/Java%20Developer/DAST/scripts/verify-admin-coverage.sh)
+- PR and nightly workflow enforcement in [dast-pr.yml](C:/Java%20Developer/DAST/.github/workflows/dast-pr.yml) and [dast-nightly.yml](C:/Java%20Developer/DAST/.github/workflows/dast-nightly.yml)
 
-### Current conclusion
-The repo currently has:
+### What is proven today
+The repo now has:
 - authenticated path coverage: **yes**
 - role-aware app surfaces: **yes**
-- end-to-end admin path coverage in the core DAST implementation: **not yet**
+- end-to-end admin path coverage in the core DAST implementation: **yes, for the built-in demo-app CI path**
+
+### Important limitation
+This is still a bounded role-aware implementation, not a complete generalized multi-role orchestration model for arbitrary external targets.
 
 ## I. Canary Verification
 
@@ -399,7 +404,7 @@ ZeroDAST is strongest today for:
 
 The current repo does **not** yet provide:
 
-- full admin-role scan coverage in the core demo-app CI path
+- generalized multi-role coverage beyond the bounded built-in admin-path contract
 - full enterprise authentication handling
 - browser automation or recorded login replay
 - SSO/SAML/OIDC/MFA support
@@ -428,9 +433,10 @@ ZeroDAST currently **does** implement:
 ### Current-state bottom line on auth/admin
 ZeroDAST currently **does** support:
 - authenticated path coverage
+- end-to-end admin path coverage in the core repo implementation for the built-in demo app
 
 ZeroDAST currently **does not yet fully support**:
-- end-to-end admin path coverage in the core repo implementation
+- generalized multi-role coverage across arbitrary target types
 
 ### Current-state bottom line on scope
 ZeroDAST is already a serious alpha security engineering system for:

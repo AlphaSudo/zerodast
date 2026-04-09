@@ -10,21 +10,21 @@ It is scoped to the realistic target already defined there:
 
 ## Phase 1: Role-Aware Auth Coverage
 
-- [ ] Confirm admin seed user exists in the demo path and can be bootstrapped in CI
-- [ ] Add dedicated admin token bootstrap alongside current user bootstrap
-- [ ] Add admin-only request seeding into the core scan config
-- [ ] Add post-scan verification that an admin-only route was actually exercised
-- [ ] Update PR profile to include bounded role-aware auth proof
-- [ ] Update nightly profile to include richer role-aware coverage
-- [ ] Prove the feature on the built-in demo app
+- [x] Confirm admin seed user exists in the demo path and can be bootstrapped in CI
+- [x] Add dedicated admin token bootstrap alongside current user bootstrap
+- [x] Add admin-only request seeding into the core scan config
+- [x] Add post-scan verification that an admin-only route was actually exercised
+- [x] Update PR profile to include bounded role-aware auth proof
+- [x] Update nightly profile to include richer role-aware coverage
+- [x] Prove the feature on the built-in demo app
 - [ ] Prove the feature on at least one external target with privileged/admin routes
-- [ ] Re-measure PR timing impact
-- [ ] Re-measure nightly timing impact
-- [ ] Update capability docs after implementation
+- [x] Re-measure PR timing impact
+- [x] Re-measure nightly timing impact
+- [x] Update capability docs after implementation
 
 ### Phase 1 exit
-- [ ] PR remains under 10 minutes
-- [ ] Nightly remains under 15 minutes
+- [x] PR remains under 10 minutes
+- [x] Nightly remains under 15 minutes
 - [ ] Authenticated + admin path coverage is proven, not assumed
 
 ---
@@ -42,8 +42,8 @@ It is scoped to the realistic target already defined there:
 - [ ] Update benchmark docs with the new evidence
 
 ### Phase 2 exit
-- [ ] PR remains under 10 minutes
-- [ ] Nightly remains under 15 minutes
+- [x] PR remains under 10 minutes
+- [x] Nightly remains under 15 minutes
 - [ ] Signal quality improves without flattening the time budget
 
 ---
@@ -62,8 +62,8 @@ It is scoped to the realistic target already defined there:
 - [ ] Update capabilities and roadmap docs after implementation
 
 ### Phase 3 exit
-- [ ] PR remains under 10 minutes
-- [ ] Nightly remains under 15 minutes
+- [x] PR remains under 10 minutes
+- [x] Nightly remains under 15 minutes
 - [ ] Auth support is materially broader than bearer-token-only flows
 
 ---
@@ -80,8 +80,8 @@ It is scoped to the realistic target already defined there:
 - [ ] Update benchmark docs with the improved API coverage model
 
 ### Phase 4 exit
-- [ ] PR remains under 10 minutes
-- [ ] Nightly remains under 15 minutes
+- [x] PR remains under 10 minutes
+- [x] Nightly remains under 15 minutes
 - [ ] API coverage improves materially on at least one hard target
 
 ---
@@ -99,8 +99,8 @@ It is scoped to the realistic target already defined there:
 - [ ] Update capability docs and comparison docs to reflect the new operator model
 
 ### Phase 5 exit
-- [ ] PR remains under 10 minutes
-- [ ] Nightly remains under 15 minutes
+- [x] PR remains under 10 minutes
+- [x] Nightly remains under 15 minutes
 - [ ] Multiple repos can be operated without ad hoc manual triage
 
 ---
