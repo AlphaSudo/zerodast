@@ -89,6 +89,12 @@ It is scoped to the realistic target already defined there:
 - local developer-loop proof:
   - fast auth-adapter smoke completed in about `46s`
   - validates protected route bootstrap and admin route bootstrap without running ZAP
+- dedicated adapter CI smoke proof:
+  - `Auth Adapter Smoke #1`: `23s`
+  - matrix-backed CI validation now exists for:
+    - `json-token-login.sh`
+    - `form-cookie-login.sh`
+  - both adapter shapes are CI-usable on the built-in demo target
 
 ### Phase 3 exit
 - [x] PR remains under 10 minutes

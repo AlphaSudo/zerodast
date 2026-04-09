@@ -60,6 +60,7 @@ Current workflow set under [.github/workflows](C:/Java%20Developer/DAST/.github/
 - [ci.yml](C:/Java%20Developer/DAST/.github/workflows/ci.yml)
 - [dast-pr.yml](C:/Java%20Developer/DAST/.github/workflows/dast-pr.yml)
 - [dast-nightly.yml](C:/Java%20Developer/DAST/.github/workflows/dast-nightly.yml)
+- [auth-adapter-smoke.yml](C:/Java%20Developer/DAST/.github/workflows/auth-adapter-smoke.yml)
 - [petclinic-t4-metadata.yml](C:/Java%20Developer/DAST/.github/workflows/petclinic-t4-metadata.yml)
 - [petclinic-t4-scan.yml](C:/Java%20Developer/DAST/.github/workflows/petclinic-t4-scan.yml)
 - [fullstack-fastapi-t4-metadata.yml](C:/Java%20Developer/DAST/.github/workflows/fullstack-fastapi-t4-metadata.yml)
@@ -84,6 +85,7 @@ Current script/runtime surface:
 - [build-request-seeds.js](C:/Java%20Developer/DAST/scripts/build-request-seeds.js)
 - [run-dast-local.sh](C:/Java%20Developer/DAST/scripts/run-dast-local.sh)
 - [run-auth-adapter-smoke.sh](C:/Java%20Developer/DAST/scripts/run-auth-adapter-smoke.sh)
+- [run-cookie-adapter-smoke.sh](C:/Java%20Developer/DAST/scripts/run-cookie-adapter-smoke.sh)
 
 ### 3. Model 1 Prototype Surface
 
@@ -217,6 +219,8 @@ The core runtime supports auth bootstrap and auth-header injection:
 - default JSON token adapter in [json-token-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/json-token-login.sh)
 - initial form/cookie adapter in [form-cookie-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/form-cookie-login.sh)
 - fast local adapter smoke in [run-auth-adapter-smoke.sh](C:/Java%20Developer/DAST/scripts/run-auth-adapter-smoke.sh)
+- fast local cookie adapter smoke in [run-cookie-adapter-smoke.sh](C:/Java%20Developer/DAST/scripts/run-cookie-adapter-smoke.sh)
+- dedicated adapter CI smoke in [auth-adapter-smoke.yml](C:/Java%20Developer/DAST/.github/workflows/auth-adapter-smoke.yml)
 
 ### What is proven in the repo's broader work
 - authenticated user-path scanning exists
@@ -224,6 +228,10 @@ The core runtime supports auth bootstrap and auth-header injection:
 - auth bootstrap and protected-route validation have already been exercised in benchmark code paths
 - adapter-based PR/nightly CI execution is proven for the core demo app
 - local fast auth-adapter smoke is proven for the core demo app
+- matrix-backed CI smoke proof exists for both built-in adapter shapes:
+  - JSON-token header path
+  - form/cookie session path
+- the built-in demo app now has a concrete session-cookie login path at `/api/auth/session-login`
 
 ### Important limitation
 This is still **adapter-shaped authenticated coverage**, not full enterprise auth parity.
