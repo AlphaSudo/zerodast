@@ -146,4 +146,79 @@ router.post("/api/auth/login", async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/auth/session-login:
+ *   post:
+ *     summary: Login and issue an authenticated session cookie
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/x-www-form-urlencoded:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: alice@test.local
+ *               password:
+ *                 type: string
+ *                 example: Test123!
+ *     responses:
+ *       200:
+ *         description: Authenticated session established
+ */
+router.post("/api/auth/session-login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "email and password are required" });
+    }
+
+    const result = await pool.query(
+      "SELECT id, email, name, password_hash, role FROM users WHERE email = $1",
+      [email]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(401).json({ error: `User ${email} does not exist` });
+    }
+
+    const user = result.rows[0];
+    const isValid = await bcrypt.compare(password, user.password_hash);
+
+    if (!isValid) {
+      return res.status(401).json({ error: `Password mismatch for ${email}` });
+    }
+
+    const token = signToken(user);
+    res.cookie("zerodast_session", token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: false,
+      path: "/",
+      maxAge: 60 * 60 * 1000,
+    });
+
+    return res.json({
+      session: "established",
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
 module.exports = router;

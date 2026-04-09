@@ -18,6 +18,7 @@ const port = Number(process.env.PORT || 8080);
 app.use(cors());
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 app.get("/v3/api-docs", (_req, res) => {
   res.json(swaggerSpec);

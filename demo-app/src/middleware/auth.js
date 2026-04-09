@@ -5,12 +5,21 @@ const JWT_SECRET =
 
 function requireAuth(req, res, next) {
   const header = req.headers.authorization;
+  const cookieHeader = req.headers.cookie || "";
+  let token = "";
 
-  if (!header || !header.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Missing or invalid Authorization header" });
+  if (header && header.startsWith("Bearer ")) {
+    token = header.slice("Bearer ".length);
+  } else {
+    const cookieMatch = cookieHeader.match(/(?:^|;\s*)zerodast_session=([^;]+)/);
+    if (cookieMatch) {
+      token = decodeURIComponent(cookieMatch[1]);
+    }
   }
 
-  const token = header.slice("Bearer ".length);
+  if (!token) {
+    return res.status(401).json({ error: "Missing or invalid authentication" });
+  }
 
   try {
     const payload = jwt.verify(token, JWT_SECRET);
