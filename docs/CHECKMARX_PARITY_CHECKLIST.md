@@ -95,6 +95,19 @@ It is scoped to the realistic target already defined there:
     - `json-token-login.sh`
     - `form-cookie-login.sh`
   - both adapter shapes are CI-usable on the built-in demo target
+- first external richer-auth proof:
+  - Django session-auth profile succeeded on `HackSoftware/Django-Styleguide-Example`
+  - new adapter:
+    - `json-session-login.sh`
+  - validated endpoints:
+    - `POST /api/auth/session/login/`
+    - `GET /api/auth/me/`
+    - `GET /api/users/`
+  - auth transport:
+    - `Authorization: Session <sessionid>`
+  - local cold run:
+    - `26s`
+  - this proves one non-demo external richer-auth path, but not yet two
 
 ### Phase 3 exit
 - [x] PR remains under 10 minutes

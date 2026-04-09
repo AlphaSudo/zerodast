@@ -75,6 +75,7 @@ Current script/runtime surface:
 - [bootstrap-auth.sh](C:/Java%20Developer/DAST/scripts/bootstrap-auth.sh)
 - [json-token-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/json-token-login.sh)
 - [form-cookie-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/form-cookie-login.sh)
+- [json-session-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/json-session-login.sh)
 - [authz-tests.sh](C:/Java%20Developer/DAST/scripts/authz-tests.sh)
 - [authz-tests.js](C:/Java%20Developer/DAST/scripts/authz-tests.js)
 - [verify-canaries.sh](C:/Java%20Developer/DAST/scripts/verify-canaries.sh)
@@ -86,6 +87,7 @@ Current script/runtime surface:
 - [run-dast-local.sh](C:/Java%20Developer/DAST/scripts/run-dast-local.sh)
 - [run-auth-adapter-smoke.sh](C:/Java%20Developer/DAST/scripts/run-auth-adapter-smoke.sh)
 - [run-cookie-adapter-smoke.sh](C:/Java%20Developer/DAST/scripts/run-cookie-adapter-smoke.sh)
+- [run-auth-profile.sh](C:/Java%20Developer/DAST/benchmarks/django-styleguide-example/run-auth-profile.sh)
 
 ### 3. Model 1 Prototype Surface
 
@@ -218,9 +220,11 @@ The core runtime supports auth bootstrap and auth-header injection:
 - adapter-driven auth header injection into ZAP config in [automation.yaml](C:/Java%20Developer/DAST/security/zap/automation.yaml)
 - default JSON token adapter in [json-token-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/json-token-login.sh)
 - initial form/cookie adapter in [form-cookie-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/form-cookie-login.sh)
+- JSON session adapter in [json-session-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/json-session-login.sh)
 - fast local adapter smoke in [run-auth-adapter-smoke.sh](C:/Java%20Developer/DAST/scripts/run-auth-adapter-smoke.sh)
 - fast local cookie adapter smoke in [run-cookie-adapter-smoke.sh](C:/Java%20Developer/DAST/scripts/run-cookie-adapter-smoke.sh)
 - dedicated adapter CI smoke in [auth-adapter-smoke.yml](C:/Java%20Developer/DAST/.github/workflows/auth-adapter-smoke.yml)
+- external Django auth-profile runner in [run-auth-profile.sh](C:/Java%20Developer/DAST/benchmarks/django-styleguide-example/run-auth-profile.sh)
 
 ### What is proven in the repo's broader work
 - authenticated user-path scanning exists
@@ -232,6 +236,12 @@ The core runtime supports auth bootstrap and auth-header injection:
   - JSON-token header path
   - form/cookie session path
 - the built-in demo app now has a concrete session-cookie login path at `/api/auth/session-login`
+- a first external Django/DRF session-auth proof exists using the repo-supported `Authorization: Session <sessionid>` transport
+- that external auth profile proved:
+  - `POST /api/auth/session/login/`
+  - `GET /api/auth/me/`
+  - `GET /api/users/`
+  on a public non-demo repo in about `26s`
 
 ### Important limitation
 This is still **adapter-shaped authenticated coverage**, not full enterprise auth parity.

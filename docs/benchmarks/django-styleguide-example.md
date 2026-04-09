@@ -110,4 +110,41 @@ This target should answer:
 - SHA frozen: yes
 - local clone created: yes
 - auth/profile review: initial pass complete
-- benchmark implementation: not started
+- benchmark implementation: started
+- external auth-profile proof: complete
+
+## Current Proof
+
+ZeroDAST now has an initial external auth-adapter proof on this repo.
+
+What was implemented:
+
+- core adapter:
+  - [json-session-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/json-session-login.sh)
+- benchmark runner:
+  - [run-auth-profile.sh](C:/Java%20Developer/DAST/benchmarks/django-styleguide-example/run-auth-profile.sh)
+
+What the local benchmark run proved:
+
+- session login worked on:
+  - `POST /api/auth/session/login/`
+- protected-route validation worked on:
+  - `GET /api/auth/me/`
+- additional protected API validation worked on:
+  - `GET /api/users/`
+- auth transport used:
+  - `Authorization: Session <sessionid>`
+
+Measured result from the first successful local run:
+
+- auth bootstrap status: `200`
+- protected route validation status: `200`
+- admin route validation status: `200`
+- cold run seconds: `26`
+
+What this does and does not mean:
+
+- it **does** prove ZeroDAST's adapter model can handle a public Django/DRF session-auth target without falling back to bearer-token-only assumptions
+- it **does** prove a non-demo external auth profile beyond the FastAPI bearer path
+- it does **not yet** prove a full Django benchmark tier such as `T3` or `T4`
+- it does **not yet** prove browser-cookie replay inside ZAP itself; the current proof uses the repo's supported `Authorization: Session <sessionid>` compatibility path
