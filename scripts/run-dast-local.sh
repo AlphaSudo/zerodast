@@ -38,6 +38,7 @@ HOST_BUILD_CONTEXT="$(host_path "$ROOT_DIR/demo-app")"
 cat > "$HOOK_FILE" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
+bash "$ROOT_DIR/scripts/verify-admin-coverage.sh" "$REPORTS_DIR/zap-report.json"
 bash "$ROOT_DIR/scripts/verify-canaries.sh" "$REPORTS_DIR/zap-report.json"
 EOF
 chmod +x "$HOOK_FILE"
@@ -52,6 +53,7 @@ MOCK_DATA_SQL="$ROOT_DIR/db/seed/mock_data.sql" \
 ZAP_CONFIG_PATH="$ZAP_CONFIG_PATH" \
 AUTH_BOOTSTRAP_MODE="app_container" \
 AUTH_TOKEN_PATH="/tmp/zap-auth-token.txt" \
+ADMIN_AUTH_TOKEN_PATH="/tmp/zap-auth-token-admin.txt" \
 POST_SCAN_SCRIPT="$HOOK_FILE" \
 REPORTS_DIR="$REPORTS_DIR" \
 APP_IMAGE="$APP_IMAGE" \

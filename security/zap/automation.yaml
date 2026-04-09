@@ -1,6 +1,7 @@
 env:
   vars:
     AUTH_TOKEN: "${AUTH_TOKEN}"
+    ADMIN_AUTH_TOKEN: "${ADMIN_AUTH_TOKEN}"
   contexts:
     - name: "zerodast-target"
       urls:
@@ -39,6 +40,29 @@ jobs:
         method: "GET"
       - url: "http://untrusted-app:8080/api/search/preview?q=test"
         method: "GET"
+
+  - type: replacer
+    parameters:
+      deleteAllRules: true
+    rules:
+      - description: "Admin auth token injection"
+        matchType: "REQ_HEADER"
+        matchString: "Authorization"
+        replacementString: "Bearer ${ADMIN_AUTH_TOKEN}"
+
+  - type: requestor
+    requests:
+      - url: "http://untrusted-app:8080/api/users"
+        method: "GET"
+
+  - type: replacer
+    parameters:
+      deleteAllRules: true
+    rules:
+      - description: "Restore user auth token injection"
+        matchType: "REQ_HEADER"
+        matchString: "Authorization"
+        replacementString: "Bearer ${AUTH_TOKEN}"
 
   - type: spider
     parameters:

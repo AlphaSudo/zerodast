@@ -83,6 +83,7 @@ jobs:
           cat <<'EOF' > /tmp/post-scan.sh
           #!/usr/bin/env bash
           set -euo pipefail
+          bash scripts/verify-admin-coverage.sh reports/zap-report.json
           EOF
           if [ "$first_line" = "FULL" ]; then
             cat <<'EOF' >> /tmp/post-scan.sh
@@ -100,6 +101,7 @@ jobs:
           ZAP_CONFIG_PATH: /tmp/zap-config.yaml
           AUTH_BOOTSTRAP_MODE: app_container
           AUTH_TOKEN_PATH: /tmp/zap-auth-token.txt
+          ADMIN_AUTH_TOKEN_PATH: /tmp/zap-auth-token-admin.txt
           RUN_AUTHZ_NETWORK: 'true'
           POST_SCAN_SCRIPT: /tmp/post-scan.sh
           REPORTS_DIR: ${{ github.workspace }}/reports

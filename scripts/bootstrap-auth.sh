@@ -4,6 +4,7 @@ set -euo pipefail
 APP_URL="${1:-${APP_URL:-http://untrusted-app:8080}}"
 ALICE_TOKEN_PATH="${ALICE_TOKEN_PATH:-/tmp/zap-auth-token.txt}"
 BOB_TOKEN_PATH="${BOB_TOKEN_PATH:-/tmp/zap-auth-token-bob.txt}"
+ADMIN_TOKEN_PATH="${ADMIN_TOKEN_PATH:-/tmp/zap-auth-token-admin.txt}"
 NODE_BIN="${NODE_BIN:-C:/Users/CM/AppData/Roaming/fnm/node-versions/v22.15.0/installation/node.exe}"
 
 extract_token() {
@@ -44,8 +45,10 @@ login_and_extract() {
 
 alice_token=$(login_and_extract 'alice@test.local' 'Test123!')
 bob_token=$(login_and_extract 'bob@test.local' 'Test123!')
+admin_token=$(login_and_extract 'admin@test.local' 'Test123!')
 
 printf '%s' "$alice_token" > "$ALICE_TOKEN_PATH"
 printf '%s' "$bob_token" > "$BOB_TOKEN_PATH"
+printf '%s' "$admin_token" > "$ADMIN_TOKEN_PATH"
 
 echo "Auth bootstrap complete"
