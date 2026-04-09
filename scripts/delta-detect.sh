@@ -7,13 +7,17 @@ CHANGED_FILES=$(git diff --name-only "${BASE_REF}...${HEAD_REF}")
 ROUTE_CHANGES=""
 CORE_CHANGED=false
 
+extract_routes_from_file() {
+  local file="$1"
+  grep -oE "(router|app)\.(get|post|put|delete|patch)\s*\(['\"][^'\"]+['\"]" "$file" \
+    | grep -oE "['\"][^'\"]+['\"]" \
+    | tr -d "'\"" || true
+}
+
 for file in $CHANGED_FILES; do
   case "$file" in
     */routes/*.js|*/routes/*.ts|*/controllers/*.js|*/controllers/*.py)
-      endpoints=$(git diff "${BASE_REF}...${HEAD_REF}" -- "$file" \
-        | grep -oE "\.(get|post|put|delete|patch)\s*\(['\"][^'\"]+['\"]" \
-        | grep -oE "['\"][^'\"]+['\"]" \
-        | tr -d "'\"") || true
+      endpoints=$(extract_routes_from_file "$file")
       ROUTE_CHANGES="$ROUTE_CHANGES $endpoints"
       ;;
     */middleware/*|*/db.*|*/index.js|*/app.js|Dockerfile|docker-compose*)
