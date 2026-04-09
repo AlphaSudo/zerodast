@@ -26,8 +26,10 @@ REQUEST_SEEDS_JSON="$("${NODE_BIN}" "${SCRIPT_DIR}/build-request-seeds.js" "$INP
 {
   echo 'env:'
   echo '  vars:'
-  echo '    AUTH_TOKEN: "${AUTH_TOKEN}"'
-  echo '    ADMIN_AUTH_TOKEN: "${ADMIN_AUTH_TOKEN}"'
+  echo '    AUTH_HEADER_NAME: "${AUTH_HEADER_NAME}"'
+  echo '    AUTH_HEADER_VALUE: "${AUTH_HEADER_VALUE}"'
+  echo '    ADMIN_AUTH_HEADER_NAME: "${ADMIN_AUTH_HEADER_NAME}"'
+  echo '    ADMIN_AUTH_HEADER_VALUE: "${ADMIN_AUTH_HEADER_VALUE}"'
   echo '  contexts:'
   echo '    - name: "zerodast-target"'
   echo "      urls: [\"${TARGET_URL}\"]"
@@ -46,15 +48,15 @@ REQUEST_SEEDS_JSON="$("${NODE_BIN}" "${SCRIPT_DIR}/build-request-seeds.js" "$INP
   REQUEST_SEEDS_JSON="$REQUEST_SEEDS_JSON" "${NODE_BIN}" - <<'EOF'
 const seeds = JSON.parse(process.env.REQUEST_SEEDS_JSON || "[]");
 
-function printReplacer(description, tokenVar) {
+function printReplacer(description, headerNameVar, headerValueVar) {
   console.log('  - type: replacer');
   console.log('    parameters:');
   console.log('      deleteAllRules: true');
   console.log('    rules:');
   console.log(`      - description: "${description}"`);
   console.log('        matchType: "REQ_HEADER"');
-  console.log('        matchString: "Authorization"');
-  console.log(`        replacementString: "Bearer \${${tokenVar}}"`);
+  console.log(`        matchString: "\${${headerNameVar}}"`);
+  console.log(`        replacementString: "\${${headerValueVar}}"`);
 }
 
 function printRequest(seed) {
@@ -73,21 +75,21 @@ for (const seed of publicSeeds) {
 }
 
 if (userSeeds.length > 0) {
-  printReplacer("Auth token injection", "AUTH_TOKEN");
+  printReplacer("Auth header injection", "AUTH_HEADER_NAME", "AUTH_HEADER_VALUE");
   for (const seed of userSeeds) {
     printRequest(seed);
   }
 }
 
 if (adminSeeds.length > 0) {
-  printReplacer("Admin auth token injection", "ADMIN_AUTH_TOKEN");
+  printReplacer("Admin auth header injection", "ADMIN_AUTH_HEADER_NAME", "ADMIN_AUTH_HEADER_VALUE");
   for (const seed of adminSeeds) {
     printRequest(seed);
   }
 }
 
 if (userSeeds.length > 0 && adminSeeds.length > 0) {
-  printReplacer("Restore user auth token injection", "AUTH_TOKEN");
+  printReplacer("Restore user auth header injection", "AUTH_HEADER_NAME", "AUTH_HEADER_VALUE");
 }
 EOF
   echo '  - type: passiveScan-wait'

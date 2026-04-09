@@ -22,12 +22,22 @@ APP_PORT_BIND="${APP_PORT_BIND:-127.0.0.1:8080:8080}"
 AUTH_BOOTSTRAP_SCRIPT="${AUTH_BOOTSTRAP_SCRIPT:-}"
 AUTH_BOOTSTRAP_URL="${AUTH_BOOTSTRAP_URL:-http://127.0.0.1:8080}"
 AUTH_BOOTSTRAP_MODE="${AUTH_BOOTSTRAP_MODE:-script}"
+AUTH_ADAPTER_SCRIPT="${AUTH_ADAPTER_SCRIPT:-$(pwd)/scripts/auth-adapters/json-token-login.sh}"
 AUTH_BOOTSTRAP_EMAIL="${AUTH_BOOTSTRAP_EMAIL:-alice@test.local}"
 AUTH_BOOTSTRAP_PASSWORD="${AUTH_BOOTSTRAP_PASSWORD:-Test123!}"
 ADMIN_AUTH_BOOTSTRAP_EMAIL="${ADMIN_AUTH_BOOTSTRAP_EMAIL:-admin@test.local}"
 ADMIN_AUTH_BOOTSTRAP_PASSWORD="${ADMIN_AUTH_BOOTSTRAP_PASSWORD:-Test123!}"
 AUTH_TOKEN_PATH="${AUTH_TOKEN_PATH:-/tmp/zap-auth-token.txt}"
 ADMIN_AUTH_TOKEN_PATH="${ADMIN_AUTH_TOKEN_PATH:-/tmp/zap-auth-token-admin.txt}"
+AUTH_OUTPUT_PATH="${AUTH_OUTPUT_PATH:-/tmp/zerodast-auth-material.env}"
+AUTH_HEADER_NAME="${AUTH_HEADER_NAME:-Authorization}"
+AUTH_HEADER_VALUE="${AUTH_HEADER_VALUE:-}"
+ADMIN_AUTH_HEADER_NAME="${ADMIN_AUTH_HEADER_NAME:-Authorization}"
+ADMIN_AUTH_HEADER_VALUE="${ADMIN_AUTH_HEADER_VALUE:-}"
+AUTH_PROTECTED_ROUTE_PATH="${AUTH_PROTECTED_ROUTE_PATH:-/api/documents}"
+AUTH_PROTECTED_ROUTE_EXPECTED_STATUS="${AUTH_PROTECTED_ROUTE_EXPECTED_STATUS:-200}"
+ADMIN_PROTECTED_ROUTE_PATH="${ADMIN_PROTECTED_ROUTE_PATH:-/api/users}"
+ADMIN_PROTECTED_ROUTE_EXPECTED_STATUS="${ADMIN_PROTECTED_ROUTE_EXPECTED_STATUS:-200}"
 POST_SCAN_SCRIPT="${POST_SCAN_SCRIPT:-}"
 POST_SCAN_APP_URL="${POST_SCAN_APP_URL:-$AUTH_BOOTSTRAP_URL}"
 RUN_AUTHZ_NETWORK="${RUN_AUTHZ_NETWORK:-false}"
@@ -70,12 +80,37 @@ bootstrap_auth_token_inside_app() {
 }
 
 validate_admin_route_inside_app() {
-  local admin_token="$1"
+  local header_name="$1"
+  local header_value="$2"
+  local route_path="$3"
+  local expected_status="$4"
 
   engine exec \
-    -e ADMIN_TOKEN="$admin_token" \
+    -e ROUTE_HEADER_NAME="$header_name" \
+    -e ROUTE_HEADER_VALUE="$header_value" \
+    -e ROUTE_PATH="$route_path" \
+    -e EXPECTED_STATUS="$expected_status" \
     "$APP_CONTAINER" \
-    node -e "fetch('http://127.0.0.1:8080/api/users', { headers: { Authorization: 'Bearer ' + process.env.ADMIN_TOKEN } }).then(async (response) => { const body = await response.text(); if (response.status !== 200) { console.error(body); process.exit(1); } process.stdout.write(String(response.status)); }).catch((error) => { console.error(error.stack || error.message); process.exit(1); });" >/dev/null
+    node -e "const headers = {}; if (process.env.ROUTE_HEADER_NAME && process.env.ROUTE_HEADER_VALUE) { headers[process.env.ROUTE_HEADER_NAME] = process.env.ROUTE_HEADER_VALUE; } fetch('http://127.0.0.1:8080' + process.env.ROUTE_PATH, { headers }).then(async (response) => { const body = await response.text(); if (String(response.status) !== String(process.env.EXPECTED_STATUS)) { console.error(body); process.exit(1); } process.stdout.write(String(response.status)); }).catch((error) => { console.error(error.stack || error.message); process.exit(1); });" >/dev/null
+}
+
+load_auth_material() {
+  local auth_file="$1"
+
+  if [[ ! -f "$auth_file" ]]; then
+    echo "Auth adapter did not produce output file: $auth_file" >&2
+    exit 1
+  fi
+
+  # shellcheck disable=SC1090
+  source "$auth_file"
+}
+
+legacy_token_from_header() {
+  local header_value="$1"
+  if [[ "$header_value" == Bearer\ * ]]; then
+    printf '%s\n' "${header_value#Bearer }"
+  fi
 }
 
 cleanup() {
@@ -160,25 +195,51 @@ echo "Started hardened app container: $APP_CONTAINER"
 wait_for_app
 
 if [[ "$AUTH_BOOTSTRAP_MODE" == "app_container" ]]; then
-  AUTH_TOKEN="$(bootstrap_auth_token_inside_app "$AUTH_BOOTSTRAP_EMAIL" "$AUTH_BOOTSTRAP_PASSWORD")"
-  ADMIN_AUTH_TOKEN="$(bootstrap_auth_token_inside_app "$ADMIN_AUTH_BOOTSTRAP_EMAIL" "$ADMIN_AUTH_BOOTSTRAP_PASSWORD")"
-  printf '%s' "$AUTH_TOKEN" > "$AUTH_TOKEN_PATH"
-  printf '%s' "$ADMIN_AUTH_TOKEN" > "$ADMIN_AUTH_TOKEN_PATH"
+  AUTH_HEADER_VALUE="Bearer $(bootstrap_auth_token_inside_app "$AUTH_BOOTSTRAP_EMAIL" "$AUTH_BOOTSTRAP_PASSWORD")"
+  ADMIN_AUTH_HEADER_VALUE="Bearer $(bootstrap_auth_token_inside_app "$ADMIN_AUTH_BOOTSTRAP_EMAIL" "$ADMIN_AUTH_BOOTSTRAP_PASSWORD")"
 elif [[ -n "$AUTH_BOOTSTRAP_SCRIPT" ]]; then
   APP_URL="$AUTH_BOOTSTRAP_URL" bash "$AUTH_BOOTSTRAP_SCRIPT" "$AUTH_BOOTSTRAP_URL"
   if [[ -f "$AUTH_TOKEN_PATH" ]]; then
-    AUTH_TOKEN=$(cat "$AUTH_TOKEN_PATH")
+    AUTH_HEADER_VALUE="Bearer $(cat "$AUTH_TOKEN_PATH")"
   fi
   if [[ -f "$ADMIN_AUTH_TOKEN_PATH" ]]; then
-    ADMIN_AUTH_TOKEN=$(cat "$ADMIN_AUTH_TOKEN_PATH")
+    ADMIN_AUTH_HEADER_VALUE="Bearer $(cat "$ADMIN_AUTH_TOKEN_PATH")"
   fi
+elif [[ -n "$AUTH_ADAPTER_SCRIPT" ]]; then
+  APP_URL="$AUTH_BOOTSTRAP_URL" \
+  AUTH_OUTPUT_PATH="$AUTH_OUTPUT_PATH" \
+  AUTH_BOOTSTRAP_EMAIL="$AUTH_BOOTSTRAP_EMAIL" \
+  AUTH_BOOTSTRAP_PASSWORD="$AUTH_BOOTSTRAP_PASSWORD" \
+  ADMIN_AUTH_BOOTSTRAP_EMAIL="$ADMIN_AUTH_BOOTSTRAP_EMAIL" \
+  ADMIN_AUTH_BOOTSTRAP_PASSWORD="$ADMIN_AUTH_BOOTSTRAP_PASSWORD" \
+  AUTH_PROTECTED_ROUTE_PATH="$AUTH_PROTECTED_ROUTE_PATH" \
+  AUTH_PROTECTED_ROUTE_EXPECTED_STATUS="$AUTH_PROTECTED_ROUTE_EXPECTED_STATUS" \
+  ADMIN_PROTECTED_ROUTE_PATH="$ADMIN_PROTECTED_ROUTE_PATH" \
+  ADMIN_PROTECTED_ROUTE_EXPECTED_STATUS="$ADMIN_PROTECTED_ROUTE_EXPECTED_STATUS" \
+  bash "$AUTH_ADAPTER_SCRIPT" "$AUTH_BOOTSTRAP_URL"
+  load_auth_material "$AUTH_OUTPUT_PATH"
 fi
 
-if [[ -n "${ADMIN_AUTH_TOKEN:-}" ]]; then
-  validate_admin_route_inside_app "$ADMIN_AUTH_TOKEN"
-  echo "Admin bootstrap validated against /api/users"
+if [[ -n "${AUTH_HEADER_VALUE:-}" ]]; then
+  validate_admin_route_inside_app "$AUTH_HEADER_NAME" "$AUTH_HEADER_VALUE" "$AUTH_PROTECTED_ROUTE_PATH" "$AUTH_PROTECTED_ROUTE_EXPECTED_STATUS"
+  echo "Protected route bootstrap validated against ${AUTH_PROTECTED_ROUTE_PATH}"
+fi
+
+if [[ -n "${ADMIN_AUTH_HEADER_VALUE:-}" ]]; then
+  validate_admin_route_inside_app "$ADMIN_AUTH_HEADER_NAME" "$ADMIN_AUTH_HEADER_VALUE" "$ADMIN_PROTECTED_ROUTE_PATH" "$ADMIN_PROTECTED_ROUTE_EXPECTED_STATUS"
+  echo "Admin bootstrap validated against ${ADMIN_PROTECTED_ROUTE_PATH}"
 else
-  echo "WARNING: ADMIN_AUTH_TOKEN is empty - admin-path coverage verification will likely fail" >&2
+  echo "WARNING: ADMIN_AUTH_HEADER_VALUE is empty - admin-path coverage verification will likely fail" >&2
+fi
+
+AUTH_TOKEN="${AUTH_TOKEN:-$(legacy_token_from_header "${AUTH_HEADER_VALUE:-}")}"
+ADMIN_AUTH_TOKEN="${ADMIN_AUTH_TOKEN:-$(legacy_token_from_header "${ADMIN_AUTH_HEADER_VALUE:-}")}"
+
+if [[ -n "${AUTH_TOKEN:-}" ]]; then
+  printf '%s' "$AUTH_TOKEN" > "$AUTH_TOKEN_PATH"
+fi
+if [[ -n "${ADMIN_AUTH_TOKEN:-}" ]]; then
+  printf '%s' "$ADMIN_AUTH_TOKEN" > "$ADMIN_AUTH_TOKEN_PATH"
 fi
 
 if [[ ! -f "$ZAP_CONFIG_PATH" ]]; then
@@ -187,11 +248,21 @@ if [[ ! -f "$ZAP_CONFIG_PATH" ]]; then
 fi
 
 ZAP_RUNTIME_CONFIG="/tmp/zap-runtime-config.yaml"
-if [[ -n "${AUTH_TOKEN:-}" || -n "${ADMIN_AUTH_TOKEN:-}" ]]; then
-  echo "Auth tokens obtained, baking into ZAP config"
+escape_sed_replacement() {
+  printf '%s' "$1" | sed -e 's/[&|]/\\&/g'
+}
+
+if [[ -n "${AUTH_HEADER_VALUE:-}" || -n "${ADMIN_AUTH_HEADER_VALUE:-}" ]]; then
+  echo "Auth material obtained, baking into ZAP config"
+  auth_header_name_escaped="$(escape_sed_replacement "${AUTH_HEADER_NAME:-Authorization}")"
+  auth_header_value_escaped="$(escape_sed_replacement "${AUTH_HEADER_VALUE:-}")"
+  admin_header_name_escaped="$(escape_sed_replacement "${ADMIN_AUTH_HEADER_NAME:-Authorization}")"
+  admin_header_value_escaped="$(escape_sed_replacement "${ADMIN_AUTH_HEADER_VALUE:-}")"
   sed \
-    -e "s|\${AUTH_TOKEN}|${AUTH_TOKEN:-}|g" \
-    -e "s|\${ADMIN_AUTH_TOKEN}|${ADMIN_AUTH_TOKEN:-}|g" \
+    -e "s|\${AUTH_HEADER_NAME}|${auth_header_name_escaped}|g" \
+    -e "s|\${AUTH_HEADER_VALUE}|${auth_header_value_escaped}|g" \
+    -e "s|\${ADMIN_AUTH_HEADER_NAME}|${admin_header_name_escaped}|g" \
+    -e "s|\${ADMIN_AUTH_HEADER_VALUE}|${admin_header_value_escaped}|g" \
     "$ZAP_CONFIG_PATH" > "$ZAP_RUNTIME_CONFIG"
 else
   echo "WARNING: auth tokens are empty - authenticated endpoints will return 401/403" >&2

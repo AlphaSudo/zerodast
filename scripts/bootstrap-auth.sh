@@ -5,6 +5,8 @@ APP_URL="${1:-${APP_URL:-http://untrusted-app:8080}}"
 ALICE_TOKEN_PATH="${ALICE_TOKEN_PATH:-/tmp/zap-auth-token.txt}"
 BOB_TOKEN_PATH="${BOB_TOKEN_PATH:-/tmp/zap-auth-token-bob.txt}"
 ADMIN_TOKEN_PATH="${ADMIN_TOKEN_PATH:-/tmp/zap-auth-token-admin.txt}"
+AUTH_OUTPUT_PATH="${AUTH_OUTPUT_PATH:-/tmp/zerodast-auth-material.env}"
+AUTH_ADAPTER_SCRIPT="${AUTH_ADAPTER_SCRIPT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/auth-adapters/json-token-login.sh}"
 NODE_BIN="${NODE_BIN:-C:/Users/CM/AppData/Roaming/fnm/node-versions/v22.15.0/installation/node.exe}"
 
 extract_token() {
@@ -43,9 +45,24 @@ login_and_extract() {
   printf '%s' "$token"
 }
 
-alice_token=$(login_and_extract 'alice@test.local' 'Test123!')
+AUTH_BOOTSTRAP_EMAIL='alice@test.local' \
+AUTH_BOOTSTRAP_PASSWORD='Test123!' \
+ADMIN_AUTH_BOOTSTRAP_EMAIL='admin@test.local' \
+ADMIN_AUTH_BOOTSTRAP_PASSWORD='Test123!' \
+AUTH_OUTPUT_PATH="$AUTH_OUTPUT_PATH" \
+bash "$AUTH_ADAPTER_SCRIPT" "$APP_URL"
+
+if [[ ! -f "$AUTH_OUTPUT_PATH" ]]; then
+  echo "Auth adapter did not produce output file: $AUTH_OUTPUT_PATH" >&2
+  exit 1
+fi
+
+# shellcheck disable=SC1090
+source "$AUTH_OUTPUT_PATH"
+
+alice_token="${AUTH_HEADER_VALUE#Bearer }"
 bob_token=$(login_and_extract 'bob@test.local' 'Test123!')
-admin_token=$(login_and_extract 'admin@test.local' 'Test123!')
+admin_token="${ADMIN_AUTH_HEADER_VALUE#Bearer }"
 
 printf '%s' "$alice_token" > "$ALICE_TOKEN_PATH"
 printf '%s' "$bob_token" > "$BOB_TOKEN_PATH"

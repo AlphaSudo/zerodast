@@ -1,7 +1,9 @@
 env:
   vars:
-    AUTH_TOKEN: "${AUTH_TOKEN}"
-    ADMIN_AUTH_TOKEN: "${ADMIN_AUTH_TOKEN}"
+    AUTH_HEADER_NAME: "${AUTH_HEADER_NAME}"
+    AUTH_HEADER_VALUE: "${AUTH_HEADER_VALUE}"
+    ADMIN_AUTH_HEADER_NAME: "${ADMIN_AUTH_HEADER_NAME}"
+    ADMIN_AUTH_HEADER_VALUE: "${ADMIN_AUTH_HEADER_VALUE}"
   contexts:
     - name: "zerodast-target"
       urls:
@@ -25,8 +27,8 @@ jobs:
     rules:
       - description: "Auth token injection"
         matchType: "REQ_HEADER"
-        matchString: "Authorization"
-        replacementString: "Bearer ${AUTH_TOKEN}"
+        matchString: "${AUTH_HEADER_NAME}"
+        replacementString: "${AUTH_HEADER_VALUE}"
 
   - type: openapi
     parameters:
@@ -47,8 +49,8 @@ jobs:
     rules:
       - description: "Admin auth token injection"
         matchType: "REQ_HEADER"
-        matchString: "Authorization"
-        replacementString: "Bearer ${ADMIN_AUTH_TOKEN}"
+        matchString: "${ADMIN_AUTH_HEADER_NAME}"
+        replacementString: "${ADMIN_AUTH_HEADER_VALUE}"
 
   - type: requestor
     requests:
@@ -61,8 +63,8 @@ jobs:
     rules:
       - description: "Restore user auth token injection"
         matchType: "REQ_HEADER"
-        matchString: "Authorization"
-        replacementString: "Bearer ${AUTH_TOKEN}"
+        matchString: "${AUTH_HEADER_NAME}"
+        replacementString: "${AUTH_HEADER_VALUE}"
 
   - type: spider
     parameters:

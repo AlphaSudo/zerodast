@@ -111,7 +111,8 @@ jobs:
           MOCK_DATA_SQL: ${{ github.workspace }}/db/seed/mock_data.sql
           OVERLAY_SQL: ${{ github.workspace }}/artifacts/overlay.sql
           ZAP_CONFIG_PATH: /tmp/zap-config.yaml
-          AUTH_BOOTSTRAP_MODE: app_container
+          AUTH_BOOTSTRAP_MODE: adapter
+          AUTH_ADAPTER_SCRIPT: ${{ github.workspace }}/scripts/auth-adapters/json-token-login.sh
           AUTH_TOKEN_PATH: /tmp/zap-auth-token.txt
           ADMIN_AUTH_TOKEN_PATH: /tmp/zap-auth-token-admin.txt
           RUN_AUTHZ_NETWORK: 'true'
