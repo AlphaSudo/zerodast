@@ -29,6 +29,7 @@ const router = express.Router();
  */
 router.get("/api/search", requireAuth, async (req, res, next) => {
   try {
+    // phase2 smoke 4: keep a route-file delta for PR coverage verification
     const query = req.query.q || "";
     // codeql[js/sql-injection]
     const sql = `SELECT id, user_id, title, content, visibility, created_at
