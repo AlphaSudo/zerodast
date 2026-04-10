@@ -29,6 +29,7 @@ const router = express.Router();
 router.get("/api/search", requireAuth, async (req, res, next) => {
   try {
     // phase3 adapter smoke: keep a route-file delta for CI auth-adapter verification
+    // phase4 inventory smoke: keep a route-file delta for CI inventory verification
     const query = req.query.q || "";
     // codeql[js/sql-injection]
     const sql = `SELECT id, user_id, title, content, visibility, created_at
