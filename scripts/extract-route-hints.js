@@ -8,7 +8,7 @@ if (inputDirs.length === 0) {
   process.exit(1);
 }
 
-const exts = new Set([".js", ".ts", ".py"]);
+const exts = new Set([".js", ".ts", ".py", ".java"]);
 const routes = new Map();
 const routeHintPrefixArgIndex = inputDirs.indexOf("--prefix");
 let globalPrefix = "";
@@ -43,6 +43,11 @@ function extractFromText(text, filePath) {
   const pyRoutePattern = /@[\w.]+\.(get|post|put|delete|patch|options|head)\(\s*["']([^"']+)["']/g;
   const pyPrefixMatches = [...text.matchAll(/APIRouter\([^)]*prefix\s*=\s*["']([^"']+)["']/g)];
   const pyPrefix = pyPrefixMatches.length > 0 ? normalizeRoute(pyPrefixMatches[0][1]) : "";
+  const javaPathConstantPattern = /\bString\s+PATH_[A-Z0-9_]+\s*=\s*"([^"]+)"/g;
+  const javaMappingPatterns = [
+    /@(GetMapping|PostMapping|PutMapping|DeleteMapping|PatchMapping|RequestMapping)\(\s*"([^"]+)"/g,
+    /@(GetMapping|PostMapping|PutMapping|DeleteMapping|PatchMapping|RequestMapping)\([^)]*value\s*=\s*"([^"]+)"/g,
+  ];
 
   if (ext === ".js" || ext === ".ts") {
     for (const match of text.matchAll(jsPattern)) {
@@ -57,6 +62,18 @@ function extractFromText(text, filePath) {
         ? normalizeRoute(route === "/" ? pyPrefix : `${pyPrefix}${route}`)
         : route;
       addRoute(combined, filePath);
+    }
+  }
+
+  if (ext === ".java") {
+    for (const match of text.matchAll(javaPathConstantPattern)) {
+      addRoute(match[1], filePath);
+    }
+
+    for (const pattern of javaMappingPatterns) {
+      for (const match of text.matchAll(pattern)) {
+        addRoute(match[2], filePath);
+      }
     }
   }
 }

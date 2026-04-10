@@ -26,6 +26,9 @@ REPORT_PATH="${WORK_DIR}/zap-report.json"
 LOG_PATH="${WORK_DIR}/zap-run.log"
 METRICS_PATH="${WORK_DIR}/metrics.json"
 VERIFY_PATH="${WORK_DIR}/verification.md"
+API_INVENTORY_JSON="${WORK_DIR}/api-inventory.json"
+API_INVENTORY_MD="${WORK_DIR}/api-inventory.md"
+ROUTE_HINTS_JSON="${WORK_DIR}/route-hints.json"
 SPEC_MODE="raw"
 
 mkdir -p "${WORK_DIR}"
@@ -167,8 +170,22 @@ cat > "${METRICS_PATH}" <<EOF
   "zapImage": "${ZAP_IMAGE}",
   "zapExitCode": ${zap_exit},
   "coldRunSeconds": ${cold_run_seconds},
-  "seededRequestCount": ${seeded_count}
+  "seededRequestCount": ${seeded_count},
+  "apiInventoryJsonPath": "${API_INVENTORY_JSON}"
 }
 EOF
+
+node "${GITHUB_WORKSPACE}/scripts/extract-route-hints.js" \
+  --prefix "${SCANNER_BASE_PATH}/api" \
+  "${TARGET_DIR}/target/generated-sources/openapi/src/main/java/org/springframework/samples/petclinic/rest/api" > "${ROUTE_HINTS_JSON}"
+
+node "${GITHUB_WORKSPACE}/scripts/build-api-inventory.js" \
+  "${REPORT_PATH}" \
+  "${LOG_PATH}" \
+  "${RAW_SPEC}" \
+  "${API_INVENTORY_JSON}" \
+  "${API_INVENTORY_MD}" \
+  "${ROUTE_HINTS_JSON}" \
+  "${SCANNER_BASE_PATH}"
 
 node "${GITHUB_WORKSPACE}/benchmarks/petclinic/verify-t4.js" "${REPORT_PATH}" "${METRICS_PATH}" | tee "${VERIFY_PATH}"

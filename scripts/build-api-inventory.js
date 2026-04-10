@@ -7,6 +7,7 @@ const specPath = process.argv[4];
 const outJsonPath = process.argv[5];
 const outMdPath = process.argv[6];
 const routeHintsPath = process.argv[7];
+const stripPrefixArg = process.argv[8] || "";
 
 if (!reportPath || !logPath || !specPath || !outJsonPath || !outMdPath) {
   console.error(
@@ -20,6 +21,14 @@ function normalizeRouteish(value) {
   if (!raw) return "";
 
   let normalized = raw.replace(/^https?:\/\/[^/]+/i, "");
+  if (stripPrefixArg) {
+    const normalizedStripPrefix = String(stripPrefixArg).replace(/\/+$/, "");
+    if (normalized === normalizedStripPrefix) {
+      normalized = "/";
+    } else if (normalized.startsWith(`${normalizedStripPrefix}/`)) {
+      normalized = normalized.slice(normalizedStripPrefix.length);
+    }
+  }
   normalized = normalized.replace(/\?.*$/, "");
   normalized = normalized.replace(/\/+$/, "");
   normalized = normalized.replace(/\/:(\w+)/g, "/{$1}");
