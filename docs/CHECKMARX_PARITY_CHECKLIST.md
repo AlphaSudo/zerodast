@@ -167,6 +167,12 @@ It is scoped to the realistic target already defined there:
   - this is still not a fixed importer story:
     - `OpenAPI imported URL count: 0`
   - but it is a real hard-target API reach improvement driven by bounded spec-derived request seeding
+- Proven on the FastAPI undocumented-route inventory follow-up:
+  - `Fullstack FastAPI T4 Scan #9`: `3m 50s`
+  - verification and artifact inventory now include:
+    - `Undocumented observed routes: 0`
+  - this proves the evidence-based undocumented-route inventory path is active in CI
+  - it does **not** yet prove discovery of real undocumented API surface on this target
 
 ### Phase 4 exit
 - [x] PR remains under 10 minutes

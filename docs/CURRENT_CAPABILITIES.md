@@ -400,6 +400,7 @@ Those outputs currently summarize:
 - observed route count
 - observed OpenAPI routes
 - unobserved OpenAPI routes
+- undocumented observed routes
 
 ### What is proven today
 GitHub-side proof now exists that the PR lane can publish API inventory data in its artifacts and summary.
@@ -415,10 +416,15 @@ Most recent proof point:
 - the report artifact contained:
   - `api-inventory.json`
   - `api-inventory.md`
+- external benchmark proof also now exists that this inventory model can surface undocumented-route counts in CI-backed benchmark artifacts
+- current FastAPI hard-target evidence reports:
+  - `Undocumented observed routes: 0`
+  - which confirms the metric is active and sane on a real benchmark target
 
 ### Current limitation
 This is inventory and visibility, not yet broader API coverage by itself.
 It helps us see importer/discovery gaps clearly, but it does not yet solve them.
+It is also not the same thing as full shadow API discovery from production traffic or passive network telemetry.
 
 ## L. External-Repo T4 Demonstrations
 
