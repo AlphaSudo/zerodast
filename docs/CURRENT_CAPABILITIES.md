@@ -543,6 +543,11 @@ The repo now also has richer comment/issue policy controls:
   - `Persisting findings vs baseline: 5`
   - `Resolved findings vs baseline: 4`
   - triage guidance: `Review new findings relative to the baseline first.`
+- PR artifact proof also now exists that the policy/diff layer is active on the PR lane:
+  - `New findings vs baseline: 0`
+  - `Persisting findings vs baseline: 9`
+  - `Resolved findings vs baseline: 0`
+  - triage guidance: `Review persisting active findings and decide remediation or acceptance.`
 
 What is still pending is explicit UI-side proof that:
 - PR comment gating behaves as configured

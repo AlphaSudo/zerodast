@@ -304,8 +304,16 @@ It is scoped to the realistic target already defined there:
       - `Resolved findings vs baseline: 4`
     - triage guidance shifted to:
       - `Review new findings relative to the baseline first.`
+  - PR-path proof now also exists for the policy-driven summary shape:
+    - PR summary reported:
+      - `New findings vs baseline: 0`
+      - `Persisting findings vs baseline: 9`
+      - `Resolved findings vs baseline: 0`
+    - PR result-state guidance reported:
+      - `Review persisting active findings and decide remediation or acceptance.`
+    - this proves the actionable-policy inputs are flowing through the real PR pipeline
   - what is still pending is explicit UI-side confirmation that:
-    - PR comment policy gates comments as configured
+    - the GitHub PR comment body renders the `### Policy Summary` block as configured
     - nightly issue dedupe/update behaves as configured
 - this is the beginning of Phase 5 operator maturity, not the full control-plane story
 
