@@ -219,7 +219,7 @@ It is scoped to the realistic target already defined there:
 - [x] Add richer issue/comment/report policy controls
 - [ ] Add simple repo-fleet tracking for multiple onboarded targets
 - [x] Add explicit result-state / triage workflow model
-- [ ] Add remediation + retest workflow guidance
+- [x] Add remediation + retest workflow guidance
 - [ ] Add operational reliability tracking
 - [ ] Update capability docs and comparison docs to reflect the new operator model
 
@@ -315,6 +315,16 @@ It is scoped to the realistic target already defined there:
   - what is still pending is explicit UI-side confirmation that:
     - the GitHub PR comment body renders the `### Policy Summary` block as configured
     - nightly issue dedupe/update behaves as configured
+- remediation/retest guidance is now implemented:
+  - generated artifact:
+    - `remediation-guide.md`
+  - built from:
+    - `result-state.json`
+  - guidance now distinguishes:
+    - new findings to triage first
+    - persisting findings to retest after fixes
+    - recently resolved findings to guard against regression
+  - this turns the diff-aware result model into a concrete maintainer loop instead of only a summary
 - this is the beginning of Phase 5 operator maturity, not the full control-plane story
 
 ### Phase 5 exit

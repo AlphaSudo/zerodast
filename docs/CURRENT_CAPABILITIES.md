@@ -88,6 +88,7 @@ Current script/runtime surface:
 - [build-environment-manifest.js](C:/Java%20Developer/DAST/scripts/build-environment-manifest.js)
 - [build-finding-baseline.js](C:/Java%20Developer/DAST/scripts/build-finding-baseline.js)
 - [build-result-state.js](C:/Java%20Developer/DAST/scripts/build-result-state.js)
+- [build-remediation-guide.js](C:/Java%20Developer/DAST/scripts/build-remediation-guide.js)
 - [build-api-inventory.js](C:/Java%20Developer/DAST/scripts/build-api-inventory.js)
 - [build-request-seeds.js](C:/Java%20Developer/DAST/scripts/build-request-seeds.js)
 - [run-dast-local.sh](C:/Java%20Developer/DAST/scripts/run-dast-local.sh)
@@ -470,6 +471,7 @@ The report bundle now includes operator-facing artifacts:
 - `environment-manifest.md`
 - `result-state.json`
 - `result-state.md`
+- `remediation-guide.md`
 
 The core scan also now supports a committed finding baseline:
 - `security/zap/.zap-result-baseline.json`
@@ -489,6 +491,10 @@ The core scan also now supports a committed finding baseline:
   - new findings
   - persisting findings
   - resolved findings
+- a remediation/retest guide derived from the current result state:
+  - what to fix first
+  - what to retest next
+  - what recently resolved findings to guard
 
 ### What this means
 ZeroDAST now has the start of an operator model rather than only raw scanner output.
@@ -552,6 +558,14 @@ The repo now also has richer comment/issue policy controls:
 What is still pending is explicit UI-side proof that:
 - PR comment gating behaves as configured
 - nightly issue dedupe/update behaves as configured
+
+The repo now also emits remediation guidance as a first-class artifact:
+- `remediation-guide.md`
+- generated from `result-state.json`
+- structured around:
+  - new findings first
+  - persisting findings next
+  - resolved findings as regression guards
 
 ### Current limitation
 This is still not:
