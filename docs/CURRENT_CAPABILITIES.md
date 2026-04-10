@@ -461,6 +461,7 @@ Implemented as the first Phase 5 operator slice.
 - baseline-adjusted result-state generation in [build-result-state.js](C:/Java%20Developer/DAST/scripts/build-result-state.js)
 - finding-baseline generation in [build-finding-baseline.js](C:/Java%20Developer/DAST/scripts/build-finding-baseline.js)
 - runtime wiring in [run-dast-env.sh](C:/Java%20Developer/DAST/security/run-dast-env.sh)
+- report policy configuration in [report-policy.json](C:/Java%20Developer/DAST/security/report-policy.json)
 - PR and nightly workflow metadata injection in [dast-pr.yml](C:/Java%20Developer/DAST/.github/workflows/dast-pr.yml) and [dast-nightly.yml](C:/Java%20Developer/DAST/.github/workflows/dast-nightly.yml)
 
 ### What the core scan now emits
@@ -495,6 +496,7 @@ This is the first real step toward:
 - lighter-weight environment management
 - repeatable triage semantics
 - suppression-aware result interpretation
+- configurable PR comment and nightly issue behavior
 
 ### What is proven today
 GitHub-side proof now exists on both core lanes:
@@ -524,6 +526,20 @@ GitHub-side proof now also exists on the PR lane:
   - `Resolved findings vs baseline: 1`
 
 That proves the diff-aware comparison is active in real PR summaries and not only in local tooling.
+
+The repo now also has richer comment/issue policy controls:
+- PR comment mode can be configured as:
+  - `always`
+  - `actionable`
+  - `new_findings`
+- nightly issue mode can be configured as:
+  - `threshold_only`
+  - `new_findings`
+  - `threshold_or_new_findings`
+  - `always`
+- nightly issue handling now supports title-prefix dedupe/update rather than always opening a fresh issue
+
+What is still pending is a fresh GitHub-side proof that the new policy controls behave as expected in both the PR comment path and nightly issue path.
 
 ### Current limitation
 This is still not:

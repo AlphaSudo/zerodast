@@ -115,19 +115,69 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const policy = JSON.parse(fs.readFileSync('security/report-policy.json', 'utf8'));
+            const issuePolicy = policy.nightlyIssue || {};
+            if (issuePolicy.enabled === false) {
+              console.log('Skipping nightly issue creation because policy disabled it.');
+              return;
+            }
             const summary = fs.readFileSync('report-summary.md', 'utf8');
-            const title = `ZeroDAST nightly findings above threshold (${context.sha.slice(0, 7)})`;
+            const resultState = fs.existsSync('reports/result-state.json')
+              ? JSON.parse(fs.readFileSync('reports/result-state.json', 'utf8'))
+              : null;
+            const comparison = resultState?.comparison || {};
+            const mode = issuePolicy.mode || 'threshold_or_new_findings';
+            const parseFailed = '${{ steps.parse_report.outputs.parse_exit }}' !== '0';
+            const shouldOpen =
+              mode === 'always' ||
+              (mode === 'threshold_only' && parseFailed) ||
+              (mode === 'new_findings' && (comparison.newFindingCount || 0) > 0) ||
+              (mode === 'threshold_or_new_findings' &&
+                (parseFailed || (comparison.newFindingCount || 0) > 0));
+            if (!shouldOpen) {
+              console.log(`Skipping nightly issue creation due to policy mode=${mode}`);
+              return;
+            }
+            const titlePrefix = issuePolicy.titlePrefix || 'ZeroDAST nightly triage';
+            const title = `${titlePrefix} (${context.sha.slice(0, 7)})`;
             const body = [
-              'Nightly DAST found alerts above the configured threshold.',
+              'Nightly DAST produced an actionable result according to report policy.',
+              '',
+              '### Policy Summary',
+              '',
+              `- Policy mode: ${mode}`,
+              `- State: ${resultState?.state || 'unknown'}`,
+              `- New findings vs baseline: ${comparison.newFindingCount || 0}`,
+              `- Persisting findings vs baseline: ${comparison.persistingFindingCount || 0}`,
+              `- Resolved findings vs baseline: ${comparison.resolvedFindingCount || 0}`,
               '',
               summary,
               '',
               `Workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
             ].join('\n');
+            const labelFilter = Array.isArray(issuePolicy.labels) ? issuePolicy.labels.join(',') : 'security,dast';
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: labelFilter,
+              per_page: 100,
+            });
+            const existing = issues.find((issue) => issue.title.startsWith(titlePrefix));
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                title,
+                body,
+              });
+              return;
+            }
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title,
               body,
-              labels: ['security', 'dast'],
+              labels: Array.isArray(issuePolicy.labels) ? issuePolicy.labels : ['security', 'dast'],
             });

@@ -216,7 +216,7 @@ It is scoped to the realistic target already defined there:
 - [x] Define a lightweight environment model for onboarded targets
 - [x] Add better suppression and baseline management
 - [x] Add cleaner diff-aware result comparison
-- [ ] Add richer issue/comment/report policy controls
+- [x] Add richer issue/comment/report policy controls
 - [ ] Add simple repo-fleet tracking for multiple onboarded targets
 - [x] Add explicit result-state / triage workflow model
 - [ ] Add remediation + retest workflow guidance
@@ -276,13 +276,27 @@ It is scoped to the realistic target already defined there:
     - new findings first
     - persisting findings
     - resolved findings
-  - CI proof now also exists on the PR lane:
+- CI proof now also exists on the PR lane:
     - `DAST PR Scan #16`: `2m 53s`
     - summary now includes:
       - `New findings vs baseline: 1`
       - `Persisting findings vs baseline: 8`
       - `Resolved findings vs baseline: 1`
     - this proves the diff-aware comparison is active in the real PR summary path, not just local tooling
+- richer policy controls are now implemented:
+  - committed policy file:
+    - `security/report-policy.json`
+  - PR comment policy now supports:
+    - `always`
+    - `actionable`
+    - `new_findings`
+  - nightly issue policy now supports:
+    - `threshold_only`
+    - `new_findings`
+    - `threshold_or_new_findings`
+    - `always`
+  - nightly issue handling now deduplicates/upgrades an existing open issue by title prefix instead of always opening a fresh issue
+  - CI proof for this policy-control slice is still pending
 - this is the beginning of Phase 5 operator maturity, not the full control-plane story
 
 ### Phase 5 exit

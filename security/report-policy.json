@@ -1,0 +1,13 @@
+{
+  "prComment": {
+    "enabled": true,
+    "mode": "actionable",
+    "header": "## ZeroDAST PR Scan"
+  },
+  "nightlyIssue": {
+    "enabled": true,
+    "mode": "threshold_or_new_findings",
+    "titlePrefix": "ZeroDAST nightly triage",
+    "labels": ["security", "dast"]
+  }
+}
