@@ -14,6 +14,8 @@ const counts = {
 const reportDir = path.dirname(reportPath);
 const logPath = path.join(reportDir, "zap-run.log");
 const inventoryJsonPath = path.join(reportDir, "api-inventory.json");
+const environmentManifestPath = path.join(reportDir, "environment-manifest.json");
+const resultStatePath = path.join(reportDir, "result-state.json");
 const deltaPath = path.join("artifacts", "delta-endpoints.txt");
 const alertUris = new Set();
 const requestorUrls = new Set();
@@ -180,22 +182,46 @@ const markdown = [
 
 console.log(markdown);
 
+if (fs.existsSync(environmentManifestPath)) {
+  const manifest = JSON.parse(fs.readFileSync(environmentManifestPath, "utf8"));
+  console.log("");
+  console.log("## Operator Context");
+  console.log("");
+  console.log(`- Target name: ${manifest.target?.name || "N/A"}`);
+  console.log(`- Scan profile: ${manifest.scan?.profile || "N/A"}`);
+  console.log(`- Scan trigger: ${manifest.scan?.trigger || "N/A"}`);
+  console.log(`- Auth bootstrap mode: ${manifest.auth?.bootstrapMode || "N/A"}`);
+}
+
+if (fs.existsSync(resultStatePath)) {
+  const state = JSON.parse(fs.readFileSync(resultStatePath, "utf8"));
+  console.log("");
+  console.log("## Result State");
+  console.log("");
+  console.log(`- State: ${state.state}`);
+  console.log(`- Fail level: ${state.failLevel}`);
+  console.log(`- Suppressed alert count: ${state.counts?.suppressedAlertCount ?? 0}`);
+  console.log(`- Unique suppression rules applied: ${state.counts?.uniqueSuppressionCount ?? 0}`);
+  console.log(`- Effective high-or-above findings: ${(state.counts?.effective?.critical ?? 0) + (state.counts?.effective?.high ?? 0)}`);
+}
+
 if (fs.existsSync(inventoryJsonPath)) {
   const inventory = JSON.parse(fs.readFileSync(inventoryJsonPath, "utf8"));
+  const counts = inventory.counts || {};
   console.log("");
   console.log("## API Inventory");
   console.log("");
-  console.log(`- OpenAPI route count: ${inventory.counts.openApiRouteCount}`);
-  console.log(`- OpenAPI operation count: ${inventory.counts.openApiOperationCount}`);
-  console.log(`- OpenAPI imported URL count: ${inventory.counts.openApiImportedUrlCount}`);
-  console.log(`- Spider discovered URL count: ${inventory.counts.spiderDiscoveredUrlCount}`);
-  console.log(`- Observed OpenAPI routes: ${inventory.counts.observedSpecRouteCount}`);
-  console.log(`- Unobserved OpenAPI routes: ${inventory.counts.unobservedSpecRouteCount}`);
-  console.log(`- Undocumented observed routes: ${inventory.counts.undocumentedObservedRouteCount}`);
-  console.log(`- Code-hinted routes: ${inventory.counts.hintedRouteCount}`);
-  console.log(`- Code-hinted observed routes: ${inventory.counts.hintedObservedRouteCount}`);
-  console.log(`- Code-hinted unobserved routes: ${inventory.counts.hintedUnobservedRouteCount}`);
-  console.log(`- Code-hinted routes outside spec: ${inventory.counts.hintedOnlyRouteCount}`);
+  console.log(`- OpenAPI route count: ${counts.openApiRouteCount ?? 0}`);
+  console.log(`- OpenAPI operation count: ${counts.openApiOperationCount ?? 0}`);
+  console.log(`- OpenAPI imported URL count: ${counts.openApiImportedUrlCount ?? 0}`);
+  console.log(`- Spider discovered URL count: ${counts.spiderDiscoveredUrlCount ?? 0}`);
+  console.log(`- Observed OpenAPI routes: ${counts.observedSpecRouteCount ?? 0}`);
+  console.log(`- Unobserved OpenAPI routes: ${counts.unobservedSpecRouteCount ?? 0}`);
+  console.log(`- Undocumented observed routes: ${counts.undocumentedObservedRouteCount ?? 0}`);
+  console.log(`- Code-hinted routes: ${counts.hintedRouteCount ?? 0}`);
+  console.log(`- Code-hinted observed routes: ${counts.hintedObservedRouteCount ?? 0}`);
+  console.log(`- Code-hinted unobserved routes: ${counts.hintedUnobservedRouteCount ?? 0}`);
+  console.log(`- Code-hinted routes outside spec: ${counts.hintedOnlyRouteCount ?? 0}`);
 
   if (Array.isArray(inventory.undocumentedObservedRoutes) && inventory.undocumentedObservedRoutes.length > 0) {
     console.log("");

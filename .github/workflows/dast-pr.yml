@@ -106,11 +106,17 @@ jobs:
 
       - name: Run isolated DAST environment
         env:
+          ZERODAST_TARGET_NAME: zerodast-demo-app
+          ZERODAST_SCAN_PROFILE: pr-delta
+          ZERODAST_SCAN_TRIGGER: workflow_run
+          ZERODAST_SCAN_MODE: core
           APP_IMAGE: zerodast-demo-app:${{ steps.pr_meta.outputs.head_sha }}
           SCHEMA_SQL: ${{ github.workspace }}/db/seed/schema.sql
           MOCK_DATA_SQL: ${{ github.workspace }}/db/seed/mock_data.sql
           OVERLAY_SQL: ${{ github.workspace }}/artifacts/overlay.sql
           ZAP_CONFIG_PATH: /tmp/zap-config.yaml
+          ZAP_FAIL_LEVEL: High
+          BASELINE_SUPPRESSIONS_PATH: ${{ github.workspace }}/security/zap/.zap-baseline.json
           AUTH_BOOTSTRAP_MODE: adapter
           AUTH_ADAPTER_SCRIPT: ${{ github.workspace }}/scripts/auth-adapters/json-token-login.sh
           AUTH_TOKEN_PATH: /tmp/zap-auth-token.txt

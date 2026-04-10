@@ -65,10 +65,16 @@ jobs:
 
       - name: Run nightly DAST
         env:
+          ZERODAST_TARGET_NAME: zerodast-demo-app
+          ZERODAST_SCAN_PROFILE: nightly-full
+          ZERODAST_SCAN_TRIGGER: push-or-schedule
+          ZERODAST_SCAN_MODE: core
           APP_IMAGE: zerodast-demo-app:${{ github.sha }}
           SCHEMA_SQL: ${{ github.workspace }}/db/seed/schema.sql
           MOCK_DATA_SQL: ${{ github.workspace }}/db/seed/mock_data.sql
           ZAP_CONFIG_PATH: ${{ github.workspace }}/security/zap/automation.yaml
+          ZAP_FAIL_LEVEL: High
+          BASELINE_SUPPRESSIONS_PATH: ${{ github.workspace }}/security/zap/.zap-baseline.json
           AUTH_BOOTSTRAP_MODE: adapter
           AUTH_ADAPTER_SCRIPT: ${{ github.workspace }}/scripts/auth-adapters/json-token-login.sh
           AUTH_TOKEN_PATH: /tmp/zap-auth-token.txt

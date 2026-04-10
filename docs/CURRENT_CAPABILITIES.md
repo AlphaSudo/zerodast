@@ -85,6 +85,8 @@ Current script/runtime surface:
 - [delta-detect.sh](C:/Java%20Developer/DAST/scripts/delta-detect.sh)
 - [generate-delta-scan.sh](C:/Java%20Developer/DAST/scripts/generate-delta-scan.sh)
 - [parse-zap-report.js](C:/Java%20Developer/DAST/scripts/parse-zap-report.js)
+- [build-environment-manifest.js](C:/Java%20Developer/DAST/scripts/build-environment-manifest.js)
+- [build-result-state.js](C:/Java%20Developer/DAST/scripts/build-result-state.js)
 - [build-api-inventory.js](C:/Java%20Developer/DAST/scripts/build-api-inventory.js)
 - [build-request-seeds.js](C:/Java%20Developer/DAST/scripts/build-request-seeds.js)
 - [run-dast-local.sh](C:/Java%20Developer/DAST/scripts/run-dast-local.sh)
@@ -391,6 +393,7 @@ The report path now emits:
 - `api-inventory.md`
 
 Those outputs currently summarize:
+- environment manifest / operator context
 - OpenAPI route count
 - OpenAPI operation count
 - OpenAPI imported URL count
@@ -405,6 +408,7 @@ Those outputs currently summarize:
 - code-hinted observed routes
 - code-hinted unobserved routes
 - code-hinted routes outside spec
+- baseline-adjusted result state and suppression usage
 
 ### What is proven today
 GitHub-side proof now exists that the PR lane can publish API inventory data in its artifacts and summary.
@@ -446,7 +450,51 @@ It helps us see importer/discovery gaps clearly, but it does not yet solve them.
 It is also not the same thing as full shadow API discovery from production traffic or passive network telemetry.
 The current hint model is intentionally lightweight and regex-driven; it is not deep static route analysis across arbitrary frameworks.
 
-## L. External-Repo T4 Demonstrations
+## L. Lightweight Environment Model and Result-State Triage
+
+### Status
+Implemented as the first Phase 5 operator slice.
+
+### What exists
+- environment manifest generation in [build-environment-manifest.js](C:/Java%20Developer/DAST/scripts/build-environment-manifest.js)
+- baseline-adjusted result-state generation in [build-result-state.js](C:/Java%20Developer/DAST/scripts/build-result-state.js)
+- runtime wiring in [run-dast-env.sh](C:/Java%20Developer/DAST/security/run-dast-env.sh)
+- PR and nightly workflow metadata injection in [dast-pr.yml](C:/Java%20Developer/DAST/.github/workflows/dast-pr.yml) and [dast-nightly.yml](C:/Java%20Developer/DAST/.github/workflows/dast-nightly.yml)
+
+### What the core scan now emits
+The report bundle now includes operator-facing artifacts:
+- `environment-manifest.json`
+- `environment-manifest.md`
+- `result-state.json`
+- `result-state.md`
+
+### What they provide
+- a stable description of the scanned environment:
+  - target name
+  - scan profile
+  - scan trigger
+  - auth bootstrap mode
+  - protected/admin route validation paths
+- a stable result-state model after baseline suppressions are applied:
+  - `clean`
+  - `baseline_only`
+  - `needs_triage`
+
+### What this means
+ZeroDAST now has the start of an operator model rather than only raw scanner output.
+This is the first real step toward:
+- lighter-weight environment management
+- repeatable triage semantics
+- suppression-aware result interpretation
+
+### Current limitation
+This is still not:
+- diff-aware result comparison
+- repo-fleet management
+- full remediation/retest workflow orchestration
+- enterprise control-plane governance
+
+## M. External-Repo T4 Demonstrations
 
 ### Status
 Implemented.
@@ -472,7 +520,7 @@ Current workflow files:
 ### Current limitation
 This is benchmark-oriented orchestration, not yet a general turnkey multi-repo SaaS/platform control plane.
 
-## M. Model 1 In-Repo Adoption Prototype
+## N. Model 1 In-Repo Adoption Prototype
 
 ### Status
 Implemented as alpha prototype.
@@ -494,7 +542,7 @@ The repo already contains a real in-repo adoption model, but it is still alpha.
 ### Current limitation
 This is not yet a hardened, broad-compatibility product for arbitrary repos.
 
-## N. Benchmarking Capability
+## O. Benchmarking Capability
 
 ### Status
 Implemented.
@@ -511,7 +559,7 @@ The repo contains:
 ### What this means
 ZeroDAST is already instrumented to compare itself honestly against lighter and more conventional baselines.
 
-## O. Supported Target Classes Today
+## P. Supported Target Classes Today
 
 ### Strongest current fit
 ZeroDAST is strongest today for:
@@ -533,7 +581,7 @@ ZeroDAST is strongest today for:
 - large enterprise governance/compliance programs
 - shadow API discovery / production traffic discovery
 
-## P. What ZeroDAST Does Not Currently Provide
+## Q. What ZeroDAST Does Not Currently Provide
 
 The current repo does **not** yet provide:
 
@@ -549,7 +597,7 @@ The current repo does **not** yet provide:
 - enterprise RBAC/governance control plane
 - universal target support across arbitrary stacks
 
-## Q. Practical Summary
+## R. Practical Summary
 
 ### Current-state bottom line
 ZeroDAST currently **does** implement:

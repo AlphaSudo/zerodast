@@ -124,7 +124,7 @@ It is scoped to the realistic target already defined there:
 ## Phase 4: API Breadth and Discovery Improvements
 
 - [x] Improve OpenAPI normalization and ingestion reliability
-- [ ] Add GraphQL support
+- [ ] Add GraphQL support (`deferred for the current REST-first target slice`)
 - [x] Add undocumented-route discovery using requestor/traffic evidence
 - [x] Add code/spec-hint-based route discovery where practical
 - [x] Add API inventory outputs to artifacts and summaries
@@ -207,20 +207,45 @@ It is scoped to the realistic target already defined there:
 - [x] PR remains under 10 minutes
 - [x] Nightly remains under 15 minutes
 - [x] API coverage improves materially on at least one hard target
+- [x] Phase 4 is complete for the current REST-first target slice
 
 ---
 
 ## Phase 5: Lightweight Environment Model and Control Plane Maturity
 
-- [ ] Define a lightweight environment model for onboarded targets
-- [ ] Add better suppression and baseline management
+- [x] Define a lightweight environment model for onboarded targets
+- [x] Add better suppression and baseline management
 - [ ] Add cleaner diff-aware result comparison
 - [ ] Add richer issue/comment/report policy controls
 - [ ] Add simple repo-fleet tracking for multiple onboarded targets
-- [ ] Add explicit result-state / triage workflow model
+- [x] Add explicit result-state / triage workflow model
 - [ ] Add remediation + retest workflow guidance
 - [ ] Add operational reliability tracking
 - [ ] Update capability docs and comparison docs to reflect the new operator model
+
+### Phase 5 progress note
+- Initial operator model is now implemented in the core PR/nightly path:
+  - `environment-manifest.json`
+  - `environment-manifest.md`
+  - `result-state.json`
+  - `result-state.md`
+- the environment manifest captures:
+  - target name
+  - scan profile and trigger
+  - fail level
+  - auth bootstrap mode
+  - protected/admin route paths
+  - route-hint source directories
+- the result-state artifact now applies baseline suppressions from:
+  - `security/zap/.zap-baseline.json`
+  and emits a stable operator-facing state:
+  - `clean`
+  - `baseline_only`
+  - `needs_triage`
+- PR/nightly summary output now includes:
+  - `Operator Context`
+  - `Result State`
+- this is the beginning of Phase 5 operator maturity, not the full control-plane story
 
 ### Phase 5 exit
 - [x] PR remains under 10 minutes
