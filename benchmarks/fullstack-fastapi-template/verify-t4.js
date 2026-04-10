@@ -15,6 +15,7 @@ const apiInventory =
   apiInventoryPath && fs.existsSync(apiInventoryPath)
     ? JSON.parse(fs.readFileSync(apiInventoryPath, "utf8"))
     : null;
+const inventoryCounts = apiInventory?.counts || null;
 
 const alerts = [];
 const apiUris = new Set();
@@ -75,16 +76,16 @@ for (const alert of grouped) {
   lines.push(`- ${alert.name} (riskCode=${alert.riskCode}, count=${alert.count})`);
 }
 
-if (apiInventory) {
+if (apiInventory && inventoryCounts) {
   lines.push(
     "",
     "## API Inventory",
     "",
-    `- OpenAPI route count: ${apiInventory.openApiRouteCount}`,
-    `- OpenAPI operation count: ${apiInventory.openApiOperationCount}`,
-    `- Requestor route count: ${apiInventory.requestorRouteCount}`,
-    `- Observed OpenAPI routes: ${apiInventory.observedSpecRouteCount}`,
-    `- Unobserved OpenAPI routes: ${apiInventory.unobservedSpecRouteCount}`
+    `- OpenAPI route count: ${inventoryCounts.openApiRouteCount}`,
+    `- OpenAPI operation count: ${inventoryCounts.openApiOperationCount}`,
+    `- Requestor route count: ${inventoryCounts.requestorRouteCount}`,
+    `- Observed OpenAPI routes: ${inventoryCounts.observedSpecRouteCount}`,
+    `- Unobserved OpenAPI routes: ${inventoryCounts.unobservedSpecRouteCount}`
   );
 }
 
