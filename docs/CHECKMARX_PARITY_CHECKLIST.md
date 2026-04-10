@@ -123,14 +123,38 @@ It is scoped to the realistic target already defined there:
 
 ## Phase 4: API Breadth and Discovery Improvements
 
-- [ ] Improve OpenAPI normalization and ingestion reliability
+- [x] Improve OpenAPI normalization and ingestion reliability
 - [ ] Add GraphQL support
 - [ ] Add undocumented-route discovery using requestor/traffic evidence
 - [ ] Add code/spec-hint-based route discovery where practical
-- [ ] Add API inventory outputs to artifacts and summaries
+- [x] Add API inventory outputs to artifacts and summaries
 - [ ] Re-test hard targets where importer weakness previously limited coverage
 - [ ] Compare API reach improvement vs timing cost
 - [ ] Update benchmark docs with the improved API coverage model
+
+### Phase 4 progress note
+- Proven on PR #56 smoke run:
+  - `CI Tests`: `55s`
+  - `DAST PR Scan`: `2m 44s`
+  - summary now includes an `API Inventory` section
+  - report artifacts now include:
+    - `api-inventory.json`
+    - `api-inventory.md`
+  - inventory signal from the PR artifact:
+    - `OpenAPI route count: 11`
+    - `OpenAPI operation count: 14`
+    - `OpenAPI imported URL count: 15`
+    - `Observed OpenAPI routes: 3`
+    - `Unobserved OpenAPI routes: 8`
+  - current unobserved spec routes were made explicit in the artifact, including:
+    - `/api/auth/login`
+    - `/api/auth/register`
+    - `/api/debug/error`
+    - `/api/documents`
+    - `/api/documents/{id}`
+    - `/api/users`
+    - `/api/users/{id}`
+    - `/health`
 
 ### Phase 4 exit
 - [x] PR remains under 10 minutes

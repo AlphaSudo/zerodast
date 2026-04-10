@@ -43,6 +43,7 @@ It already contains:
 | Canary verification | Implemented |
 | Delta-scoped PR scanning | Implemented |
 | Full nightly scanning | Implemented |
+| API inventory outputs | Implemented |
 | External-repo T4 demonstrations | Implemented |
 | Model 1 in-repo prototype | Implemented |
 | Admin-path coverage in core repo | Implemented for the core demo-app CI path |
@@ -84,6 +85,7 @@ Current script/runtime surface:
 - [delta-detect.sh](C:/Java%20Developer/DAST/scripts/delta-detect.sh)
 - [generate-delta-scan.sh](C:/Java%20Developer/DAST/scripts/generate-delta-scan.sh)
 - [parse-zap-report.js](C:/Java%20Developer/DAST/scripts/parse-zap-report.js)
+- [build-api-inventory.js](C:/Java%20Developer/DAST/scripts/build-api-inventory.js)
 - [build-request-seeds.js](C:/Java%20Developer/DAST/scripts/build-request-seeds.js)
 - [run-dast-local.sh](C:/Java%20Developer/DAST/scripts/run-dast-local.sh)
 - [run-auth-adapter-smoke.sh](C:/Java%20Developer/DAST/scripts/run-auth-adapter-smoke.sh)
@@ -381,6 +383,42 @@ The PR/nightly summary path now distinguishes:
 - authenticated requestor reach vs public requestor reach
 - admin requestor reach when present
 - delta endpoint observation when delta metadata is available
+- OpenAPI inventory visibility when the report artifact includes spec and log data
+
+### What the current API inventory adds
+The report path now emits:
+- `api-inventory.json`
+- `api-inventory.md`
+
+Those outputs currently summarize:
+- OpenAPI route count
+- OpenAPI operation count
+- OpenAPI imported URL count
+- spider discovered URL count
+- requestor route count
+- alert route count
+- observed route count
+- observed OpenAPI routes
+- unobserved OpenAPI routes
+
+### What is proven today
+GitHub-side proof now exists that the PR lane can publish API inventory data in its artifacts and summary.
+
+Most recent proof point:
+- Phase 4 PR smoke reported:
+  - `OpenAPI route count: 11`
+  - `OpenAPI operation count: 14`
+  - `OpenAPI imported URL count: 15`
+  - `Observed OpenAPI routes: 3`
+  - `Unobserved OpenAPI routes: 8`
+- the summary artifact contained a dedicated `API Inventory` section
+- the report artifact contained:
+  - `api-inventory.json`
+  - `api-inventory.md`
+
+### Current limitation
+This is inventory and visibility, not yet broader API coverage by itself.
+It helps us see importer/discovery gaps clearly, but it does not yet solve them.
 
 ## L. External-Repo T4 Demonstrations
 
