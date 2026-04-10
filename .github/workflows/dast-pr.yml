@@ -117,6 +117,7 @@ jobs:
           ZAP_CONFIG_PATH: /tmp/zap-config.yaml
           ZAP_FAIL_LEVEL: High
           BASELINE_SUPPRESSIONS_PATH: ${{ github.workspace }}/security/zap/.zap-baseline.json
+          FINDING_BASELINE_PATH: ${{ github.workspace }}/security/zap/.zap-result-baseline.json
           AUTH_BOOTSTRAP_MODE: adapter
           AUTH_ADAPTER_SCRIPT: ${{ github.workspace }}/scripts/auth-adapters/json-token-login.sh
           AUTH_TOKEN_PATH: /tmp/zap-auth-token.txt

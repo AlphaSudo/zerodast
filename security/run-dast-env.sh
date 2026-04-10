@@ -58,6 +58,7 @@ ENVIRONMENT_MANIFEST_MD_PATH="${ENVIRONMENT_MANIFEST_MD_PATH:-$REPORTS_DIR/envir
 RESULT_STATE_JSON_PATH="${RESULT_STATE_JSON_PATH:-$REPORTS_DIR/result-state.json}"
 RESULT_STATE_MD_PATH="${RESULT_STATE_MD_PATH:-$REPORTS_DIR/result-state.md}"
 BASELINE_SUPPRESSIONS_PATH="${BASELINE_SUPPRESSIONS_PATH:-$WORKSPACE_DIR/security/zap/.zap-baseline.json}"
+FINDING_BASELINE_PATH="${FINDING_BASELINE_PATH:-$WORKSPACE_DIR/security/zap/.zap-result-baseline.json}"
 
 engine() {
   if [[ "$ENGINE_BIN" == *.exe ]]; then
@@ -370,7 +371,8 @@ if [[ -f "$REPORTS_DIR/zap-report.json" && -f "$REPORTS_DIR/zap-run.log" ]]; the
     "$REPORTS_DIR/zap-report.json" \
     "$BASELINE_SUPPRESSIONS_PATH" \
     "$RESULT_STATE_JSON_PATH" \
-    "$RESULT_STATE_MD_PATH"
+    "$RESULT_STATE_MD_PATH" \
+    "$FINDING_BASELINE_PATH"
 fi
 
 if [[ "$RUN_AUTHZ_NETWORK" == "true" ]]; then

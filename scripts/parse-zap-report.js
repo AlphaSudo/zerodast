@@ -203,6 +203,9 @@ if (fs.existsSync(resultStatePath)) {
   console.log(`- Suppressed alert count: ${state.counts?.suppressedAlertCount ?? 0}`);
   console.log(`- Unique suppression rules applied: ${state.counts?.uniqueSuppressionCount ?? 0}`);
   console.log(`- Effective high-or-above findings: ${(state.counts?.effective?.critical ?? 0) + (state.counts?.effective?.high ?? 0)}`);
+  console.log(`- New findings vs baseline: ${state.comparison?.newFindingCount ?? 0}`);
+  console.log(`- Persisting findings vs baseline: ${state.comparison?.persistingFindingCount ?? 0}`);
+  console.log(`- Resolved findings vs baseline: ${state.comparison?.resolvedFindingCount ?? 0}`);
 }
 
 if (fs.existsSync(inventoryJsonPath)) {

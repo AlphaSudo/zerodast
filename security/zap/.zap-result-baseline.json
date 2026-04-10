@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "generatedAt": "2026-04-10T15:41:33.131Z",
+  "sourceReport": "C:\\Java Developer\\DAST\\tmp-phase5-pr-report\\zap-report.json",
+  "signatures": [
+    {
+      "name": "Cross Site Scripting (DOM Based)",
+      "risk": "high",
+      "route": "/api/search/preview"
+    },
+    {
+      "name": "Cross Site Scripting (Reflected)",
+      "risk": "high",
+      "route": "/api/search/preview"
+    },
+    {
+      "name": "SQL Injection",
+      "risk": "high",
+      "route": "/api/search"
+    },
+    {
+      "name": "Authentication Request Identified",
+      "risk": "informational",
+      "route": "/api/auth/session-login"
+    },
+    {
+      "name": "GET for POST",
+      "risk": "informational",
+      "route": "/api/auth/session-login"
+    },
+    {
+      "name": "Content Security Policy (CSP) Header Not Set",
+      "risk": "medium",
+      "route": "/api/search/preview"
+    },
+    {
+      "name": "Cross-Domain Misconfiguration",
+      "risk": "medium",
+      "route": "/api/search"
+    },
+    {
+      "name": "Cross-Domain Misconfiguration",
+      "risk": "medium",
+      "route": "/api/search/preview"
+    },
+    {
+      "name": "Cross-Domain Misconfiguration",
+      "risk": "medium",
+      "route": "/v3/api-docs"
+    }
+  ]
+}

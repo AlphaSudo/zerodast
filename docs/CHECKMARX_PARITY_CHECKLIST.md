@@ -215,7 +215,7 @@ It is scoped to the realistic target already defined there:
 
 - [x] Define a lightweight environment model for onboarded targets
 - [x] Add better suppression and baseline management
-- [ ] Add cleaner diff-aware result comparison
+- [x] Add cleaner diff-aware result comparison
 - [ ] Add richer issue/comment/report policy controls
 - [ ] Add simple repo-fleet tracking for multiple onboarded targets
 - [x] Add explicit result-state / triage workflow model
@@ -263,8 +263,20 @@ It is scoped to the realistic target already defined there:
     - PR operator values confirmed:
       - profile: `pr-delta`
       - trigger: `workflow_run`
-      - bootstrap mode: `adapter`
-      - state: `needs_triage`
+    - bootstrap mode: `adapter`
+    - state: `needs_triage`
+- local diff-aware comparison proof now exists:
+  - committed finding baseline:
+    - `security/zap/.zap-result-baseline.json`
+  - current demo report now compares against that baseline and reports:
+    - `New findings vs baseline: 0`
+    - `Persisting findings vs baseline: 9`
+    - `Resolved findings vs baseline: 0`
+  - triage guidance now distinguishes:
+    - new findings first
+    - persisting findings
+    - resolved findings
+  - CI proof for the diff-aware comparison slice is still pending
 - this is the beginning of Phase 5 operator maturity, not the full control-plane story
 
 ### Phase 5 exit

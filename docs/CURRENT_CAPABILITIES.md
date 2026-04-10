@@ -86,6 +86,7 @@ Current script/runtime surface:
 - [generate-delta-scan.sh](C:/Java%20Developer/DAST/scripts/generate-delta-scan.sh)
 - [parse-zap-report.js](C:/Java%20Developer/DAST/scripts/parse-zap-report.js)
 - [build-environment-manifest.js](C:/Java%20Developer/DAST/scripts/build-environment-manifest.js)
+- [build-finding-baseline.js](C:/Java%20Developer/DAST/scripts/build-finding-baseline.js)
 - [build-result-state.js](C:/Java%20Developer/DAST/scripts/build-result-state.js)
 - [build-api-inventory.js](C:/Java%20Developer/DAST/scripts/build-api-inventory.js)
 - [build-request-seeds.js](C:/Java%20Developer/DAST/scripts/build-request-seeds.js)
@@ -458,6 +459,7 @@ Implemented as the first Phase 5 operator slice.
 ### What exists
 - environment manifest generation in [build-environment-manifest.js](C:/Java%20Developer/DAST/scripts/build-environment-manifest.js)
 - baseline-adjusted result-state generation in [build-result-state.js](C:/Java%20Developer/DAST/scripts/build-result-state.js)
+- finding-baseline generation in [build-finding-baseline.js](C:/Java%20Developer/DAST/scripts/build-finding-baseline.js)
 - runtime wiring in [run-dast-env.sh](C:/Java%20Developer/DAST/security/run-dast-env.sh)
 - PR and nightly workflow metadata injection in [dast-pr.yml](C:/Java%20Developer/DAST/.github/workflows/dast-pr.yml) and [dast-nightly.yml](C:/Java%20Developer/DAST/.github/workflows/dast-nightly.yml)
 
@@ -467,6 +469,9 @@ The report bundle now includes operator-facing artifacts:
 - `environment-manifest.md`
 - `result-state.json`
 - `result-state.md`
+
+The core scan also now supports a committed finding baseline:
+- `security/zap/.zap-result-baseline.json`
 
 ### What they provide
 - a stable description of the scanned environment:
@@ -479,6 +484,10 @@ The report bundle now includes operator-facing artifacts:
   - `clean`
   - `baseline_only`
   - `needs_triage`
+- a diff-aware comparison against a known finding baseline:
+  - new findings
+  - persisting findings
+  - resolved findings
 
 ### What this means
 ZeroDAST now has the start of an operator model rather than only raw scanner output.
@@ -501,9 +510,16 @@ GitHub-side proof now exists on both core lanes:
   - auth bootstrap mode: `adapter`
   - result state: `needs_triage`
 
+Local proof also now exists that diff-aware comparison is working against the committed demo baseline:
+- `New findings vs baseline: 0`
+- `Persisting findings vs baseline: 9`
+- `Resolved findings vs baseline: 0`
+
+That proves the comparison model itself.
+What is still pending is a fresh GitHub-side proof that the same comparison values show up in PR/nightly summaries and artifacts.
+
 ### Current limitation
 This is still not:
-- diff-aware result comparison
 - repo-fleet management
 - full remediation/retest workflow orchestration
 - enterprise control-plane governance
