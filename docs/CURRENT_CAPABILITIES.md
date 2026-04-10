@@ -538,8 +538,15 @@ The repo now also has richer comment/issue policy controls:
   - `threshold_or_new_findings`
   - `always`
 - nightly issue handling now supports title-prefix dedupe/update rather than always opening a fresh issue
+- nightly artifact proof now exists that the policy/diff layer is active on the full lane:
+  - `New findings vs baseline: 21`
+  - `Persisting findings vs baseline: 5`
+  - `Resolved findings vs baseline: 4`
+  - triage guidance: `Review new findings relative to the baseline first.`
 
-What is still pending is a fresh GitHub-side proof that the new policy controls behave as expected in both the PR comment path and nightly issue path.
+What is still pending is explicit UI-side proof that:
+- PR comment gating behaves as configured
+- nightly issue dedupe/update behaves as configured
 
 ### Current limitation
 This is still not:

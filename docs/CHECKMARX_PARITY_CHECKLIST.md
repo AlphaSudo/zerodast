@@ -296,7 +296,17 @@ It is scoped to the realistic target already defined there:
     - `threshold_or_new_findings`
     - `always`
   - nightly issue handling now deduplicates/upgrades an existing open issue by title prefix instead of always opening a fresh issue
-  - CI proof for this policy-control slice is still pending
+  - nightly proof now exists for the policy-driven result shape:
+    - `DAST Nightly #62`: `4m 23s`
+    - nightly result state reported:
+      - `New findings vs baseline: 21`
+      - `Persisting findings vs baseline: 5`
+      - `Resolved findings vs baseline: 4`
+    - triage guidance shifted to:
+      - `Review new findings relative to the baseline first.`
+  - what is still pending is explicit UI-side confirmation that:
+    - PR comment policy gates comments as configured
+    - nightly issue dedupe/update behaves as configured
 - this is the beginning of Phase 5 operator maturity, not the full control-plane story
 
 ### Phase 5 exit
