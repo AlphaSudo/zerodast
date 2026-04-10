@@ -60,6 +60,30 @@ RESULT_STATE_MD_PATH="${RESULT_STATE_MD_PATH:-$REPORTS_DIR/result-state.md}"
 REMEDIATION_GUIDE_MD_PATH="${REMEDIATION_GUIDE_MD_PATH:-$REPORTS_DIR/remediation-guide.md}"
 BASELINE_SUPPRESSIONS_PATH="${BASELINE_SUPPRESSIONS_PATH:-$WORKSPACE_DIR/security/zap/.zap-baseline.json}"
 FINDING_BASELINE_PATH="${FINDING_BASELINE_PATH:-$WORKSPACE_DIR/security/zap/.zap-result-baseline.json}"
+RELIABILITY_METRICS_JSON_PATH="${RELIABILITY_METRICS_JSON_PATH:-$REPORTS_DIR/reliability-metrics.json}"
+OPERATIONAL_RELIABILITY_JSON_PATH="${OPERATIONAL_RELIABILITY_JSON_PATH:-$REPORTS_DIR/operational-reliability.json}"
+OPERATIONAL_RELIABILITY_MD_PATH="${OPERATIONAL_RELIABILITY_MD_PATH:-$REPORTS_DIR/operational-reliability.md}"
+RUN_STARTED_AT="$(date +%s)"
+DB_READY=false
+APP_READY=false
+DB_READY_SECONDS=""
+APP_READY_SECONDS=""
+AUTH_VALIDATION_ATTEMPTED=false
+AUTH_VALIDATION_PASSED=false
+ADMIN_VALIDATION_ATTEMPTED=false
+ADMIN_VALIDATION_PASSED=false
+ZAP_RUN_REQUESTED=false
+ZAP_RUN_COMPLETED=false
+REPORT_PRODUCED=false
+API_INVENTORY_PRODUCED=false
+RESULT_STATE_PRODUCED=false
+REMEDIATION_GUIDE_PRODUCED=false
+POST_SCAN_ATTEMPTED=false
+POST_SCAN_COMPLETED=false
+AUTHZ_ATTEMPTED=false
+AUTHZ_COMPLETED=false
+DB_START_TS=0
+APP_START_TS=0
 
 engine() {
   if [[ "$ENGINE_BIN" == *.exe ]]; then
@@ -80,6 +104,40 @@ host_path() {
 
 next_delay() {
   awk -v value="$1" 'BEGIN { value = value * 1.5; if (value > 3) value = 3; printf "%.3f", value }'
+}
+
+write_operational_reliability() {
+  local total_runtime_seconds
+  total_runtime_seconds=$(( $(date +%s) - RUN_STARTED_AT ))
+
+  cat > "$RELIABILITY_METRICS_JSON_PATH" <<JSON
+{
+  "totalRuntimeSeconds": $total_runtime_seconds,
+  "dbReady": $DB_READY,
+  "dbReadySeconds": ${DB_READY_SECONDS:-null},
+  "appReady": $APP_READY,
+  "appReadySeconds": ${APP_READY_SECONDS:-null},
+  "authValidationAttempted": $AUTH_VALIDATION_ATTEMPTED,
+  "authValidationPassed": $AUTH_VALIDATION_PASSED,
+  "adminValidationAttempted": $ADMIN_VALIDATION_ATTEMPTED,
+  "adminValidationPassed": $ADMIN_VALIDATION_PASSED,
+  "zapRunRequested": $ZAP_RUN_REQUESTED,
+  "zapRunCompleted": $ZAP_RUN_COMPLETED,
+  "reportProduced": $REPORT_PRODUCED,
+  "apiInventoryProduced": $API_INVENTORY_PRODUCED,
+  "resultStateProduced": $RESULT_STATE_PRODUCED,
+  "remediationGuideProduced": $REMEDIATION_GUIDE_PRODUCED,
+  "postScanAttempted": $POST_SCAN_ATTEMPTED,
+  "postScanCompleted": $POST_SCAN_COMPLETED,
+  "authzAttempted": $AUTHZ_ATTEMPTED,
+  "authzCompleted": $AUTHZ_COMPLETED
+}
+JSON
+
+  node "$WORKSPACE_DIR/scripts/build-operational-reliability.js" \
+    "$RELIABILITY_METRICS_JSON_PATH" \
+    "$OPERATIONAL_RELIABILITY_JSON_PATH" \
+    "$OPERATIONAL_RELIABILITY_MD_PATH"
 }
 
 capture_openapi_spec_inside_app() {
@@ -143,8 +201,11 @@ trap cleanup EXIT
 
 wait_for_db() {
   local attempt delay=0.2
+  DB_START_TS="$(date +%s)"
   for attempt in $(seq 1 "$DB_WAIT_ATTEMPTS"); do
     if engine exec "$DB_CONTAINER" sh -lc "PGPASSWORD=throwaway_ci_test_pass psql -h 127.0.0.1 -U testuser -d testdb -c 'select 1' >/dev/null 2>&1"; then
+      DB_READY=true
+      DB_READY_SECONDS=$(( $(date +%s) - DB_START_TS ))
       return 0
     fi
     sleep "$delay"
@@ -163,8 +224,11 @@ seed_sql_file() {
 
 wait_for_app() {
   local attempt delay=0.2
+  APP_START_TS="$(date +%s)"
   for attempt in $(seq 1 "$APP_WAIT_ATTEMPTS"); do
     if engine exec "$APP_CONTAINER" wget -qO- "http://127.0.0.1:8080${APP_HEALTH_PATH}" >/dev/null 2>&1; then
+      APP_READY=true
+      APP_READY_SECONDS=$(( $(date +%s) - APP_START_TS ))
       return 0
     fi
     sleep "$delay"
@@ -269,12 +333,16 @@ elif [[ -n "$AUTH_ADAPTER_SCRIPT" ]]; then
 fi
 
 if [[ -n "${AUTH_HEADER_VALUE:-}" ]]; then
+  AUTH_VALIDATION_ATTEMPTED=true
   validate_admin_route_inside_app "$AUTH_HEADER_NAME" "$AUTH_HEADER_VALUE" "$AUTH_PROTECTED_ROUTE_PATH" "$AUTH_PROTECTED_ROUTE_EXPECTED_STATUS"
+  AUTH_VALIDATION_PASSED=true
   echo "Protected route bootstrap validated against ${AUTH_PROTECTED_ROUTE_PATH}"
 fi
 
 if [[ -n "${ADMIN_AUTH_HEADER_VALUE:-}" ]]; then
+  ADMIN_VALIDATION_ATTEMPTED=true
   validate_admin_route_inside_app "$ADMIN_AUTH_HEADER_NAME" "$ADMIN_AUTH_HEADER_VALUE" "$ADMIN_PROTECTED_ROUTE_PATH" "$ADMIN_PROTECTED_ROUTE_EXPECTED_STATUS"
+  ADMIN_VALIDATION_PASSED=true
   echo "Admin bootstrap validated against ${ADMIN_PROTECTED_ROUTE_PATH}"
 else
   echo "WARNING: ADMIN_AUTH_HEADER_VALUE is empty - admin-path coverage verification will likely fail" >&2
@@ -296,6 +364,7 @@ if [[ ! -f "$ZAP_CONFIG_PATH" ]]; then
 fi
 
 if [[ "$SKIP_ZAP_RUN" == "true" ]]; then
+  write_operational_reliability
   echo "Skipping ZAP run after successful auth/bootstrap validation"
   exit 0
 fi
@@ -325,6 +394,7 @@ HOST_ZAP_RUNTIME_PATH="$(host_path "$ZAP_RUNTIME_CONFIG")"
 ZAP_RUN_LOG="$REPORTS_DIR/zap-run.log"
 rm -f "$ZAP_RUN_LOG" 2>/dev/null || true
 
+ZAP_RUN_REQUESTED=true
 set +e
 engine run --rm \
   --network "$NETWORK_NAME" \
@@ -339,13 +409,18 @@ engine run --rm \
   2>&1 | tee "$ZAP_RUN_LOG"
 ZAP_EXIT=${PIPESTATUS[0]}
 set -e
+ZAP_RUN_COMPLETED=true
 
 if [[ "${ZAP_EXIT:-0}" -gt 3 ]]; then
+  write_operational_reliability
   echo "ZAP crashed with exit code $ZAP_EXIT" >&2
   exit 1
 fi
 
 echo "ZAP finished with exit code ${ZAP_EXIT:-0}"
+if [[ -f "$REPORTS_DIR/zap-report.json" ]]; then
+  REPORT_PRODUCED=true
+fi
 
 if [[ -f "$REPORTS_DIR/zap-report.json" && -f "$REPORTS_DIR/zap-run.log" ]]; then
   if [[ -n "${ROUTE_HINT_DIRS:-}" ]]; then
@@ -367,6 +442,9 @@ if [[ -f "$REPORTS_DIR/zap-report.json" && -f "$REPORTS_DIR/zap-run.log" ]]; the
     "$API_INVENTORY_JSON_PATH" \
     "$API_INVENTORY_MD_PATH" \
     "$ROUTE_HINTS_JSON_PATH"
+  if [[ -f "$API_INVENTORY_JSON_PATH" && -f "$API_INVENTORY_MD_PATH" ]]; then
+    API_INVENTORY_PRODUCED=true
+  fi
 
   node "$WORKSPACE_DIR/scripts/build-result-state.js" \
     "$REPORTS_DIR/zap-report.json" \
@@ -374,17 +452,26 @@ if [[ -f "$REPORTS_DIR/zap-report.json" && -f "$REPORTS_DIR/zap-run.log" ]]; the
     "$RESULT_STATE_JSON_PATH" \
     "$RESULT_STATE_MD_PATH" \
     "$FINDING_BASELINE_PATH"
+  if [[ -f "$RESULT_STATE_JSON_PATH" && -f "$RESULT_STATE_MD_PATH" ]]; then
+    RESULT_STATE_PRODUCED=true
+  fi
 
   node "$WORKSPACE_DIR/scripts/build-remediation-guide.js" \
     "$RESULT_STATE_JSON_PATH" \
     "$REMEDIATION_GUIDE_MD_PATH"
+  if [[ -f "$REMEDIATION_GUIDE_MD_PATH" ]]; then
+    REMEDIATION_GUIDE_PRODUCED=true
+  fi
 fi
 
+AUTHZ_EXIT=0
 if [[ "$RUN_AUTHZ_NETWORK" == "true" ]]; then
+  AUTHZ_ATTEMPTED=true
   if [[ -n "$MOCK_DATA_SQL" && -f "$MOCK_DATA_SQL" ]]; then
     seed_sql_file "$MOCK_DATA_SQL"
   fi
   HOST_WORKSPACE_DIR="$(host_path "$WORKSPACE_DIR")"
+  set +e
   engine run --rm \
     --network "$NETWORK_NAME" \
     -e EXPECT_IDOR="$EXPECT_IDOR" \
@@ -392,8 +479,31 @@ if [[ "$RUN_AUTHZ_NETWORK" == "true" ]]; then
     -w /work \
     node:20-alpine \
     node "$AUTHZ_SCRIPT_PATH" "http://$APP_CONTAINER:8080"
+  AUTHZ_EXIT=$?
+  set -e
+  if [[ "$AUTHZ_EXIT" -eq 0 ]]; then
+    AUTHZ_COMPLETED=true
+  fi
 fi
 
+POST_SCAN_EXIT=0
 if [[ -n "$POST_SCAN_SCRIPT" ]]; then
+  POST_SCAN_ATTEMPTED=true
+  set +e
   APP_URL="$POST_SCAN_APP_URL" bash "$POST_SCAN_SCRIPT"
+  POST_SCAN_EXIT=$?
+  set -e
+  if [[ "$POST_SCAN_EXIT" -eq 0 ]]; then
+    POST_SCAN_COMPLETED=true
+  fi
+fi
+
+write_operational_reliability
+
+if [[ "$AUTHZ_EXIT" -ne 0 ]]; then
+  exit "$AUTHZ_EXIT"
+fi
+
+if [[ "$POST_SCAN_EXIT" -ne 0 ]]; then
+  exit "$POST_SCAN_EXIT"
 fi

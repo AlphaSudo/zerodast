@@ -16,6 +16,7 @@ const logPath = path.join(reportDir, "zap-run.log");
 const inventoryJsonPath = path.join(reportDir, "api-inventory.json");
 const environmentManifestPath = path.join(reportDir, "environment-manifest.json");
 const resultStatePath = path.join(reportDir, "result-state.json");
+const operationalReliabilityPath = path.join(reportDir, "operational-reliability.json");
 const deltaPath = path.join("artifacts", "delta-endpoints.txt");
 const alertUris = new Set();
 const requestorUrls = new Set();
@@ -206,6 +207,18 @@ if (fs.existsSync(resultStatePath)) {
   console.log(`- New findings vs baseline: ${state.comparison?.newFindingCount ?? 0}`);
   console.log(`- Persisting findings vs baseline: ${state.comparison?.persistingFindingCount ?? 0}`);
   console.log(`- Resolved findings vs baseline: ${state.comparison?.resolvedFindingCount ?? 0}`);
+}
+
+if (fs.existsSync(operationalReliabilityPath)) {
+  const reliability = JSON.parse(fs.readFileSync(operationalReliabilityPath, "utf8"));
+  console.log("");
+  console.log("## Operational Reliability");
+  console.log("");
+  console.log(`- State: ${reliability.state || "N/A"}`);
+  console.log(`- Summary: ${reliability.summary || "N/A"}`);
+  console.log(`- Total runtime seconds: ${reliability.timings?.totalRuntimeSeconds ?? "N/A"}`);
+  console.log(`- Database ready seconds: ${reliability.timings?.dbReadySeconds ?? "N/A"}`);
+  console.log(`- Application ready seconds: ${reliability.timings?.appReadySeconds ?? "N/A"}`);
 }
 
 if (fs.existsSync(inventoryJsonPath)) {
