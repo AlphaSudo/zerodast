@@ -135,7 +135,7 @@ trap cleanup EXIT
 wait_for_db() {
   local attempt delay=0.2
   for attempt in $(seq 1 "$DB_WAIT_ATTEMPTS"); do
-    if engine exec "$DB_CONTAINER" pg_isready -U testuser -d testdb >/dev/null 2>&1; then
+    if engine exec "$DB_CONTAINER" sh -lc "PGPASSWORD=throwaway_ci_test_pass psql -h 127.0.0.1 -U testuser -d testdb -c 'select 1' >/dev/null 2>&1"; then
       return 0
     fi
     sleep "$delay"
@@ -148,7 +148,7 @@ wait_for_db() {
 seed_sql_file() {
   local sql_file="$1"
   if [[ -n "$sql_file" && -f "$sql_file" ]]; then
-    engine exec -i "$DB_CONTAINER" psql -v ON_ERROR_STOP=1 -U testuser -d testdb < "$sql_file"
+    engine exec -i "$DB_CONTAINER" sh -lc "PGPASSWORD=throwaway_ci_test_pass psql -h 127.0.0.1 -v ON_ERROR_STOP=1 -U testuser -d testdb" < "$sql_file"
   fi
 }
 
