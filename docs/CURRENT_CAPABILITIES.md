@@ -89,6 +89,7 @@ Current script/runtime surface:
 - [build-finding-baseline.js](C:/Java%20Developer/DAST/scripts/build-finding-baseline.js)
 - [build-result-state.js](C:/Java%20Developer/DAST/scripts/build-result-state.js)
 - [build-remediation-guide.js](C:/Java%20Developer/DAST/scripts/build-remediation-guide.js)
+- [build-operational-reliability.js](C:/Java%20Developer/DAST/scripts/build-operational-reliability.js)
 - [build-api-inventory.js](C:/Java%20Developer/DAST/scripts/build-api-inventory.js)
 - [build-request-seeds.js](C:/Java%20Developer/DAST/scripts/build-request-seeds.js)
 - [run-dast-local.sh](C:/Java%20Developer/DAST/scripts/run-dast-local.sh)
@@ -472,6 +473,9 @@ The report bundle now includes operator-facing artifacts:
 - `result-state.json`
 - `result-state.md`
 - `remediation-guide.md`
+- `reliability-metrics.json`
+- `operational-reliability.json`
+- `operational-reliability.md`
 
 The core scan also now supports a committed finding baseline:
 - `security/zap/.zap-result-baseline.json`
@@ -495,6 +499,14 @@ The core scan also now supports a committed finding baseline:
   - what to fix first
   - what to retest next
   - what recently resolved findings to guard
+- a lightweight operational reliability view of the scan runtime:
+  - `healthy`
+  - `degraded`
+  - `failed`
+  - DB/app readiness timing
+  - auth/bootstrap validation success
+  - ZAP/report/inventory/result-state/remediation artifact completion
+  - AuthZ and post-scan completion
 
 ### What this means
 ZeroDAST now has the start of an operator model rather than only raw scanner output.
@@ -567,6 +579,26 @@ The repo now also emits remediation guidance as a first-class artifact:
   - persisting findings next
   - resolved findings as regression guards
 - nightly artifact proof now exists that this guide is emitted in the standard report bundle and tracks the current diff-aware result state rather than acting as a static template
+
+The repo now also emits operational reliability artifacts as part of the standard report bundle:
+- `reliability-metrics.json`
+- `operational-reliability.json`
+- `operational-reliability.md`
+- these separate scan-runtime health from application security findings
+- nightly artifact proof now exists that the reliability model is active in CI and currently reports:
+  - `State: healthy`
+  - `Total runtime seconds: 203`
+  - `Database ready seconds: 2`
+  - `Application ready seconds: 1`
+  - successful completion of:
+    - protected/admin validation
+    - ZAP run
+    - report generation
+    - API inventory generation
+    - result-state generation
+    - remediation guidance generation
+    - AuthZ network checks
+    - post-scan verification
 
 ### Current limitation
 This is still not:

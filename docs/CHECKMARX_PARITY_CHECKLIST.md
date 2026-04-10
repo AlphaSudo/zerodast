@@ -220,7 +220,7 @@ It is scoped to the realistic target already defined there:
 - [ ] Add simple repo-fleet tracking for multiple onboarded targets
 - [x] Add explicit result-state / triage workflow model
 - [x] Add remediation + retest workflow guidance
-- [ ] Add operational reliability tracking
+- [x] Add operational reliability tracking
 - [ ] Update capability docs and comparison docs to reflect the new operator model
 
 ### Phase 5 progress note
@@ -335,6 +335,33 @@ It is scoped to the realistic target already defined there:
         - new findings
         - persisting findings
         - recently resolved findings
+- operational reliability tracking is now implemented:
+  - generated artifacts:
+    - `reliability-metrics.json`
+    - `operational-reliability.json`
+    - `operational-reliability.md`
+  - the reliability model currently distinguishes:
+    - `healthy`
+    - `degraded`
+    - `failed`
+  - the runtime checks currently track:
+    - DB readiness
+    - app readiness
+    - protected/admin bootstrap validation
+    - ZAP completion
+    - report/inventory/result-state/remediation artifact production
+    - AuthZ network checks
+    - post-scan verification
+  - nightly artifact proof now exists:
+    - artifact bundle included:
+      - `operational-reliability.json`
+      - `operational-reliability.md`
+    - nightly operational reliability reported:
+      - `State: healthy`
+      - `Total runtime seconds: 203`
+      - `Database ready seconds: 2`
+      - `Application ready seconds: 1`
+      - all core runtime checks completed successfully
 - this is the beginning of Phase 5 operator maturity, not the full control-plane story
 
 ### Phase 5 exit
