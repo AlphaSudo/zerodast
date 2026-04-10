@@ -566,6 +566,7 @@ The repo now also emits remediation guidance as a first-class artifact:
   - new findings first
   - persisting findings next
   - resolved findings as regression guards
+- nightly artifact proof now exists that this guide is emitted in the standard report bundle and tracks the current diff-aware result state rather than acting as a static template
 
 ### Current limitation
 This is still not:

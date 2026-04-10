@@ -325,6 +325,16 @@ It is scoped to the realistic target already defined there:
     - persisting findings to retest after fixes
     - recently resolved findings to guard against regression
   - this turns the diff-aware result model into a concrete maintainer loop instead of only a summary
+  - nightly artifact proof now exists:
+    - artifact bundle included:
+      - `remediation-guide.md`
+    - the guide correctly reflected nightly result-state priorities:
+      - `Current state: needs_triage`
+      - `Priority summary: Prioritize 22 new finding(s) first, top risk: high.`
+      - separate sections for:
+        - new findings
+        - persisting findings
+        - recently resolved findings
 - this is the beginning of Phase 5 operator maturity, not the full control-plane story
 
 ### Phase 5 exit
