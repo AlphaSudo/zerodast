@@ -52,6 +52,11 @@
 - T3 result: auth/bootstrap moved fully into the target network and still succeeded, which is an important ZeroDAST proof, but the scanner output did not improve beyond T2.
 - T4 result: the CI-backed trusted ZeroDAST path improved signal materially. Using ZAP `2.17.0`, the external FastAPI target proved authenticated and privileged-route coverage together: admin route validation returned `200`, admin route exercise was recorded, API alert URI count reached `14`, and `Cross Site Scripting Weakness (Reflected in JSON Response)` surfaced on authenticated API routes.
 - T4 Phase 4 follow-up result: bounded spec-derived request seeding and API inventory reporting improved measured API reach on the same target. Seeded request count rose to `10`, observed OpenAPI routes reached `9 / 15`, and the remaining unobserved spec routes were made explicit in the artifact.
+- T4 Phase 4 code-hint follow-up result: the benchmark now also emits lightweight code-hinted route inventory. On the same target, code-hinted routes matched the documented surface cleanly:
+  - `Code-hinted routes: 15`
+  - `Code-hinted observed routes: 9`
+  - `Code-hinted unobserved routes: 6`
+  - `Code-hinted routes outside spec: 0`
 - Candidate findings of note:
   - `Cross Site Scripting Weakness (Reflected in JSON Response)`
   - `X-Content-Type-Options Header Missing`
@@ -70,6 +75,7 @@
   - T4 still showed `openapi added 0 URLs` and the familiar spider-root `404` warning, so the improved signal came from the stronger CI/runtime/scanner path rather than a fixed importer
   - the stronger Phase 1 close-out signal came from `Admin route validation status: 200`, `Admin route exercised: yes`, and the explicit `Admin Route Evidence` block in the verification artifact, not from a new OpenAPI importer capability
   - even after the Phase 4 reach uplift, the importer still added `0` URLs; the improvement came from bounded spec-derived request seeds and clearer inventory outputs, not from a fixed OpenAPI importer
+  - the new code-hint route inventory is intentionally lightweight and regex-driven; on this FastAPI target it aligned well with the spec, but that does not yet imply deep static route analysis across arbitrary frameworks
 
 ## Stability Notes
 - Consecutive run behavior: not measured yet
@@ -90,3 +96,4 @@
 - Suitable / Suitable with caveats / Not suitable: Suitable
 - Recommendation: treat this repo as the first authenticated non-Java T4 showcase and the first external privileged/admin-route proof target. The current evidence says ZeroDAST can handle auth bootstrap, privileged-route validation, route exercise, and trusted orchestration here in a way that produces meaningfully better CI signal than the local baselines.
 - What this repo should teach us about ZeroDAST: Whether ZeroDAST can bring together authenticated bootstrap, privileged-route exercise, and trusted DAST orchestration on a non-Java public repo without losing the low-noise adaptation story. T1-T4 now suggest the answer is "yes", with the strongest proof coming from the CI-backed T4 path, its explicit admin-route evidence, and the new Phase 4 inventory proof that shows `9 / 15` OpenAPI routes observed rather than just reporting raw alerts.
+- What this repo should teach us about ZeroDAST: Whether ZeroDAST can bring together authenticated bootstrap, privileged-route exercise, and trusted DAST orchestration on a non-Java public repo without losing the low-noise adaptation story. T1-T4 now suggest the answer is "yes", with the strongest proof coming from the CI-backed T4 path, its explicit admin-route evidence, the Phase 4 inventory proof that shows `9 / 15` OpenAPI routes observed, and the code-hint proof showing `15` hinted routes with `0` hint-only routes outside the documented surface.

@@ -401,6 +401,10 @@ Those outputs currently summarize:
 - observed OpenAPI routes
 - unobserved OpenAPI routes
 - undocumented observed routes
+- code-hinted routes
+- code-hinted observed routes
+- code-hinted unobserved routes
+- code-hinted routes outside spec
 
 ### What is proven today
 GitHub-side proof now exists that the PR lane can publish API inventory data in its artifacts and summary.
@@ -420,11 +424,19 @@ Most recent proof point:
 - current FastAPI hard-target evidence reports:
   - `Undocumented observed routes: 0`
   - which confirms the metric is active and sane on a real benchmark target
+- external benchmark proof also now exists that the lightweight code-hint route model works in CI-backed benchmark artifacts
+- current FastAPI hard-target evidence reports:
+  - `Code-hinted routes: 15`
+  - `Code-hinted observed routes: 9`
+  - `Code-hinted unobserved routes: 6`
+  - `Code-hinted routes outside spec: 0`
+  - which confirms the hint model is active and aligned with the target's documented API surface on a real benchmark target
 
 ### Current limitation
 This is inventory and visibility, not yet broader API coverage by itself.
 It helps us see importer/discovery gaps clearly, but it does not yet solve them.
 It is also not the same thing as full shadow API discovery from production traffic or passive network telemetry.
+The current hint model is intentionally lightweight and regex-driven; it is not deep static route analysis across arbitrary frameworks.
 
 ## L. External-Repo T4 Demonstrations
 

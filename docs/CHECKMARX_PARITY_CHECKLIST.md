@@ -173,6 +173,15 @@ It is scoped to the realistic target already defined there:
     - `Undocumented observed routes: 0`
   - this proves the evidence-based undocumented-route inventory path is active in CI
   - it does **not** yet prove discovery of real undocumented API surface on this target
+- Proven on the FastAPI code-hinted inventory follow-up:
+  - `Fullstack FastAPI T4 Scan #10`: `3m 45s`
+  - verification and artifact inventory now include:
+    - `Code-hinted routes: 15`
+    - `Code-hinted observed routes: 9`
+    - `Code-hinted unobserved routes: 6`
+    - `Code-hinted routes outside spec: 0`
+  - this proves the lightweight code/spec-hint discovery path is active in CI and aligned with the target's documented API surface
+  - it does **not** yet prove deep static route analysis across arbitrary frameworks
 
 ### Phase 4 exit
 - [x] PR remains under 10 minutes
