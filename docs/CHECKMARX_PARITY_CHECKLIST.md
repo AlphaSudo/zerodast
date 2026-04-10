@@ -155,11 +155,23 @@ It is scoped to the realistic target already defined there:
     - `/api/users`
     - `/api/users/{id}`
     - `/health`
+- Proven on the FastAPI hard target follow-up:
+  - `Fullstack FastAPI T4 Scan #7`: `3m 44s`
+  - seeded request count rose to `10`
+  - API alert URI count rose to `14`
+  - inventory output on the external target now reports:
+    - `OpenAPI route count: 15`
+    - `OpenAPI operation count: 23`
+    - `Observed OpenAPI routes: 9`
+    - `Unobserved OpenAPI routes: 6`
+  - this is still not a fixed importer story:
+    - `OpenAPI imported URL count: 0`
+  - but it is a real hard-target API reach improvement driven by bounded spec-derived request seeding
 
 ### Phase 4 exit
 - [x] PR remains under 10 minutes
 - [x] Nightly remains under 15 minutes
-- [ ] API coverage improves materially on at least one hard target
+- [x] API coverage improves materially on at least one hard target
 
 ---
 

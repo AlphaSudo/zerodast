@@ -44,13 +44,14 @@
 | T1 | Moderate | 270.8s | Pending | Login bootstrap succeeded; protected route validation and authenticated request seeding succeeded | Meaningful but limited: API-side findings landed, but OpenAPI import added `0` URLs and findings stayed low/informational | Compose-network local scan, no trusted split yet | Partial success |
 | T2 | Moderate | 307.6s | Pending | Login bootstrap succeeded; protected-route validation and authenticated seeding still succeeded | Better than T1: API alert URI count rose from `5` to `7`, mainly by exercising authenticated query-string variants | Compose-network local scan, still no trusted split | Partial success |
 | T3 | High | 630.1s | Pending | Login bootstrap, protected-route validation, and request seeding all succeeded from inside the target network | No lift over T2: API alert URI count stayed at `7`, OpenAPI import still added `0` URLs, and the same low/informational finding set remained | Network-side auth/bootstrap and scan orchestration; closer to ZeroDAST's real model | Partial success |
-| T4 | High | 127s | Pending | CI bootstrap/login/protected-route validation all succeeded in the trusted scan lane, and the superuser-only `users/` route validated with HTTP `200` | Strongest result so far: API alert URI count reached `10`, reflected JSON XSS signal appeared on authenticated API routes, and the privileged `users/` route was explicitly exercised | Full CI-backed trusted split with isolated runtime and target-aware auth orchestration | Success |
+| T4 | High | 133s | Pending | CI bootstrap/login/protected-route validation all succeeded in the trusted scan lane, and the superuser-only `users/` route validated with HTTP `200` | Strongest result so far: API alert URI count reached `14`, reflected JSON XSS signal appeared on authenticated API routes, the privileged `users/` route was explicitly exercised, and the benchmark now emits OpenAPI inventory coverage data | Full CI-backed trusted split with isolated runtime and target-aware auth orchestration | Success |
 
 ## Findings Summary
 - High-level result: the first authenticated T1 baseline worked operationally and produced authenticated API-side signal
 - Follow-up T2 result: still partial, but better than T1. The improved seed set raised API-side alert coverage from `5` URIs to `7`, even though the importer still added `0` URLs and the active findings stayed low/informational.
 - T3 result: auth/bootstrap moved fully into the target network and still succeeded, which is an important ZeroDAST proof, but the scanner output did not improve beyond T2.
-- T4 result: the CI-backed trusted ZeroDAST path improved signal materially. Using ZAP `2.17.0`, the external FastAPI target proved authenticated and privileged-route coverage together: admin route validation returned `200`, admin route exercise was recorded, API alert URI count reached `10`, and `Cross Site Scripting Weakness (Reflected in JSON Response)` surfaced on authenticated API routes.
+- T4 result: the CI-backed trusted ZeroDAST path improved signal materially. Using ZAP `2.17.0`, the external FastAPI target proved authenticated and privileged-route coverage together: admin route validation returned `200`, admin route exercise was recorded, API alert URI count reached `14`, and `Cross Site Scripting Weakness (Reflected in JSON Response)` surfaced on authenticated API routes.
+- T4 Phase 4 follow-up result: bounded spec-derived request seeding and API inventory reporting improved measured API reach on the same target. Seeded request count rose to `10`, observed OpenAPI routes reached `9 / 15`, and the remaining unobserved spec routes were made explicit in the artifact.
 - Candidate findings of note:
   - `Cross Site Scripting Weakness (Reflected in JSON Response)`
   - `X-Content-Type-Options Header Missing`
@@ -68,6 +69,7 @@
   - T3 confirmed that network-side auth/bootstrap is not the limiting factor on this target; the limiting factor is still scanner/importer depth on cached ZAP `2.16.0`
   - T4 still showed `openapi added 0 URLs` and the familiar spider-root `404` warning, so the improved signal came from the stronger CI/runtime/scanner path rather than a fixed importer
   - the stronger Phase 1 close-out signal came from `Admin route validation status: 200`, `Admin route exercised: yes`, and the explicit `Admin Route Evidence` block in the verification artifact, not from a new OpenAPI importer capability
+  - even after the Phase 4 reach uplift, the importer still added `0` URLs; the improvement came from bounded spec-derived request seeds and clearer inventory outputs, not from a fixed OpenAPI importer
 
 ## Stability Notes
 - Consecutive run behavior: not measured yet
@@ -77,6 +79,7 @@
   - cached `2.16.0` does not recognize the extra `activeScan` tuning knobs we initially tried for T2, so this target needs version-aware config
   - T3 is currently much slower than T2 without improving signal, so network-side orchestration alone is not yet a runtime or output win on this target
   - T4 improved both runtime and signal, which suggests the bigger gain on this repo came from the CI path and newer ZAP rather than from additional local orchestration complexity
+  - the benchmark now also depends on the inventory/verification layer staying in sync; one follow-up fix was needed so `verification.md` read `api-inventory.json` counts correctly
 - Workarounds used:
   - created `backend/htmlcov/` locally before startup
   - ran the final ZAP container invocation directly with Podman outside the script after the harness had already generated config/spec/token artifacts
@@ -86,4 +89,4 @@
 ## Final Assessment
 - Suitable / Suitable with caveats / Not suitable: Suitable
 - Recommendation: treat this repo as the first authenticated non-Java T4 showcase and the first external privileged/admin-route proof target. The current evidence says ZeroDAST can handle auth bootstrap, privileged-route validation, route exercise, and trusted orchestration here in a way that produces meaningfully better CI signal than the local baselines.
-- What this repo should teach us about ZeroDAST: Whether ZeroDAST can bring together authenticated bootstrap, privileged-route exercise, and trusted DAST orchestration on a non-Java public repo without losing the low-noise adaptation story. T1-T4 now suggest the answer is "yes", with the strongest proof coming from the CI-backed T4 path and its explicit admin-route evidence.
+- What this repo should teach us about ZeroDAST: Whether ZeroDAST can bring together authenticated bootstrap, privileged-route exercise, and trusted DAST orchestration on a non-Java public repo without losing the low-noise adaptation story. T1-T4 now suggest the answer is "yes", with the strongest proof coming from the CI-backed T4 path, its explicit admin-route evidence, and the new Phase 4 inventory proof that shows `9 / 15` OpenAPI routes observed rather than just reporting raw alerts.
