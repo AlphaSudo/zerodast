@@ -125,12 +125,12 @@ It is scoped to the realistic target already defined there:
 
 - [x] Improve OpenAPI normalization and ingestion reliability
 - [ ] Add GraphQL support
-- [ ] Add undocumented-route discovery using requestor/traffic evidence
-- [ ] Add code/spec-hint-based route discovery where practical
+- [x] Add undocumented-route discovery using requestor/traffic evidence
+- [x] Add code/spec-hint-based route discovery where practical
 - [x] Add API inventory outputs to artifacts and summaries
-- [ ] Re-test hard targets where importer weakness previously limited coverage
+- [x] Re-test hard targets where importer weakness previously limited coverage
 - [ ] Compare API reach improvement vs timing cost
-- [ ] Update benchmark docs with the improved API coverage model
+- [x] Update benchmark docs with the improved API coverage model
 
 ### Phase 4 progress note
 - Proven on PR #56 smoke run:
@@ -182,6 +182,26 @@ It is scoped to the realistic target already defined there:
     - `Code-hinted routes outside spec: 0`
   - this proves the lightweight code/spec-hint discovery path is active in CI and aligned with the target's documented API surface
   - it does **not** yet prove deep static route analysis across arbitrary frameworks
+- Proven on the Petclinic second hard target follow-up:
+  - `Petclinic T4 Scan #4`: `5m 9s`
+  - verification and artifact inventory now include:
+    - `OpenAPI route count: 17`
+    - `OpenAPI operation count: 41`
+    - `Observed OpenAPI routes: 17`
+    - `Unobserved OpenAPI routes: 0`
+    - `Undocumented observed routes: 6`
+    - `Code-hinted routes: 17`
+    - `Code-hinted observed routes: 17`
+    - `Code-hinted unobserved routes: 0`
+    - `Code-hinted routes outside spec: 1`
+  - undocumented observed routes were primarily operational/UI surface:
+    - `/actuator/health`
+    - `/swagger-ui/*`
+  - the one code-hinted route outside spec was:
+    - `/api/oops`
+  - this gives Phase 4 a second hard-target proof with a very different shape than FastAPI:
+    - FastAPI showed partial observed spec reach with remaining gaps
+    - Petclinic showed strong spec/hint alignment with operational undocumented surface
 
 ### Phase 4 exit
 - [x] PR remains under 10 minutes

@@ -101,10 +101,33 @@
   - clean rerun duration: `209s`
   - clean rerun metrics recorded `zapExitCode: 0`
   - artifact package included `zap-report.json`, `verification.md`, `metrics.json`, generated request URLs, and the resolved automation plan
+ - Phase 4 inventory/hint follow-up evidence:
+   - `Petclinic T4 Scan #4`: `5m 9s`
+   - seeded request count: `15`
+   - API inventory now reports:
+     - `OpenAPI route count: 17`
+     - `OpenAPI operation count: 41`
+     - `Observed OpenAPI routes: 17`
+     - `Unobserved OpenAPI routes: 0`
+     - `Undocumented observed routes: 6`
+     - `Code-hinted routes: 17`
+     - `Code-hinted observed routes: 17`
+     - `Code-hinted unobserved routes: 0`
+     - `Code-hinted routes outside spec: 1`
+   - undocumented observed routes were mostly operational/UI surface rather than hidden API breadth:
+     - `/actuator/health`
+     - `/swagger-ui/index.html`
+     - `/swagger-ui/index.css`
+     - `/swagger-ui/swagger-ui-standalone-preset.js`
+     - favicon assets under `/swagger-ui/`
+   - the one code-hinted route outside spec was:
+     - `/api/oops`
+   - this is the second hard-target proof that the new inventory/hint model can behave usefully on a real external repo
 - Caveats:
   - T3 improved API reach, but only modestly; this is evidence of value, not yet evidence of strong comprehensive API coverage.
   - Real-repo findings are candidate findings until independently validated.
   - T5's higher API URI count does not automatically mean it is a better benchmark outcome than `T4`; much of the extra signal is tied to noisier active-attack behavior, large 4xx/5xx churn, and a conventional in-repo trust model.
+  - The new Phase 4 undocumented-route and code-hint metrics are still lightweight inventory signals, not full shadow API discovery or deep static route analysis.
 
 ## Stability Notes
 - Consecutive run behavior: One clean T4 rerun now exists in CI.

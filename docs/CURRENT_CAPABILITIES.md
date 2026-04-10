@@ -431,6 +431,14 @@ Most recent proof point:
   - `Code-hinted unobserved routes: 6`
   - `Code-hinted routes outside spec: 0`
   - which confirms the hint model is active and aligned with the target's documented API surface on a real benchmark target
+- a second hard-target proof now exists on Petclinic:
+  - `OpenAPI routes observed: 17 / 17`
+  - `Code-hinted routes: 17`
+  - `Code-hinted observed routes: 17`
+  - `Code-hinted unobserved routes: 0`
+  - `Code-hinted routes outside spec: 1`
+  - undocumented observed routes there are mostly operational/UI surface such as `/actuator/health` and `/swagger-ui/*`
+  - which confirms the inventory/hint model can also align cleanly on a Java/Spring target rather than only on FastAPI
 
 ### Current limitation
 This is inventory and visibility, not yet broader API coverage by itself.
