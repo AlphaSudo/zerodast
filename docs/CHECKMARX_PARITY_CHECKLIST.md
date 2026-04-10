@@ -276,7 +276,13 @@ It is scoped to the realistic target already defined there:
     - new findings first
     - persisting findings
     - resolved findings
-  - CI proof for the diff-aware comparison slice is still pending
+  - CI proof now also exists on the PR lane:
+    - `DAST PR Scan #16`: `2m 53s`
+    - summary now includes:
+      - `New findings vs baseline: 1`
+      - `Persisting findings vs baseline: 8`
+      - `Resolved findings vs baseline: 1`
+    - this proves the diff-aware comparison is active in the real PR summary path, not just local tooling
 - this is the beginning of Phase 5 operator maturity, not the full control-plane story
 
 ### Phase 5 exit

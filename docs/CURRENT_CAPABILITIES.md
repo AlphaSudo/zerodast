@@ -516,7 +516,14 @@ Local proof also now exists that diff-aware comparison is working against the co
 - `Resolved findings vs baseline: 0`
 
 That proves the comparison model itself.
-What is still pending is a fresh GitHub-side proof that the same comparison values show up in PR/nightly summaries and artifacts.
+GitHub-side proof now also exists on the PR lane:
+- `DAST PR Scan #16`
+- summary included:
+  - `New findings vs baseline: 1`
+  - `Persisting findings vs baseline: 8`
+  - `Resolved findings vs baseline: 1`
+
+That proves the diff-aware comparison is active in real PR summaries and not only in local tooling.
 
 ### Current limitation
 This is still not:
