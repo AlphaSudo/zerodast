@@ -245,6 +245,26 @@ It is scoped to the realistic target already defined there:
 - PR/nightly summary output now includes:
   - `Operator Context`
   - `Result State`
+- CI proof now exists on both core lanes:
+  - nightly proof:
+    - `DAST Nightly #56`: `4m 48s`
+    - artifact bundle included:
+      - `environment-manifest.json`
+      - `result-state.json`
+    - nightly result state:
+      - `needs_triage`
+  - PR proof:
+    - `report-summary.md` now includes:
+      - `## Operator Context`
+      - `## Result State`
+    - PR artifact bundle included:
+      - `environment-manifest.json`
+      - `result-state.json`
+    - PR operator values confirmed:
+      - profile: `pr-delta`
+      - trigger: `workflow_run`
+      - bootstrap mode: `adapter`
+      - state: `needs_triage`
 - this is the beginning of Phase 5 operator maturity, not the full control-plane story
 
 ### Phase 5 exit

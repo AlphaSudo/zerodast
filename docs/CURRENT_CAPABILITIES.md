@@ -487,6 +487,20 @@ This is the first real step toward:
 - repeatable triage semantics
 - suppression-aware result interpretation
 
+### What is proven today
+GitHub-side proof now exists on both core lanes:
+- nightly artifacts include:
+  - `environment-manifest.json`
+  - `result-state.json`
+- PR summary output includes:
+  - `## Operator Context`
+  - `## Result State`
+- PR operator-state proof currently shows:
+  - profile: `pr-delta`
+  - trigger: `workflow_run`
+  - auth bootstrap mode: `adapter`
+  - result state: `needs_triage`
+
 ### Current limitation
 This is still not:
 - diff-aware result comparison
