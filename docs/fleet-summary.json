@@ -1,0 +1,128 @@
+{
+  "generatedAt": "2026-04-10T18:13:32.417Z",
+  "counts": {
+    "targetCount": 4,
+    "categoryCounts": {
+      "core-demo": 1,
+      "external-benchmark": 2,
+      "external-auth-profile": 1
+    },
+    "authModeCounts": {
+      "adapter": 1,
+      "bearer-token": 1,
+      "unauthenticated": 1,
+      "session-header": 1
+    }
+  },
+  "targets": [
+    {
+      "id": "demo-core",
+      "name": "ZeroDAST Demo App",
+      "category": "core-demo",
+      "repo": {
+        "name": "AlphaSudo/zerodast",
+        "url": "https://github.com/AlphaSudo/zerodast"
+      },
+      "authMode": "adapter",
+      "authShapes": [
+        "json-token",
+        "form-cookie"
+      ],
+      "profilesSupported": [
+        "pr-delta",
+        "nightly-full"
+      ],
+      "latestProof": {
+        "workflow": "DAST Nightly #64",
+        "status": "proven",
+        "timingSeconds": 203,
+        "notes": "Operational reliability artifact reported healthy state with complete runtime checks."
+      },
+      "limitations": [
+        "Built-in demo target only",
+        "Not evidence of generalized multi-repo control-plane parity"
+      ]
+    },
+    {
+      "id": "fastapi-t4",
+      "name": "Fullstack FastAPI T4",
+      "category": "external-benchmark",
+      "repo": {
+        "name": "fastapi/full-stack-fastapi-template",
+        "url": "https://github.com/fastapi/full-stack-fastapi-template"
+      },
+      "authMode": "bearer-token",
+      "authShapes": [
+        "jwt-bearer"
+      ],
+      "profilesSupported": [
+        "metadata",
+        "trusted-scan"
+      ],
+      "latestProof": {
+        "workflow": "Fullstack FastAPI T4 Scan #10",
+        "status": "proven",
+        "timingSeconds": 225,
+        "notes": "External hard-target proof with API inventory and code-hinted route metrics."
+      },
+      "limitations": [
+        "OpenAPI importer still reported 0 imported URLs",
+        "Observed OpenAPI routes remain partial rather than complete"
+      ]
+    },
+    {
+      "id": "petclinic-t4",
+      "name": "Spring Petclinic T4",
+      "category": "external-benchmark",
+      "repo": {
+        "name": "spring-petclinic/spring-petclinic-rest",
+        "url": "https://github.com/spring-petclinic/spring-petclinic-rest"
+      },
+      "authMode": "unauthenticated",
+      "authShapes": [
+        "public-rest"
+      ],
+      "profilesSupported": [
+        "metadata",
+        "trusted-scan"
+      ],
+      "latestProof": {
+        "workflow": "Petclinic T4 Scan #4",
+        "status": "proven",
+        "timingSeconds": 309,
+        "notes": "Second hard-target proof with full observed OpenAPI route coverage and strong code-hint alignment."
+      },
+      "limitations": [
+        "Default benchmark path is unauthenticated",
+        "Undocumented observed routes are mostly operational/UI surface"
+      ]
+    },
+    {
+      "id": "django-auth-profile",
+      "name": "Django Styleguide Auth Profile",
+      "category": "external-auth-profile",
+      "repo": {
+        "name": "HackSoftware/Django-Styleguide-Example",
+        "url": "https://github.com/HackSoftware/Django-Styleguide-Example"
+      },
+      "authMode": "session-header",
+      "authShapes": [
+        "session-header",
+        "session-cookie-compatible"
+      ],
+      "profilesSupported": [
+        "auth-profile"
+      ],
+      "latestProof": {
+        "workflow": "Django Auth Profile #1",
+        "status": "proven",
+        "timingSeconds": 92,
+        "notes": "External richer-auth proof using Authorization: Session <sessionid>."
+      },
+      "limitations": [
+        "Auth-profile proof, not yet full T3/T4 benchmark parity",
+        "Does not yet prove browser-cookie replay inside ZAP"
+      ]
+    }
+  ]
+}

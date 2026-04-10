@@ -606,7 +606,54 @@ This is still not:
 - full remediation/retest workflow orchestration
 - enterprise control-plane governance
 
-## M. External-Repo T4 Demonstrations
+## M. Lightweight Repo-Fleet Tracking
+
+### Status
+Implemented as the next Phase 5 operator slice.
+
+### What exists
+- committed fleet registry in [fleet-targets.json](C:/Java%20Developer/DAST/security/fleet-targets.json)
+- generated fleet summary JSON in [fleet-summary.json](C:/Java%20Developer/DAST/docs/fleet-summary.json)
+- generated operator-readable fleet summary in [FLEET_SUMMARY.md](C:/Java%20Developer/DAST/docs/FLEET_SUMMARY.md)
+- generator script in [build-fleet-summary.js](C:/Java%20Developer/DAST/scripts/build-fleet-summary.js)
+
+### What the fleet model currently tracks
+- target name
+- target category
+- repository URL/name
+- auth mode
+- auth shapes
+- supported profiles
+- latest proof workflow
+- latest proof timing
+- current known limitations
+
+### What is currently tracked
+The initial committed fleet includes:
+- the built-in ZeroDAST demo app
+- the external FastAPI T4 benchmark target
+- the external Petclinic T4 benchmark target
+- the external Django auth-profile target
+
+### What this means
+ZeroDAST now has a lightweight multi-target operator view.
+This is not a heavy platform feature, but it is a meaningful step beyond single-target memory and ad hoc chat context.
+
+It gives maintainers one place to answer:
+- what targets are actively carried
+- what proof shape exists for each target
+- what auth model each target depends on
+- what the latest known timing envelope looks like
+- what limitations still matter before making stronger claims
+
+### Current limitation
+This is still not:
+- automated fleet-state ingestion from live workflow history
+- issue routing across many repos
+- full repo-fleet governance or ownership modeling
+- a hosted control plane
+
+## N. External-Repo T4 Demonstrations
 
 ### Status
 Implemented.
@@ -632,7 +679,7 @@ Current workflow files:
 ### Current limitation
 This is benchmark-oriented orchestration, not yet a general turnkey multi-repo SaaS/platform control plane.
 
-## N. Model 1 In-Repo Adoption Prototype
+## O. Model 1 In-Repo Adoption Prototype
 
 ### Status
 Implemented as alpha prototype.
@@ -654,7 +701,7 @@ The repo already contains a real in-repo adoption model, but it is still alpha.
 ### Current limitation
 This is not yet a hardened, broad-compatibility product for arbitrary repos.
 
-## O. Benchmarking Capability
+## P. Benchmarking Capability
 
 ### Status
 Implemented.
@@ -671,7 +718,7 @@ The repo contains:
 ### What this means
 ZeroDAST is already instrumented to compare itself honestly against lighter and more conventional baselines.
 
-## P. Supported Target Classes Today
+## Q. Supported Target Classes Today
 
 ### Strongest current fit
 ZeroDAST is strongest today for:
@@ -693,7 +740,7 @@ ZeroDAST is strongest today for:
 - large enterprise governance/compliance programs
 - shadow API discovery / production traffic discovery
 
-## Q. What ZeroDAST Does Not Currently Provide
+## R. What ZeroDAST Does Not Currently Provide
 
 The current repo does **not** yet provide:
 
@@ -709,7 +756,7 @@ The current repo does **not** yet provide:
 - enterprise RBAC/governance control plane
 - universal target support across arbitrary stacks
 
-## R. Practical Summary
+## S. Practical Summary
 
 ### Current-state bottom line
 ZeroDAST currently **does** implement:

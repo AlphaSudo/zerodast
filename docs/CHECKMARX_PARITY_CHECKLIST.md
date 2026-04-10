@@ -217,7 +217,7 @@ It is scoped to the realistic target already defined there:
 - [x] Add better suppression and baseline management
 - [x] Add cleaner diff-aware result comparison
 - [x] Add richer issue/comment/report policy controls
-- [ ] Add simple repo-fleet tracking for multiple onboarded targets
+- [x] Add simple repo-fleet tracking for multiple onboarded targets
 - [x] Add explicit result-state / triage workflow model
 - [x] Add remediation + retest workflow guidance
 - [x] Add operational reliability tracking
@@ -362,6 +362,26 @@ It is scoped to the realistic target already defined there:
       - `Database ready seconds: 2`
       - `Application ready seconds: 1`
       - all core runtime checks completed successfully
+- simple repo-fleet tracking is now implemented:
+  - committed registry:
+    - `security/fleet-targets.json`
+  - generated fleet outputs:
+    - `docs/fleet-summary.json`
+    - `docs/FLEET_SUMMARY.md`
+  - the initial tracked fleet currently includes:
+    - built-in demo app
+    - FastAPI external benchmark target
+    - Petclinic external benchmark target
+    - Django external auth-profile target
+  - tracked fields currently include:
+    - target name
+    - category
+    - auth mode / auth shapes
+    - supported profiles
+    - latest proof workflow
+    - latest proof timing
+    - known limitations
+  - this gives Phase 5 its first lightweight multi-target operator view without introducing a heavy control-plane design
 - this is the beginning of Phase 5 operator maturity, not the full control-plane story
 
 ### Phase 5 exit
