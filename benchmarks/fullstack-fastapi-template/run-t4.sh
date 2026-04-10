@@ -28,6 +28,8 @@ REPORT_PATH="${WORK_DIR}/zap-report.json"
 LOG_PATH="${WORK_DIR}/zap-run.log"
 METRICS_PATH="${WORK_DIR}/metrics.json"
 VERIFY_PATH="${WORK_DIR}/verification.md"
+API_INVENTORY_JSON="${WORK_DIR}/api-inventory.json"
+API_INVENTORY_MD="${WORK_DIR}/api-inventory.md"
 SPEC_MODE="raw"
 
 mkdir -p "${WORK_DIR}"
@@ -241,8 +243,18 @@ cat > "${METRICS_PATH}" <<EOF
   "seededRequestCount": ${seeded_count},
   "openApiImportedUrlCount": ${openapi_imported},
   "spiderDiscoveredUrlCount": ${spider_found},
-  "adminRouteUrl": "${ADMIN_ROUTE_URL}"
+  "adminRouteUrl": "${ADMIN_ROUTE_URL}",
+  "apiInventoryJsonPath": "${API_INVENTORY_JSON}"
 }
 EOF
+
+if [[ -f "${REPORT_PATH}" && -f "${LOG_PATH}" && -f "${RAW_SPEC}" ]]; then
+  node "${GITHUB_WORKSPACE}/scripts/build-api-inventory.js" \
+    "${REPORT_PATH}" \
+    "${LOG_PATH}" \
+    "${RAW_SPEC}" \
+    "${API_INVENTORY_JSON}" \
+    "${API_INVENTORY_MD}"
+fi
 
 node "${GITHUB_WORKSPACE}/benchmarks/fullstack-fastapi-template/verify-t4.js" "${REPORT_PATH}" "${METRICS_PATH}" "${LOG_PATH}" | tee "${VERIFY_PATH}"
