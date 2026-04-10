@@ -30,6 +30,7 @@ METRICS_PATH="${WORK_DIR}/metrics.json"
 VERIFY_PATH="${WORK_DIR}/verification.md"
 API_INVENTORY_JSON="${WORK_DIR}/api-inventory.json"
 API_INVENTORY_MD="${WORK_DIR}/api-inventory.md"
+ROUTE_HINTS_JSON="${WORK_DIR}/route-hints.json"
 SPEC_MODE="raw"
 
 mkdir -p "${WORK_DIR}"
@@ -249,12 +250,17 @@ cat > "${METRICS_PATH}" <<EOF
 EOF
 
 if [[ -f "${REPORT_PATH}" && -f "${LOG_PATH}" && -f "${RAW_SPEC}" ]]; then
+  node "${GITHUB_WORKSPACE}/scripts/extract-route-hints.js" \
+    --prefix "${API_BASE_PATH}" \
+    "${TARGET_DIR}/backend/app/api/routes" > "${ROUTE_HINTS_JSON}"
+
   node "${GITHUB_WORKSPACE}/scripts/build-api-inventory.js" \
     "${REPORT_PATH}" \
     "${LOG_PATH}" \
     "${RAW_SPEC}" \
     "${API_INVENTORY_JSON}" \
-    "${API_INVENTORY_MD}"
+    "${API_INVENTORY_MD}" \
+    "${ROUTE_HINTS_JSON}"
 fi
 
 node "${GITHUB_WORKSPACE}/benchmarks/fullstack-fastapi-template/verify-t4.js" "${REPORT_PATH}" "${METRICS_PATH}" "${LOG_PATH}" | tee "${VERIFY_PATH}"

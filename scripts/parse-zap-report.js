@@ -192,12 +192,34 @@ if (fs.existsSync(inventoryJsonPath)) {
   console.log(`- Observed OpenAPI routes: ${inventory.counts.observedSpecRouteCount}`);
   console.log(`- Unobserved OpenAPI routes: ${inventory.counts.unobservedSpecRouteCount}`);
   console.log(`- Undocumented observed routes: ${inventory.counts.undocumentedObservedRouteCount}`);
+  console.log(`- Code-hinted routes: ${inventory.counts.hintedRouteCount}`);
+  console.log(`- Code-hinted observed routes: ${inventory.counts.hintedObservedRouteCount}`);
+  console.log(`- Code-hinted unobserved routes: ${inventory.counts.hintedUnobservedRouteCount}`);
+  console.log(`- Code-hinted routes outside spec: ${inventory.counts.hintedOnlyRouteCount}`);
 
   if (Array.isArray(inventory.undocumentedObservedRoutes) && inventory.undocumentedObservedRoutes.length > 0) {
     console.log("");
     console.log("### Undocumented Observed Routes");
     console.log("");
     for (const route of inventory.undocumentedObservedRoutes.slice(0, 12)) {
+      console.log(`- ${route}`);
+    }
+  }
+
+  if (Array.isArray(inventory.hintedUnobservedRoutes) && inventory.hintedUnobservedRoutes.length > 0) {
+    console.log("");
+    console.log("### Code-Hinted Unobserved Routes");
+    console.log("");
+    for (const route of inventory.hintedUnobservedRoutes.slice(0, 12)) {
+      console.log(`- ${route}`);
+    }
+  }
+
+  if (Array.isArray(inventory.hintedOnlyRoutes) && inventory.hintedOnlyRoutes.length > 0) {
+    console.log("");
+    console.log("### Code-Hinted Routes Outside Spec");
+    console.log("");
+    for (const route of inventory.hintedOnlyRoutes.slice(0, 12)) {
       console.log(`- ${route}`);
     }
   }

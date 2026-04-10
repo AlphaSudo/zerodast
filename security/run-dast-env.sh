@@ -51,6 +51,8 @@ OPENAPI_SPEC_URL="${OPENAPI_SPEC_URL:-${AUTH_BOOTSTRAP_URL:-http://127.0.0.1:808
 OPENAPI_SPEC_PATH="${OPENAPI_SPEC_PATH:-$REPORTS_DIR/openapi-spec.json}"
 API_INVENTORY_JSON_PATH="${API_INVENTORY_JSON_PATH:-$REPORTS_DIR/api-inventory.json}"
 API_INVENTORY_MD_PATH="${API_INVENTORY_MD_PATH:-$REPORTS_DIR/api-inventory.md}"
+ROUTE_HINTS_JSON_PATH="${ROUTE_HINTS_JSON_PATH:-$REPORTS_DIR/route-hints.json}"
+ROUTE_HINT_DIRS="${ROUTE_HINT_DIRS:-$WORKSPACE_DIR/demo-app/src}"
 
 engine() {
   if [[ "$ENGINE_BIN" == *.exe ]]; then
@@ -321,12 +323,25 @@ fi
 echo "ZAP finished with exit code ${ZAP_EXIT:-0}"
 
 if [[ -f "$REPORTS_DIR/zap-report.json" && -f "$REPORTS_DIR/zap-run.log" ]]; then
+  if [[ -n "${ROUTE_HINT_DIRS:-}" ]]; then
+    hint_args=()
+    for hint_dir in ${ROUTE_HINT_DIRS}; do
+      if [[ -d "$hint_dir" ]]; then
+        hint_args+=("$hint_dir")
+      fi
+    done
+    if [[ "${#hint_args[@]}" -gt 0 ]]; then
+      node "$WORKSPACE_DIR/scripts/extract-route-hints.js" "${hint_args[@]}" > "$ROUTE_HINTS_JSON_PATH"
+    fi
+  fi
+
   node "$WORKSPACE_DIR/scripts/build-api-inventory.js" \
     "$REPORTS_DIR/zap-report.json" \
     "$REPORTS_DIR/zap-run.log" \
     "$OPENAPI_SPEC_PATH" \
     "$API_INVENTORY_JSON_PATH" \
-    "$API_INVENTORY_MD_PATH"
+    "$API_INVENTORY_MD_PATH" \
+    "$ROUTE_HINTS_JSON_PATH"
 fi
 
 if [[ "$RUN_AUTHZ_NETWORK" == "true" ]]; then

@@ -86,7 +86,11 @@ if (apiInventory && inventoryCounts) {
     `- Requestor route count: ${inventoryCounts.requestorRouteCount}`,
     `- Observed OpenAPI routes: ${inventoryCounts.observedSpecRouteCount}`,
     `- Unobserved OpenAPI routes: ${inventoryCounts.unobservedSpecRouteCount}`,
-    `- Undocumented observed routes: ${inventoryCounts.undocumentedObservedRouteCount}`
+    `- Undocumented observed routes: ${inventoryCounts.undocumentedObservedRouteCount}`,
+    `- Code-hinted routes: ${inventoryCounts.hintedRouteCount}`,
+    `- Code-hinted observed routes: ${inventoryCounts.hintedObservedRouteCount}`,
+    `- Code-hinted unobserved routes: ${inventoryCounts.hintedUnobservedRouteCount}`,
+    `- Code-hinted routes outside spec: ${inventoryCounts.hintedOnlyRouteCount}`
   );
 }
 
@@ -118,6 +122,20 @@ if (
 ) {
   lines.push("", "## Undocumented Observed Routes", "");
   for (const route of apiInventory.undocumentedObservedRoutes.slice(0, 12)) {
+    lines.push(`- ${route}`);
+  }
+}
+
+if (apiInventory && Array.isArray(apiInventory.hintedUnobservedRoutes) && apiInventory.hintedUnobservedRoutes.length > 0) {
+  lines.push("", "## Code-Hinted Unobserved Routes", "");
+  for (const route of apiInventory.hintedUnobservedRoutes.slice(0, 12)) {
+    lines.push(`- ${route}`);
+  }
+}
+
+if (apiInventory && Array.isArray(apiInventory.hintedOnlyRoutes) && apiInventory.hintedOnlyRoutes.length > 0) {
+  lines.push("", "## Code-Hinted Routes Outside Spec", "");
+  for (const route of apiInventory.hintedOnlyRoutes.slice(0, 12)) {
     lines.push(`- ${route}`);
   }
 }

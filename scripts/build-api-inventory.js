@@ -6,10 +6,11 @@ const logPath = process.argv[3];
 const specPath = process.argv[4];
 const outJsonPath = process.argv[5];
 const outMdPath = process.argv[6];
+const routeHintsPath = process.argv[7];
 
 if (!reportPath || !logPath || !specPath || !outJsonPath || !outMdPath) {
   console.error(
-    "Usage: node scripts/build-api-inventory.js <reportPath> <logPath> <specPath> <outJsonPath> <outMdPath>"
+    "Usage: node scripts/build-api-inventory.js <reportPath> <logPath> <specPath> <outJsonPath> <outMdPath> [routeHintsJsonPath]"
   );
   process.exit(1);
 }
@@ -81,9 +82,18 @@ function loadSpecRoutes(specFilePath) {
   };
 }
 
+function loadRouteHints(hintsFilePath) {
+  if (!hintsFilePath || !fs.existsSync(hintsFilePath)) {
+    return [];
+  }
+  const raw = JSON.parse(fs.readFileSync(hintsFilePath, "utf8"));
+  return [...new Set((raw.routes || []).map((entry) => normalizeRouteish(entry.route)).filter(Boolean))].sort();
+}
+
 const report = fs.existsSync(reportPath) ? JSON.parse(fs.readFileSync(reportPath, "utf8")) : { site: [] };
 const logText = fs.existsSync(logPath) ? fs.readFileSync(logPath, "utf8") : "";
 const spec = loadSpecRoutes(specPath);
+const routeHints = loadRouteHints(routeHintsPath);
 
 const alertRoutes = new Set();
 for (const site of report.site || []) {
@@ -107,6 +117,13 @@ const unobservedSpecRoutes = spec.routes.filter((route) => !observedSpecRoutes.i
 const undocumentedObservedRoutes = [...observedRoutes]
   .filter((observed) => !spec.routes.some((route) => routesOverlap(observed, route)))
   .sort();
+const hintedObservedRoutes = routeHints.filter((route) =>
+  [...observedRoutes].some((observed) => routesOverlap(observed, route))
+);
+const hintedUnobservedRoutes = routeHints.filter((route) => !hintedObservedRoutes.includes(route));
+const hintedOnlyRoutes = routeHints.filter(
+  (route) => !spec.routes.some((specRoute) => routesOverlap(specRoute, route))
+);
 
 const inventory = {
   generatedAt: new Date().toISOString(),
@@ -126,6 +143,10 @@ const inventory = {
     observedSpecRouteCount: observedSpecRoutes.length,
     unobservedSpecRouteCount: unobservedSpecRoutes.length,
     undocumentedObservedRouteCount: undocumentedObservedRoutes.length,
+    hintedRouteCount: routeHints.length,
+    hintedObservedRouteCount: hintedObservedRoutes.length,
+    hintedUnobservedRouteCount: hintedUnobservedRoutes.length,
+    hintedOnlyRouteCount: hintedOnlyRoutes.length,
   },
   openApiRoutes: spec.routes,
   requestorRoutes: [...requestorRoutes].sort(),
@@ -133,6 +154,10 @@ const inventory = {
   observedSpecRoutes,
   unobservedSpecRoutes,
   undocumentedObservedRoutes,
+  hintedRoutes: routeHints,
+  hintedObservedRoutes,
+  hintedUnobservedRoutes,
+  hintedOnlyRoutes,
 };
 
 const markdown = [
@@ -148,6 +173,10 @@ const markdown = [
   `- Observed OpenAPI routes: ${inventory.counts.observedSpecRouteCount}`,
   `- Unobserved OpenAPI routes: ${inventory.counts.unobservedSpecRouteCount}`,
   `- Undocumented observed routes: ${inventory.counts.undocumentedObservedRouteCount}`,
+  `- Code-hinted routes: ${inventory.counts.hintedRouteCount}`,
+  `- Code-hinted observed routes: ${inventory.counts.hintedObservedRouteCount}`,
+  `- Code-hinted unobserved routes: ${inventory.counts.hintedUnobservedRouteCount}`,
+  `- Code-hinted routes outside spec: ${inventory.counts.hintedOnlyRouteCount}`,
 ];
 
 if (inventory.unobservedSpecRoutes.length > 0) {
@@ -160,6 +189,20 @@ if (inventory.unobservedSpecRoutes.length > 0) {
 if (inventory.undocumentedObservedRoutes.length > 0) {
   markdown.push("", "### Undocumented Observed Routes", "");
   for (const route of inventory.undocumentedObservedRoutes) {
+    markdown.push(`- ${route}`);
+  }
+}
+
+if (inventory.hintedUnobservedRoutes.length > 0) {
+  markdown.push("", "### Code-Hinted Unobserved Routes", "");
+  for (const route of inventory.hintedUnobservedRoutes) {
+    markdown.push(`- ${route}`);
+  }
+}
+
+if (inventory.hintedOnlyRoutes.length > 0) {
+  markdown.push("", "### Code-Hinted Routes Outside Spec", "");
+  for (const route of inventory.hintedOnlyRoutes) {
     markdown.push(`- ${route}`);
   }
 }
