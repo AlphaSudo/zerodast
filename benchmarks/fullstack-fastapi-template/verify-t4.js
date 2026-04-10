@@ -85,7 +85,8 @@ if (apiInventory && inventoryCounts) {
     `- OpenAPI operation count: ${inventoryCounts.openApiOperationCount}`,
     `- Requestor route count: ${inventoryCounts.requestorRouteCount}`,
     `- Observed OpenAPI routes: ${inventoryCounts.observedSpecRouteCount}`,
-    `- Unobserved OpenAPI routes: ${inventoryCounts.unobservedSpecRouteCount}`
+    `- Unobserved OpenAPI routes: ${inventoryCounts.unobservedSpecRouteCount}`,
+    `- Undocumented observed routes: ${inventoryCounts.undocumentedObservedRouteCount}`
   );
 }
 
@@ -106,6 +107,17 @@ if (adminRouteEvidence.size > 0) {
 if (apiInventory && Array.isArray(apiInventory.unobservedSpecRoutes) && apiInventory.unobservedSpecRoutes.length > 0) {
   lines.push("", "## Unobserved OpenAPI Routes", "");
   for (const route of apiInventory.unobservedSpecRoutes.slice(0, 12)) {
+    lines.push(`- ${route}`);
+  }
+}
+
+if (
+  apiInventory &&
+  Array.isArray(apiInventory.undocumentedObservedRoutes) &&
+  apiInventory.undocumentedObservedRoutes.length > 0
+) {
+  lines.push("", "## Undocumented Observed Routes", "");
+  for (const route of apiInventory.undocumentedObservedRoutes.slice(0, 12)) {
     lines.push(`- ${route}`);
   }
 }

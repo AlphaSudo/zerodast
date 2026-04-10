@@ -54,6 +54,10 @@ function parseOpenApiImportedCount(logText) {
   return Number(matches[matches.length - 1][1] || 0);
 }
 
+function routesOverlap(left, right) {
+  return left === right || left.startsWith(`${right}/`) || right.startsWith(`${left}/`);
+}
+
 function loadSpecRoutes(specFilePath) {
   if (!fs.existsSync(specFilePath)) {
     return { routes: [], operations: 0 };
@@ -96,10 +100,13 @@ const requestorRoutes = new Set([...parseRequestorUrls(logText)].map((url) => no
 const observedRoutes = new Set([...requestorRoutes, ...alertRoutes]);
 const observedSpecRoutes = spec.routes.filter((route) =>
   [...observedRoutes].some(
-    (observed) => observed === route || observed.startsWith(`${route}/`) || route.startsWith(`${observed}/`)
+    (observed) => routesOverlap(observed, route)
   )
 );
 const unobservedSpecRoutes = spec.routes.filter((route) => !observedSpecRoutes.includes(route));
+const undocumentedObservedRoutes = [...observedRoutes]
+  .filter((observed) => !spec.routes.some((route) => routesOverlap(observed, route)))
+  .sort();
 
 const inventory = {
   generatedAt: new Date().toISOString(),
@@ -118,12 +125,14 @@ const inventory = {
     observedRouteCount: observedRoutes.size,
     observedSpecRouteCount: observedSpecRoutes.length,
     unobservedSpecRouteCount: unobservedSpecRoutes.length,
+    undocumentedObservedRouteCount: undocumentedObservedRoutes.length,
   },
   openApiRoutes: spec.routes,
   requestorRoutes: [...requestorRoutes].sort(),
   alertRoutes: [...alertRoutes].sort(),
   observedSpecRoutes,
   unobservedSpecRoutes,
+  undocumentedObservedRoutes,
 };
 
 const markdown = [
@@ -138,11 +147,19 @@ const markdown = [
   `- Observed route count: ${inventory.counts.observedRouteCount}`,
   `- Observed OpenAPI routes: ${inventory.counts.observedSpecRouteCount}`,
   `- Unobserved OpenAPI routes: ${inventory.counts.unobservedSpecRouteCount}`,
+  `- Undocumented observed routes: ${inventory.counts.undocumentedObservedRouteCount}`,
 ];
 
 if (inventory.unobservedSpecRoutes.length > 0) {
   markdown.push("", "### Unobserved OpenAPI Routes", "");
   for (const route of inventory.unobservedSpecRoutes) {
+    markdown.push(`- ${route}`);
+  }
+}
+
+if (inventory.undocumentedObservedRoutes.length > 0) {
+  markdown.push("", "### Undocumented Observed Routes", "");
+  for (const route of inventory.undocumentedObservedRoutes) {
     markdown.push(`- ${route}`);
   }
 }

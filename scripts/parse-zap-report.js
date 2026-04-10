@@ -191,6 +191,16 @@ if (fs.existsSync(inventoryJsonPath)) {
   console.log(`- Spider discovered URL count: ${inventory.counts.spiderDiscoveredUrlCount}`);
   console.log(`- Observed OpenAPI routes: ${inventory.counts.observedSpecRouteCount}`);
   console.log(`- Unobserved OpenAPI routes: ${inventory.counts.unobservedSpecRouteCount}`);
+  console.log(`- Undocumented observed routes: ${inventory.counts.undocumentedObservedRouteCount}`);
+
+  if (Array.isArray(inventory.undocumentedObservedRoutes) && inventory.undocumentedObservedRoutes.length > 0) {
+    console.log("");
+    console.log("### Undocumented Observed Routes");
+    console.log("");
+    for (const route of inventory.undocumentedObservedRoutes.slice(0, 12)) {
+      console.log(`- ${route}`);
+    }
+  }
 }
 
 if (delta.mode === "DELTA") {
