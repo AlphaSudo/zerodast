@@ -16,6 +16,7 @@ API_BASE_URL="${SCANNER_BASE_ROOT}${API_BASE_PATH}"
 PUBLIC_API_BASE_URL="${PUBLIC_BASE_ROOT}${API_BASE_PATH}"
 HEALTH_URL="${API_BASE_URL}/utils/health-check/"
 SIGNUP_URL="${PUBLIC_API_BASE_URL}/users/signup"
+INTERNAL_SIGNUP_URL="${API_BASE_URL}/users/signup"
 LOGIN_URL="${PUBLIC_API_BASE_URL}/login/access-token"
 ME_URL="${PUBLIC_API_BASE_URL}/users/me"
 USERS_URL="${PUBLIC_API_BASE_URL}/users/?skip=0&limit=10"
@@ -80,7 +81,7 @@ ensure_user_signup() {
       console.error(error.message);
       process.exit(1);
     });
-  " "${PUBLIC_API_BASE_URL}/users/signup" "${USER_EMAIL}" "${USER_PASSWORD}" >/dev/null
+  " "${INTERNAL_SIGNUP_URL}" "${USER_EMAIL}" "${USER_PASSWORD}" >/dev/null
 }
 
 validate_with_header() {
