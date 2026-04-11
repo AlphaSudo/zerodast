@@ -568,8 +568,20 @@ The repo now also has richer comment/issue policy controls:
   - triage guidance: `Review persisting active findings and decide remediation or acceptance.`
 
 What is still pending is explicit UI-side proof that:
-- PR comment gating behaves as configured
-- nightly issue dedupe/update behaves as configured
+- nightly issue dedupe/update behaves as configured over repeated runs
+
+GitHub UI-side proof now also exists that:
+- the PR bot comment renders the configured `### Policy Summary` block
+- the posted PR comment includes:
+  - `Policy mode: actionable`
+  - `State: needs_triage`
+  - diff-aware `new/persisting/resolved` counts
+- the nightly policy path can create the newer triage-style issue body rather than only the older threshold-only issue shape
+- the posted nightly issue includes:
+  - `### Policy Summary`
+  - `## Operator Context`
+  - `## Result State`
+  - `## Operational Reliability`
 
 The repo now also emits remediation guidance as a first-class artifact:
 - `remediation-guide.md`

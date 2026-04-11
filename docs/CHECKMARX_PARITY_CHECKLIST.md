@@ -312,9 +312,20 @@ It is scoped to the realistic target already defined there:
     - PR result-state guidance reported:
       - `Review persisting active findings and decide remediation or acceptance.`
     - this proves the actionable-policy inputs are flowing through the real PR pipeline
-  - what is still pending is explicit UI-side confirmation that:
-    - the GitHub PR comment body renders the `### Policy Summary` block as configured
-    - nightly issue dedupe/update behaves as configured
+  - explicit GitHub UI-side proof now also exists for:
+    - the PR comment body rendering the `### Policy Summary` block as configured
+    - `Policy mode: actionable`
+    - `State: needs_triage`
+    - diff-aware counts in the posted bot comment
+  - explicit GitHub UI-side proof now also exists for nightly issue creation under the newer policy shape:
+    - issue title:
+      - `ZeroDAST nightly triage (828ec1d)`
+    - issue body included:
+      - `### Policy Summary`
+      - `## Operator Context`
+      - `## Result State`
+      - `## Operational Reliability`
+  - what is still pending is a later proof that nightly issue **update/dedupe** reuses an existing policy-driven triage issue instead of creating a fresh one
 - remediation/retest guidance is now implemented:
   - generated artifact:
     - `remediation-guide.md`
