@@ -416,7 +416,7 @@ SPIDER_MAX_DEPTH="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFi
 SPIDER_MAX_CHILDREN="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.spiderMaxChildren||50));" "$(node_path "${PREPARED_CONFIG}")")"
 PASSIVE_WAIT_MINUTES="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.passiveWaitMinutes||2));" "$(node_path "${PREPARED_CONFIG}")")"
 SCAN_MINUTES="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.maxDurationMinutes||15));" "$(node_path "${PREPARED_CONFIG}")")"
-THREAD_PER_HOST="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.threadPerHost||4));" "$(node_path "${PREPARED_CONFIG}")")"
+THREAD_PER_HOST="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.threadPerHost||10));" "$(node_path "${PREPARED_CONFIG}")")"
 DEFAULT_STRENGTH="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.defaultStrength||'medium'));" "$(node_path "${PREPARED_CONFIG}")")"
 DEFAULT_THRESHOLD="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.defaultThreshold||'low'));" "$(node_path "${PREPARED_CONFIG}")")"
 ZAP_IMAGE="zaproxy/zap-stable:${ZAP_VERSION}"
