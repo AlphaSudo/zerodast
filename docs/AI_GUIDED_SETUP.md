@@ -8,12 +8,14 @@ Use the prompt files under `ai-prompts/` to adapt ZeroDAST to another repository
 - Run `ai-prompts/INSPECT_REPO.md` against the target repo.
 - Capture working directory, runtime, auth mode, route layout, schema sources, and DAST blockers.
 
-2. Generate
-- Feed the inspection YAML into `ai-prompts/GENERATE_CONFIG.md`.
-- Use the result to draft ZAP config, auth bootstrap, seed strategy, and runtime notes.
+2. Generate Model 1 Config
+- Feed the inspection YAML into `ai-prompts/GENERATE_MODEL1_CONFIG.md`.
+- This produces a valid `zerodast/config.json` for the Model 1 in-repo prototype.
+- For general ZAP config and strategy, use `ai-prompts/GENERATE_CONFIG.md`.
 
 3. Adapt Auth
 - Use `ai-prompts/ADAPT_AUTH.md` with real login code and auth routes.
+- The output now includes a Model 1 adapter selection and a `config.json` auth block.
 - Dry-run auth bootstrap before attempting full scans.
 
 4. Adapt Seed
