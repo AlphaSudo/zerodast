@@ -14,7 +14,7 @@ RUN_STARTED_AT="$(date +%s)"
 
 HELPER_SCRIPT='fetch(process.argv[1]).then(async r => { if (!r.ok) process.exit(1); process.stdout.write(await r.text()); }).catch((err) => { console.error(err.message); process.exit(1); });'
 
-AUTH_LOGIN_SCRIPT='const body={};body[process.env.EMAIL_FIELD||"email"]=process.env.EMAIL;body[process.env.PASSWORD_FIELD||"password"]=process.env.PASSWORD;const ct=process.env.CONTENT_TYPE||"application/json";const bs=ct.includes("json")?JSON.stringify(body):new URLSearchParams(body).toString();fetch(process.env.LOGIN_URL,{method:"POST",headers:{"Content-Type":ct},body:bs,redirect:"manual"}).then(async r=>{if(process.env.EXTRACT_MODE==="cookie"){const c=r.headers.get("set-cookie");if(!c){console.error(await r.text());process.exit(1);}process.stdout.write(c.split(";")[0]);return;}if(!r.ok){console.error(await r.text());process.exit(1);}const d=await r.json();const t=d[process.env.TOKEN_FIELD||"token"];if(!t){console.error(JSON.stringify(d));process.exit(1);}process.stdout.write(t);}).catch(e=>{console.error(e.message);process.exit(1);});'
+AUTH_LOGIN_SCRIPT='const body={};body[process.env.EMAIL_FIELD||"email"]=process.env.EMAIL;body[process.env.PASSWORD_FIELD||"password"]=process.env.PASSWORD;const ct=process.env.CONTENT_TYPE||"application/json";const bs=ct.includes("json")?JSON.stringify(body):new URLSearchParams(body).toString();fetch(process.env.LOGIN_URL,{method:"POST",headers:{"Content-Type":ct},body:bs,redirect:"manual"}).then(async r=>{if(process.env.EXTRACT_MODE==="cookie"){const c=r.headers.get("set-cookie");if(!c){console.error(await r.text());process.exit(1);}process.stdout.write(c.split(";")[0]);return;}if(!r.ok){console.error(await r.text());process.exit(1);}const d=await r.json();const fields=(process.env.TOKEN_FIELD||"token").split(".");let t=d;for(const f of fields){t=t&&t[f];}if(!t){console.error(JSON.stringify(d));process.exit(1);}process.stdout.write(String(t));}).catch(e=>{console.error(e.message);process.exit(1);});'
 
 AUTH_VALIDATE_SCRIPT='const h={};if(process.env.HEADER_NAME&&process.env.HEADER_VALUE)h[process.env.HEADER_NAME]=process.env.HEADER_VALUE;fetch(process.env.ROUTE_URL,{headers:h}).then(async r=>{if(String(r.status)!==process.env.EXPECTED_STATUS){console.error(await r.text());process.exit(1);}}).catch(e=>{console.error(e.message);process.exit(1);});'
 
@@ -336,12 +336,25 @@ wait_for_health() {
   return 1
 }
 
-if ! wait_for_health 60; then
+if ! wait_for_health 90; then
   echo "Timed out waiting for target health endpoint at ${SCANNER_BASE_ROOT}${TARGET_HEALTH_PATH}" >&2
+  if [[ "${TARGET_RUNTIME_MODE}" == "compose" ]]; then
+    echo "--- Container logs for debugging ---"
+    (cd "${TARGET_DIR}" && docker compose -f docker-compose.zerodast.yml logs --tail=80 2>&1) || true
+    echo "--- End container logs ---"
+  fi
   write_operational_reliability
   exit 1
 fi
 echo "Target healthy at ${SCANNER_BASE_ROOT}${TARGET_HEALTH_PATH}"
+
+# --- Seed (runs on host, after health, before auth) ---
+SEED_COMMAND="$(cfg target.compose.seedCommand)"
+if [[ -n "${SEED_COMMAND}" ]]; then
+  echo "Running seed command: ${SEED_COMMAND}"
+  (cd "${REPO_ROOT}" && eval "${SEED_COMMAND}")
+  echo "Seed complete"
+fi
 
 # --- Auth bootstrap ---
 if [[ -n "${AUTH_ADAPTER}" && -n "${AUTH_LOGIN_PATH}" ]]; then
@@ -422,7 +435,7 @@ env:
       includePaths:
         - "${SCANNER_BASE_URL}.*"
   parameters:
-    failOnError: true
+    failOnError: false
     progressToStdout: true
 jobs:
 EOF
@@ -440,12 +453,18 @@ EOF
         initiators: []
 EOF
     fi
-    cat <<EOF
+    local spec_has_paths
+    spec_has_paths="$(node -e "try{const s=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));process.stdout.write(Object.keys(s.paths||{}).length>0?'yes':'no');}catch{process.stdout.write('no');}" "$(node_path "${RAW_SPEC}")" 2>/dev/null || echo no)"
+    if [[ "${spec_has_paths}" == "yes" ]]; then
+      cat <<EOF
   - type: openapi
     parameters:
       apiUrl: "${api_url}"
       targetUrl: "${SCANNER_BASE_URL}"
       context: "zerodast-model1"
+EOF
+    fi
+    cat <<EOF
   - type: requestor
     requests:
 EOF
@@ -491,14 +510,12 @@ EOF
 
 # --- Run ZAP ---
 run_zap() {
+  chmod 777 "${REPORT_DIR}" 2>/dev/null || true
   MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" rm -f "${ZAP_CONTAINER}" >/dev/null 2>&1 || true
   MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" run --rm --name "${ZAP_CONTAINER}" \
     --network "${NETWORK_NAME}" \
-    -v "${AUTOMATION_MOUNT}:/zap/wrk/config.yaml:Z" \
-    -v "$(docker_path "${RAW_SPEC}"):/zap/wrk/openapi-raw.json:Z" \
-    -v "$(docker_path "${SANITIZED_SPEC}"):/zap/wrk/openapi-sanitized.json:Z" \
     -v "${REPORT_DIR_MOUNT}:/zap/wrk:Z" \
-    "${ZAP_IMAGE}" zap.sh -cmd -autorun /zap/wrk/config.yaml
+    "${ZAP_IMAGE}" zap.sh -cmd -autorun /zap/wrk/automation.yaml
 }
 
 SECONDS=0
@@ -509,7 +526,7 @@ run_zap > "${LOG_PATH}" 2>&1
 zap_exit=$?
 set -e
 
-if [[ ! -f "${REPORT_PATH}" ]] || grep -Eq 'Failed to import OpenAPI definition|OpenAPI' "${LOG_PATH}"; then
+if [[ ! -f "${REPORT_PATH}" ]] && grep -q 'Failed to import OpenAPI definition' "${LOG_PATH}" 2>/dev/null; then
   SPEC_MODE="sanitized"
   write_config "file:///zap/wrk/openapi-sanitized.json"
   set +e

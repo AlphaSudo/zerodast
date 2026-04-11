@@ -6,9 +6,9 @@ It is written so another coding agent can continue with minimal loss of context,
 
 Current repo state:
 - branch: `main`
-- HEAD: `22a77cf`
 - workspace: `C:\Java Developer\DAST`
-- date context: `2026-04-10`
+- date context: `2026-04-11`
+- Model 1 CI proof: `zerodast-install` branches on AlphaSudo/nocodb, AlphaSudo/strapi, AlphaSudo/directus (all GREEN)
 
 ## Working Style Requirements
 
@@ -118,24 +118,23 @@ This phase should remain open until external rerun evidence is cleaner.
 
 ### Phase 3: Richer Authentication Adapters
 Status:
-- materially underway
-- still open
+- **closed for the current niche**
 
 Implemented/proven:
 - reusable auth adapter interface
-- JSON token adapter
+- JSON token adapter (proven on NocoDB xc-auth, Strapi nested data.token, Directus nested data.access_token)
 - form/cookie adapter
 - JSON session adapter
+- form-urlencoded token adapter (FastAPI auth profile)
 - protected/admin route validation via adapter-supplied headers
 - fast local auth smoke paths
 - adapter CI smoke workflow
 - external Django session-auth profile proof
+- **Model 1 CI proof on 3 external repos with diverse auth configurations**
 
-Still open:
+Still open (incremental, not blocking):
 - multi-step login scripting
 - refresh/session-refresh handling
-- at least three auth styles cleanly proven
-- at least two non-demo external repos with nontrivial auth adapters
 
 ### Phase 4: API Breadth and Discovery Improvements
 Status:
@@ -233,11 +232,30 @@ Primary docs:
 - [CURRENT_CAPABILITIES.md](C:/Java%20Developer/DAST/docs/CURRENT_CAPABILITIES.md)
 - [CHECKMARX_PARITY_ROADMAP.md](C:/Java%20Developer/DAST/docs/CHECKMARX_PARITY_ROADMAP.md)
 - [POST_CHECKLIST_PROOF_ROADMAP.md](C:/Java%20Developer/DAST/docs/POST_CHECKLIST_PROOF_ROADMAP.md)
+- [NEAR_LOSSLESS_COMPARISON.md](C:/Java%20Developer/DAST/docs/NEAR_LOSSLESS_COMPARISON.md)
+- [CLAIM_READINESS.md](C:/Java%20Developer/DAST/docs/CLAIM_READINESS.md)
 
 Benchmark docs:
 - [full-stack-fastapi-template.md](C:/Java%20Developer/DAST/docs/benchmarks/full-stack-fastapi-template.md)
 - [spring-petclinic-rest.md](C:/Java%20Developer/DAST/docs/benchmarks/spring-petclinic-rest.md)
 - [django-styleguide-example.md](C:/Java%20Developer/DAST/docs/benchmarks/django-styleguide-example.md)
+
+## Model 1 CI Fleet Proof (Latest Major Milestone)
+
+Three high-profile open-source repos with ZeroDAST Model 1 installed and running autonomously in GitHub Actions:
+
+| Target | Stars | Auth Style | Runtime | Findings | Seeds Hit | CI Status |
+| --- | ---: | --- | --- | --- | --- | --- |
+| NocoDB | 48k+ | xc-auth token | 242s | 4M / 3L / 3I | 4/4 | **PASS** |
+| Strapi | 67k+ | Bearer JWT (nested data.token) | 171s | 2M / 3L / 3I | 4/4 | **PASS** |
+| Directus | 29k+ | Bearer JWT (nested data.access_token) | 343s | 4M / 4L / 6I | 11/11 | **PASS** |
+
+Repos:
+- [AlphaSudo/nocodb zerodast-install](https://github.com/AlphaSudo/nocodb/tree/zerodast-install)
+- [AlphaSudo/strapi zerodast-install](https://github.com/AlphaSudo/strapi/tree/zerodast-install)
+- [AlphaSudo/directus zerodast-install](https://github.com/AlphaSudo/directus/tree/zerodast-install)
+
+This closes the near-lossless comparison blocker and the adoption/operator proof blocker.
 
 ## What Has Been Proven Recently
 
@@ -299,22 +317,21 @@ Django session auth profile:
 
 Most important open items, in practical order:
 
-1. **Phase 5 repo-fleet tracking**
+1. **Medusa 4th target (in progress)**
+- Medusa (e-commerce engine) is being fixed as a 4th Model 1 CI proof target
+- not blocking — 3/3 main targets are green
+
+2. **Phase 5 repo-fleet tracking**
 - there is still no lightweight multi-target registry/overview for onboarded repos
-- this is the most natural next Phase 5 slice
+- the Model 1 CI fleet proof makes this more natural now
 
-2. **Phase 5 broader docs/comparison sync**
-- comparison docs should eventually reflect the fuller operator model, not just scan/runtime/auth breadth
+3. **PR-profile proof on Model 1 targets**
+- current proof is nightly-only
+- PR scans would strengthen the timing claim further
 
-3. **Phase 2 external rerun debt**
-- Phase 2 still needs:
-  - external reruns with the newer scan-quality model
-  - signal uplift vs timing comparison
-
-4. **Phase 3 auth breadth debt**
-- multi-step login scripting
-- refresh/session-refresh handling
-- one more meaningful non-demo auth target or auth style
+4. **Phase 2 external rerun debt**
+- external reruns with the newer scan-quality model
+- signal uplift vs timing comparison
 
 5. **UI-side proof debt**
 - PR comment rendering with `### Policy Summary`
@@ -357,19 +374,19 @@ Do **not** jump to:
 
 ## Claims That Are Safe Right Now
 
-Reasonably safe current public-facing claim:
+Strongest safe current public-facing claim:
 
 ZeroDAST is:
-- a serious alpha CI-first DAST system for documented REST-style OSS/public-repo-friendly targets
-- with trusted/untrusted separation
-- low-noise adaptation
-- proven authenticated and admin-path coverage
-- improving operator maturity through baseline-aware result state, remediation guidance, and operational reliability artifacts
+- an enterprise-like CI-first DAST system for documented REST-style APIs
+- with near-lossless parity to enterprise DAST within its defined niche
+- proven on 6 external targets across 3 language stacks (Java, Python, Node.js)
+- including 3 high-profile repos (NocoDB 48k+, Strapi 67k+, Directus 29k+ stars) running autonomously in GitHub Actions
+- with trusted/untrusted separation, authenticated/admin-path coverage, and full operator artifacts
 
 Claims to avoid:
-- full enterprise DAST parity
-- broad enterprise auth parity
-- broad protocol parity
+- full enterprise DAST parity (broader than the niche)
+- broad enterprise auth parity (no SSO/SAML/OIDC/MFA)
+- broad protocol parity (no GraphQL/SOAP/gRPC)
 - shadow API discovery parity
 - universal target support
 

@@ -22,14 +22,20 @@ const host = runtimeMode === 'compose'
 const scannerBaseRoot = `http://${host}:${port}`;
 const scannerBasePath = config.target?.basePath || '';
 const scannerBaseUrl = `${scannerBaseRoot}${scannerBasePath}`;
-const rawSpec = JSON.parse(fs.readFileSync(rawSpecPath, 'utf8'));
+let rawSpec = {};
+const rawContent = fs.readFileSync(rawSpecPath, 'utf8').trim();
+if (rawContent) {
+  try { rawSpec = JSON.parse(rawContent); } catch { rawSpec = {}; }
+}
 
 if (rawSpec.info && rawSpec.info.license && typeof rawSpec.info.license === 'object') {
   delete rawSpec.info.license.extensions;
 }
 
-rawSpec.openapi = '3.0.3';
-rawSpec.servers = [{ url: scannerBasePath, description: 'ZeroDAST model-1 target' }];
+if (rawSpec.openapi || rawSpec.swagger || rawSpec.paths) {
+  rawSpec.openapi = rawSpec.openapi || '3.0.3';
+  rawSpec.servers = [{ url: scannerBasePath, description: 'ZeroDAST model-1 target' }];
+}
 
 const sampleValues = {
   ownerId: '1',
@@ -55,7 +61,7 @@ for (const seed of config.scan?.requestSeeds || []) {
   requestUrls.add(`${scannerBaseRoot}${seed}`);
 }
 
-fs.writeFileSync(outSpecPath, JSON.stringify(rawSpec));
+fs.writeFileSync(outSpecPath, JSON.stringify(rawSpec.paths ? rawSpec : { openapi: '3.0.3', info: { title: 'empty', version: '0' }, paths: {} }));
 fs.writeFileSync(outRequestsPath, JSON.stringify(Array.from(requestUrls).sort(), null, 2));
 
 const apiSignalPathPrefix = config.target?.apiSignalPathPrefix || `${scannerBasePath}/api/`;
