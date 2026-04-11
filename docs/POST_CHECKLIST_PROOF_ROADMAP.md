@@ -251,6 +251,16 @@ only if all of the following are true:
 
 - the positioning claim is approved by evidence, not hope
 
+### Current note
+The repo has now entered this stage in practice.
+
+However, the current assessment is:
+- ready for a narrower truthful public positioning
+- not yet ready for the strongest final positioning claim
+
+See:
+- [CLAIM_READINESS.md](C:/Java%20Developer/DAST/docs/CLAIM_READINESS.md)
+
 ---
 
 ## Recommended Execution Order
