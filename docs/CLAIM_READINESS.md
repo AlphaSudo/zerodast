@@ -43,20 +43,20 @@ as a fully closed proof statement.
 
 ### Why not
 
-The repo is already strong, but three proof debts still matter:
+The repo is already strong, but the remaining blockers still matter:
 
-1. **Phase 2 remains open**
-- external scan-quality rerun evidence is incomplete
-- signal-uplift vs timing comparison is not fully closed
-
-2. **Phase 3 remains open**
+1. **Phase 3 remains open**
 - richer auth breadth is real, but not broad enough yet
 - only one non-demo richer-auth external target is clearly proven
 - multi-step / refresh-oriented auth is still missing
 
-3. **Near-lossless comparison proof is not fully closed**
+2. **Near-lossless comparison proof is not fully closed**
 - we have strong directional benchmark evidence
 - but not yet the final, disciplined cross-target comparison package needed for the strongest claim
+
+3. **Adoption/operator proof is still only partial**
+- the operator model is now strong
+- but installation/adoption proof is not yet closed tightly enough to use as the strongest differentiator claim
 
 So the repo is not blocked by missing engineering basics.
 It is blocked by **remaining proof discipline**.
@@ -165,10 +165,9 @@ This shorter version is also defensible:
 
 These are the remaining blockers, in order:
 
-1. close remaining Phase 2 external rerun / signal-quality proof debt
-2. close remaining Phase 3 richer-auth breadth proof debt
-3. finish the near-lossless comparison package across the chosen hard targets
-4. strengthen adoption/operator proof for Model 1 if that claim surface matters
+1. close remaining Phase 3 richer-auth breadth proof debt
+2. finish the near-lossless comparison package across the chosen hard targets
+3. strengthen adoption/operator proof for Model 1 if that claim surface matters
 
 ## Practical Recommendation
 
@@ -182,7 +181,6 @@ This means:
 - stop adding random new features
 - treat the repo as implementation-mature enough for focused proof work
 - spend the next effort on:
-  - closing Phase 2 proof debt
   - closing Phase 3 proof debt
   - final comparison/adoption evidence
 

@@ -37,9 +37,9 @@ It is scoped to the realistic target already defined there:
 - [x] Distinguish route exercise from alert-bearing signal in summaries
 - [x] Distinguish authenticated route exercise from unauthenticated reach
 - [x] Improve artifact summaries for fast PR triage
-- [ ] Re-run at least two external targets with the new scan-quality model
-- [ ] Compare signal uplift vs timing impact
-- [ ] Update benchmark docs with the new evidence
+- [x] Re-run at least two external targets with the new scan-quality model
+- [x] Compare signal uplift vs timing impact
+- [x] Update benchmark docs with the new evidence
 
 ### Phase 2 progress note
 - Proven on PR #39 smoke run:
@@ -53,11 +53,26 @@ It is scoped to the realistic target already defined there:
   - PR duration remained bounded:
     - `CI Tests`: `1m 4s`
     - `DAST PR Scan`: `2m 43s`
+- Proven on external reruns:
+  - FastAPI follow-up:
+    - earlier reference point: `133s`, API alert URI count `14`
+    - later scan-quality evidence: `3m 44s`, seeded request count `10`, observed OpenAPI routes `9 / 15`
+    - assessment:
+      - better measured authenticated API reach and clearer coverage visibility
+      - still comfortably inside the nightly budget
+  - Petclinic follow-up:
+    - earlier reference point: `145s` initial / `209s` clean rerun, API alert URIs observed `1`
+    - later scan-quality evidence: `5m 9s`, observed OpenAPI routes `17 / 17`, code-hinted observed routes `17 / 17`
+    - assessment:
+      - stronger route-coverage confidence and cleaner API-vs-operational-surface distinction
+      - still comfortably inside the nightly budget
+- See:
+  - [PHASE2_PROOF.md](C:/Java%20Developer/DAST/docs/PHASE2_PROOF.md)
 
 ### Phase 2 exit
 - [x] PR remains under 10 minutes
 - [x] Nightly remains under 15 minutes
-- [ ] Signal quality improves without flattening the time budget
+- [x] Signal quality improves without flattening the time budget
 
 ---
 
