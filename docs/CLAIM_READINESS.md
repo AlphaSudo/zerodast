@@ -12,7 +12,7 @@ Current assessment date:
 
 Current repo state reviewed:
 - branch: `main`
-- HEAD at assessment start: `c88c025`
+- HEAD at assessment start: `40cf5d1`
 
 ## Intended Positioning Under Review
 
@@ -45,16 +45,11 @@ as a fully closed proof statement.
 
 The repo is already strong, but the remaining blockers still matter:
 
-1. **Phase 3 remains open**
-- richer auth breadth is real, but not broad enough yet
-- only one non-demo richer-auth external target is clearly proven
-- multi-step / refresh-oriented auth is still missing
-
-2. **Near-lossless comparison proof is not fully closed**
+1. **Near-lossless comparison proof is not fully closed**
 - we have strong directional benchmark evidence
 - but not yet the final, disciplined cross-target comparison package needed for the strongest claim
 
-3. **Adoption/operator proof is still only partial**
+2. **Adoption/operator proof is still only partial**
 - the operator model is now strong
 - but installation/adoption proof is not yet closed tightly enough to use as the strongest differentiator claim
 
@@ -159,15 +154,14 @@ If a concise truthful public statement is needed **today**, this is the stronges
 
 This shorter version is also defensible:
 
-> ZeroDAST is enterprise-like in several important CI DAST behaviors for its target niche, but it is not yet a full enterprise DAST platform and still has remaining proof debt on richer auth breadth and final near-lossless comparison evidence.
+> ZeroDAST is enterprise-like in several important CI DAST behaviors for its target niche, but it is not yet a full enterprise DAST platform and still has remaining proof debt on final near-lossless comparison evidence and adoption proof.
 
 ## Blockers To The Strongest Claim
 
 These are the remaining blockers, in order:
 
-1. close remaining Phase 3 richer-auth breadth proof debt
-2. finish the near-lossless comparison package across the chosen hard targets
-3. strengthen adoption/operator proof for Model 1 if that claim surface matters
+1. finish the near-lossless comparison package across the chosen hard targets
+2. strengthen adoption/operator proof for Model 1 if that claim surface matters
 
 ## Practical Recommendation
 
@@ -181,7 +175,6 @@ This means:
 - stop adding random new features
 - treat the repo as implementation-mature enough for focused proof work
 - spend the next effort on:
-  - closing Phase 3 proof debt
   - final comparison/adoption evidence
 
 ### Why this is the disciplined move

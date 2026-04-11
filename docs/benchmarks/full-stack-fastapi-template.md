@@ -92,6 +92,41 @@
   - used elevated local execution for T3 so the network-side helper path could call Podman reliably from this desktop environment
   - T4 avoided the local Windows Podman friction entirely by running in GitHub Actions
 
+## External Auth-Profile Follow-Up
+
+ZeroDAST now also has a narrower external auth-profile proof on this same repo.
+
+What was added:
+- adapter:
+  - [form-urlencoded-token-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/form-urlencoded-token-login.sh)
+- benchmark runner:
+  - [run-auth-profile.sh](C:/Java%20Developer/DAST/benchmarks/fullstack-fastapi-template/run-auth-profile.sh)
+- workflow:
+  - [fullstack-fastapi-auth-profile.yml](C:/Java%20Developer/DAST/.github/workflows/fullstack-fastapi-auth-profile.yml)
+
+What this auth-profile proves:
+- public signup for a normal user
+- form-urlencoded login at:
+  - `POST /api/v1/login/access-token`
+- protected-route validation at:
+  - `GET /api/v1/users/me`
+- admin-route validation at:
+  - `GET /api/v1/users/?skip=0&limit=10`
+- auth transport:
+  - `Authorization: Bearer <access_token>`
+
+Measured CI proof:
+- workflow:
+  - `Fullstack FastAPI Auth Profile`
+- successful run on commit:
+  - `40cf5d1`
+- runtime from workflow timestamps:
+  - about `52s`
+
+Important interpretation:
+- the auth-profile runner hard-fails on signup, token bootstrap, protected-route validation, or admin-route validation
+- so a successful workflow run is meaningful proof that all of those checks passed cleanly
+
 ## Final Assessment
 - Suitable / Suitable with caveats / Not suitable: Suitable
 - Recommendation: treat this repo as the first authenticated non-Java T4 showcase and the first external privileged/admin-route proof target. The current evidence says ZeroDAST can handle auth bootstrap, privileged-route validation, route exercise, and trusted orchestration here in a way that produces meaningfully better CI signal than the local baselines.

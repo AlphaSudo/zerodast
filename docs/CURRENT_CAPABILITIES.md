@@ -63,6 +63,7 @@ Current workflow set under [.github/workflows](C:/Java%20Developer/DAST/.github/
 - [dast-nightly.yml](C:/Java%20Developer/DAST/.github/workflows/dast-nightly.yml)
 - [auth-adapter-smoke.yml](C:/Java%20Developer/DAST/.github/workflows/auth-adapter-smoke.yml)
 - [django-auth-profile.yml](C:/Java%20Developer/DAST/.github/workflows/django-auth-profile.yml)
+- [fullstack-fastapi-auth-profile.yml](C:/Java%20Developer/DAST/.github/workflows/fullstack-fastapi-auth-profile.yml)
 - [petclinic-t4-metadata.yml](C:/Java%20Developer/DAST/.github/workflows/petclinic-t4-metadata.yml)
 - [petclinic-t4-scan.yml](C:/Java%20Developer/DAST/.github/workflows/petclinic-t4-scan.yml)
 - [fullstack-fastapi-t4-metadata.yml](C:/Java%20Developer/DAST/.github/workflows/fullstack-fastapi-t4-metadata.yml)
@@ -78,6 +79,7 @@ Current script/runtime surface:
 - [json-token-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/json-token-login.sh)
 - [form-cookie-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/form-cookie-login.sh)
 - [json-session-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/json-session-login.sh)
+- [form-urlencoded-token-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/form-urlencoded-token-login.sh)
 - [authz-tests.sh](C:/Java%20Developer/DAST/scripts/authz-tests.sh)
 - [authz-tests.js](C:/Java%20Developer/DAST/scripts/authz-tests.js)
 - [verify-canaries.sh](C:/Java%20Developer/DAST/scripts/verify-canaries.sh)
@@ -229,10 +231,12 @@ The core runtime supports auth bootstrap and auth-header injection:
 - default JSON token adapter in [json-token-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/json-token-login.sh)
 - initial form/cookie adapter in [form-cookie-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/form-cookie-login.sh)
 - JSON session adapter in [json-session-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/json-session-login.sh)
+- form-urlencoded token adapter in [form-urlencoded-token-login.sh](C:/Java%20Developer/DAST/scripts/auth-adapters/form-urlencoded-token-login.sh)
 - fast local adapter smoke in [run-auth-adapter-smoke.sh](C:/Java%20Developer/DAST/scripts/run-auth-adapter-smoke.sh)
 - fast local cookie adapter smoke in [run-cookie-adapter-smoke.sh](C:/Java%20Developer/DAST/scripts/run-cookie-adapter-smoke.sh)
 - dedicated adapter CI smoke in [auth-adapter-smoke.yml](C:/Java%20Developer/DAST/.github/workflows/auth-adapter-smoke.yml)
 - external Django auth-profile runner in [run-auth-profile.sh](C:/Java%20Developer/DAST/benchmarks/django-styleguide-example/run-auth-profile.sh)
+- external FastAPI auth-profile runner in [run-auth-profile.sh](C:/Java%20Developer/DAST/benchmarks/fullstack-fastapi-template/run-auth-profile.sh)
 
 ### What is proven in the repo's broader work
 - authenticated user-path scanning exists
@@ -245,6 +249,7 @@ The core runtime supports auth bootstrap and auth-header injection:
   - form/cookie session path
 - the built-in demo app now has a concrete session-cookie login path at `/api/auth/session-login`
 - a first external Django/DRF session-auth proof exists using the repo-supported `Authorization: Session <sessionid>` transport
+- a second external auth-profile proof now exists for OAuth2-style form-urlencoded token login on FastAPI
 - that external auth profile proved:
   - `POST /api/auth/session/login/`
   - `GET /api/auth/me/`
@@ -254,6 +259,17 @@ The core runtime supports auth bootstrap and auth-header injection:
   - `Django Auth Profile #1`
   - `92s`
   - bootstrap, protected-route validation, and admin-route validation all returned `200`
+- a second external auth-profile workflow is now also proven in CI:
+  - `Fullstack FastAPI Auth Profile`
+  - successful run on commit `40cf5d1`
+  - runtime from workflow timestamps: about `52s`
+  - the runner hard-fails on signup, token bootstrap, protected-route validation, or admin-route validation
+  - so the successful run is meaningful proof that all of those checks passed
+- the current proven auth-style set now includes:
+  - JSON body login -> bearer header
+  - form/cookie session login
+  - JSON session login -> session header
+  - form-urlencoded OAuth2-style login -> bearer header
 
 ### Important limitation
 This is still **adapter-shaped authenticated coverage**, not full enterprise auth parity.

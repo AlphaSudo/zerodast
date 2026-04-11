@@ -84,10 +84,10 @@ It is scoped to the realistic target already defined there:
 - [ ] Add refresh-token/session-refresh handling
 - [x] Separate simple seeded auth from richer enterprise-style auth adapters in config/docs
 - [x] Improve protected-route validation before scan launch
-- [ ] Prove at least three auth styles cleanly
-- [ ] Prove at least two non-demo external repos with nontrivial auth adapters
-- [ ] Keep browser-grade auth out of PR unless timing proves acceptable
-- [ ] Update capabilities and roadmap docs after implementation
+- [x] Prove at least three auth styles cleanly
+- [x] Prove at least two non-demo external repos with nontrivial auth adapters
+- [x] Keep browser-grade auth out of PR unless timing proves acceptable
+- [x] Update capabilities and roadmap docs after implementation
 
 ### Phase 3 progress note
 - Foundation proven in core CI:
@@ -127,12 +127,36 @@ It is scoped to the realistic target already defined there:
     - auth bootstrap status: `200`
     - protected route validation status: `200`
     - admin route validation status: `200`
-  - this proves one non-demo external richer-auth path, but not yet two
+  - this proves one non-demo external richer-auth path
+- second external richer-auth proof:
+  - FastAPI auth-profile succeeded on `fastapi/full-stack-fastapi-template`
+  - new adapter:
+    - `form-urlencoded-token-login.sh`
+  - validated path shape:
+    - public signup for a normal user
+    - form-urlencoded login at `POST /api/v1/login/access-token`
+    - protected-route validation on `GET /api/v1/users/me`
+    - admin-route validation on `GET /api/v1/users/?skip=0&limit=10`
+  - auth transport:
+    - `Authorization: Bearer <access_token>`
+  - CI proof:
+    - `Fullstack FastAPI Auth Profile`
+    - successful run on commit `40cf5d1`
+    - runtime from workflow timestamps:
+      - about `52s`
+- current clean auth-style set now includes:
+  - JSON body login -> bearer header
+  - form/cookie session login
+  - JSON session login -> session header
+  - form-urlencoded OAuth2-style login -> bearer header
+- browser-grade auth remains intentionally out of the PR lane for the current scope
+- see:
+  - [PHASE3_PROOF.md](C:/Java%20Developer/DAST/docs/PHASE3_PROOF.md)
 
 ### Phase 3 exit
 - [x] PR remains under 10 minutes
 - [x] Nightly remains under 15 minutes
-- [ ] Auth support is materially broader than bearer-token-only flows
+- [x] Auth support is materially broader than bearer-token-only flows
 
 ---
 
