@@ -47,6 +47,17 @@ Before starting this roadmap, confirm:
 - ZeroDAST is feature-complete enough for proof work
 - no major hidden implementation gap is still being called "done"
 
+### Current note
+The repo is now past the original "major implementation only" state.
+
+In practice:
+- Phase 4 is complete for the current REST-first target slice
+- Phase 5 has a materially implemented lightweight operator model
+- the remaining work is less about core missing capabilities and more about:
+  - repeated proof quality
+  - benchmark expansion
+  - final claim discipline
+
 ---
 
 ## Stage 1: Stability and Repeatability Proof
@@ -279,3 +290,24 @@ If this roadmap is completed successfully, ZeroDAST should be ready to present a
 - materially easier to adopt than conventional enterprise setups
 - faster enough in CI to be practical
 - backed by benchmark and operational evidence rather than only design intent
+
+## Current Reality Check
+
+As of the current repo state, ZeroDAST is already much closer to this outcome than when this proof roadmap was first written.
+
+That is because the repo now has:
+- proven authenticated + admin-path coverage
+- proven external richer-auth coverage
+- proven REST-first API inventory/hint coverage on multiple hard targets
+- proven lightweight operator artifacts:
+  - environment manifest
+  - result state
+  - remediation guide
+  - operational reliability
+  - lightweight fleet summary
+- GitHub-proven PR/nightly policy outputs in the newer operator-oriented format
+
+So the remaining burden is now mostly:
+- broaden proof where it still matters
+- keep claims honest
+- avoid overbuilding beyond the current niche before the benchmark/proof story is fully consolidated

@@ -40,6 +40,24 @@ The biggest current gaps are:
 - better API breadth and discovery
 - stronger environment, result-management, and operational control-plane features
 
+### Reality update after current implementation progress
+
+That earlier gap summary is now partially outdated.
+
+ZeroDAST has since closed much of the lightweight operator-model gap for the current target slice, including:
+- environment manifests
+- baseline-aware result-state artifacts
+- diff-aware finding comparison
+- remediation/retest guidance
+- operational reliability artifacts
+- lightweight repo-fleet tracking
+- GitHub-side PR comment and nightly issue proof for the newer policy shape
+
+So the remaining gap is less "basic operator model missing" and more:
+- richer auth breadth
+- remaining Phase 2 external scan-quality proof debt
+- broader multi-target operational maturity beyond the first lightweight fleet view
+
 ## Time Budget Constraint
 
 To preserve the product thesis, every phase must protect these budgets:
@@ -243,6 +261,24 @@ Approach enterprise usability without becoming enterprise-bloated, especially ar
 - a more serious product surface for maintainers and teams
 - closer alignment with the environment-centric and triage-centric shape visible in enterprise DAST products
 
+### Current progress note
+Phase 5 is now materially implemented for the current target slice.
+
+ZeroDAST already has:
+- environment-manifest artifacts
+- result-state artifacts
+- diff-aware comparison against a committed finding baseline
+- remediation/retest guidance artifacts
+- operational reliability artifacts
+- lightweight repo-fleet tracking
+- GitHub-proven PR policy summary comments
+- GitHub-proven nightly triage issue creation in the newer operator-oriented shape
+
+The main remaining gaps in this phase are now:
+- deeper repeated-run issue dedupe/update proof
+- broader comparison-doc synchronization
+- more mature fleet operation beyond the first file-based registry
+
 ### What it still does not add
 - full ASPM parity
 - enterprise compliance mapping parity
@@ -264,6 +300,16 @@ Approach enterprise usability without becoming enterprise-bloated, especially ar
 - multiple repos can be managed without ad hoc manual triage
 - repeated runs and result deltas are easy to reason about
 - maintainers get more actionable outputs with less noise
+
+### Practical current assessment
+For the current lightweight operator-model scope, Phase 5 is close to functionally complete.
+
+That does **not** mean:
+- enterprise control-plane parity
+- hosted platform parity
+- broad governance/RBAC/compliance parity
+
+It **does** mean the repo now has a coherent operator story for the current niche.
 
 ### Estimated parity gain
 - **Overall:** `+4-7%`
