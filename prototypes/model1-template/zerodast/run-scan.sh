@@ -5,11 +5,18 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${ROOT_DIR}/.." && pwd)"
 CONFIG_PATH="${ROOT_DIR}/config.json"
 REPORT_DIR="${ROOT_DIR}/reports"
+SCRIPTS_DIR="${ROOT_DIR}/scripts"
 MODE="${ZERODAST_MODE:-pr}"
 DOCKER_CMD="${ZERODAST_DOCKER_CMD:-docker}"
-HELPER_SCRIPT='fetch(process.argv[1]).then(async r => { if (!r.ok) process.exit(1); process.stdout.write(await r.text()); }).catch((err) => { console.error(err.message); process.exit(1); });'
 DOCKER_REQUIRES_WINDOWS_PATHS="false"
 NODE_REQUIRES_WINDOWS_PATHS="false"
+RUN_STARTED_AT="$(date +%s)"
+
+HELPER_SCRIPT='fetch(process.argv[1]).then(async r => { if (!r.ok) process.exit(1); process.stdout.write(await r.text()); }).catch((err) => { console.error(err.message); process.exit(1); });'
+
+AUTH_LOGIN_SCRIPT='const body={};body[process.env.EMAIL_FIELD||"email"]=process.env.EMAIL;body[process.env.PASSWORD_FIELD||"password"]=process.env.PASSWORD;const ct=process.env.CONTENT_TYPE||"application/json";const bs=ct.includes("json")?JSON.stringify(body):new URLSearchParams(body).toString();fetch(process.env.LOGIN_URL,{method:"POST",headers:{"Content-Type":ct},body:bs,redirect:"manual"}).then(async r=>{if(process.env.EXTRACT_MODE==="cookie"){const c=r.headers.get("set-cookie");if(!c){console.error(await r.text());process.exit(1);}process.stdout.write(c.split(";")[0]);return;}if(!r.ok){console.error(await r.text());process.exit(1);}const d=await r.json();const t=d[process.env.TOKEN_FIELD||"token"];if(!t){console.error(JSON.stringify(d));process.exit(1);}process.stdout.write(t);}).catch(e=>{console.error(e.message);process.exit(1);});'
+
+AUTH_VALIDATE_SCRIPT='const h={};if(process.env.HEADER_NAME&&process.env.HEADER_VALUE)h[process.env.HEADER_NAME]=process.env.HEADER_VALUE;fetch(process.env.ROUTE_URL,{headers:h}).then(async r=>{if(String(r.status)!==process.env.EXPECTED_STATUS){console.error(await r.text());process.exit(1);}}).catch(e=>{console.error(e.message);process.exit(1);});'
 
 if [[ "${DOCKER_CMD}" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
   DOCKER_REQUIRES_WINDOWS_PATHS="true"
@@ -34,47 +41,106 @@ REPORT_PATH="${REPORT_DIR}/zap-report.json"
 LOG_PATH="${REPORT_DIR}/zap-run.log"
 METRICS_PATH="${REPORT_DIR}/metrics.json"
 SUMMARY_PATH="${REPORT_DIR}/summary.md"
+ENV_MANIFEST_JSON="${REPORT_DIR}/environment-manifest.json"
+ENV_MANIFEST_MD="${REPORT_DIR}/environment-manifest.md"
+API_INVENTORY_JSON="${REPORT_DIR}/api-inventory.json"
+API_INVENTORY_MD="${REPORT_DIR}/api-inventory.md"
+RESULT_STATE_JSON="${REPORT_DIR}/result-state.json"
+RESULT_STATE_MD="${REPORT_DIR}/result-state.md"
+REMEDIATION_MD="${REPORT_DIR}/remediation-guide.md"
+RELIABILITY_JSON="${REPORT_DIR}/reliability-metrics.json"
+OP_RELIABILITY_JSON="${REPORT_DIR}/operational-reliability.json"
+OP_RELIABILITY_MD="${REPORT_DIR}/operational-reliability.md"
+ROUTE_HINTS_JSON="${REPORT_DIR}/route-hints.json"
+BASELINE_PATH="${ROOT_DIR}/.zap-baseline.json"
+FINDING_BASELINE_PATH="${ROOT_DIR}/.zap-result-baseline.json"
 PREPARE_OPENAPI_SCRIPT="${ROOT_DIR}/prepare-openapi.js"
 VERIFY_REPORT_SCRIPT="${ROOT_DIR}/verify-report.js"
 
-CONFIG_PATH_NODE="${CONFIG_PATH}"
-PREPARED_CONFIG_NODE="${PREPARED_CONFIG}"
-RAW_SPEC_NODE="${RAW_SPEC}"
-SANITIZED_SPEC_NODE="${SANITIZED_SPEC}"
-REQUESTS_JSON_NODE="${REQUESTS_JSON}"
-REPORT_PATH_NODE="${REPORT_PATH}"
-LOG_PATH_NODE="${LOG_PATH}"
-METRICS_PATH_NODE="${METRICS_PATH}"
-PREPARE_OPENAPI_SCRIPT_NODE="${PREPARE_OPENAPI_SCRIPT}"
-VERIFY_REPORT_SCRIPT_NODE="${VERIFY_REPORT_SCRIPT}"
+# --- Reliability tracking booleans ---
+APP_READY=false
+APP_READY_SECONDS=""
+AUTH_VALIDATION_ATTEMPTED=false
+AUTH_VALIDATION_PASSED=false
+ADMIN_VALIDATION_ATTEMPTED=false
+ADMIN_VALIDATION_PASSED=false
+ZAP_RUN_REQUESTED=false
+ZAP_RUN_COMPLETED=false
+REPORT_PRODUCED=false
+API_INVENTORY_PRODUCED=false
+RESULT_STATE_PRODUCED=false
+REMEDIATION_GUIDE_PRODUCED=false
 
-if [[ "${NODE_REQUIRES_WINDOWS_PATHS}" == "true" ]]; then
-  CONFIG_PATH_NODE="$(cygpath -w "${CONFIG_PATH}")"
-  PREPARED_CONFIG_NODE="$(cygpath -w "${PREPARED_CONFIG}")"
-  RAW_SPEC_NODE="$(cygpath -w "${RAW_SPEC}")"
-  SANITIZED_SPEC_NODE="$(cygpath -w "${SANITIZED_SPEC}")"
-  REQUESTS_JSON_NODE="$(cygpath -w "${REQUESTS_JSON}")"
-  REPORT_PATH_NODE="$(cygpath -w "${REPORT_PATH}")"
-  LOG_PATH_NODE="$(cygpath -w "${LOG_PATH}")"
-  METRICS_PATH_NODE="$(cygpath -w "${METRICS_PATH}")"
-  PREPARE_OPENAPI_SCRIPT_NODE="$(cygpath -w "${PREPARE_OPENAPI_SCRIPT}")"
-  VERIFY_REPORT_SCRIPT_NODE="$(cygpath -w "${VERIFY_REPORT_SCRIPT}")"
-fi
+# --- Windows path helpers ---
+node_path() {
+  local p="$1"
+  if [[ "${NODE_REQUIRES_WINDOWS_PATHS}" == "true" ]]; then
+    cygpath -w "$p"
+  else
+    printf '%s' "$p"
+  fi
+}
 
-TARGET_WORK_DIR="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.workingDirectory || '.');" "${CONFIG_PATH_NODE}")"
-TARGET_RUNTIME_MODE="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.runtimeMode || 'artifact');" "${CONFIG_PATH_NODE}")"
-TARGET_PORT="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.target.port || 80));" "${CONFIG_PATH_NODE}")"
-TARGET_HEALTH_PATH="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.healthPath || '/');" "${CONFIG_PATH_NODE}")"
-TARGET_OPENAPI_PATH="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.openApiPath || '/');" "${CONFIG_PATH_NODE}")"
-TARGET_BUILD_COMMAND="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.buildCommand || '');" "${CONFIG_PATH_NODE}")"
-TARGET_ARTIFACT_PATTERN="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.artifactPattern || '');" "${CONFIG_PATH_NODE}")"
-APP_IMAGE="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.appImage || 'eclipse-temurin:17-jre-jammy');" "${CONFIG_PATH_NODE}")"
-COMPOSE_UP_COMMAND="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.upCommand || '');" "${CONFIG_PATH_NODE}")"
-COMPOSE_DOWN_COMMAND="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.downCommand || '');" "${CONFIG_PATH_NODE}")"
-COMPOSE_NETWORK_NAME="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.networkName || '');" "${CONFIG_PATH_NODE}")"
-COMPOSE_APP_HOST="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.target.compose?.appHost || '');" "${CONFIG_PATH_NODE}")"
-ZAP_VERSION="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.scan?.zapVersion || '2.17.0');" "${CONFIG_PATH_NODE}")"
-HELPER_IMAGE="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.scan?.helperImage || 'node:20-alpine');" "${CONFIG_PATH_NODE}")"
+docker_path() {
+  local p="$1"
+  if [[ "${DOCKER_REQUIRES_WINDOWS_PATHS}" == "true" ]]; then
+    cygpath -w "$p"
+  else
+    printf '%s' "$p"
+  fi
+}
+
+# --- Read config values ---
+cfg() {
+  node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));const v=process.argv[2].split('.').reduce((o,k)=>o&&o[k],c);process.stdout.write(v==null?'':String(v));" "$(node_path "${CONFIG_PATH}")" "$1"
+}
+
+TARGET_WORK_DIR="$(cfg target.workingDirectory)"
+TARGET_RUNTIME_MODE="$(cfg target.runtimeMode)"
+TARGET_PORT="$(cfg target.port)"
+TARGET_HEALTH_PATH="$(cfg target.healthPath)"
+TARGET_OPENAPI_PATH="$(cfg target.openApiPath)"
+TARGET_BUILD_COMMAND="$(cfg target.buildCommand)"
+TARGET_ARTIFACT_PATTERN="$(cfg target.artifactPattern)"
+TARGET_START_COMMAND="$(cfg target.startCommand)"
+APP_IMAGE="$(cfg target.appImage)"
+COMPOSE_UP_COMMAND="$(cfg target.compose.upCommand)"
+COMPOSE_DOWN_COMMAND="$(cfg target.compose.downCommand)"
+COMPOSE_NETWORK_NAME="$(cfg target.compose.networkName)"
+COMPOSE_APP_HOST="$(cfg target.compose.appHost)"
+ZAP_VERSION="$(cfg scan.zapVersion)"
+HELPER_IMAGE="$(cfg scan.helperImage)"
+
+[[ -z "$TARGET_PORT" ]] && TARGET_PORT="80"
+[[ -z "$ZAP_VERSION" ]] && ZAP_VERSION="2.17.0"
+[[ -z "$HELPER_IMAGE" ]] && HELPER_IMAGE="node:20-alpine"
+[[ -z "$TARGET_WORK_DIR" ]] && TARGET_WORK_DIR="."
+
+AUTH_ADAPTER="$(cfg auth.adapter)"
+AUTH_LOGIN_PATH="$(cfg auth.loginPath)"
+AUTH_CONTENT_TYPE="$(cfg auth.contentType)"
+AUTH_EMAIL_FIELD="$(cfg auth.emailField)"
+AUTH_PASSWORD_FIELD="$(cfg auth.passwordField)"
+AUTH_RESPONSE_TOKEN_FIELD="$(cfg auth.responseTokenField)"
+AUTH_HEADER_NAME_CFG="$(cfg auth.headerName)"
+AUTH_HEADER_PREFIX="$(cfg auth.headerPrefix)"
+AUTH_USER_EMAIL="$(cfg auth.user.email)"
+AUTH_USER_PASSWORD="$(cfg auth.user.password)"
+AUTH_ADMIN_EMAIL="$(cfg auth.admin.email)"
+AUTH_ADMIN_PASSWORD="$(cfg auth.admin.password)"
+AUTH_PROTECTED_ROUTE="$(cfg auth.protectedRoute.path)"
+AUTH_PROTECTED_EXPECTED="$(cfg auth.protectedRoute.expectedStatus)"
+AUTH_ADMIN_ROUTE="$(cfg auth.adminRoute.path)"
+AUTH_ADMIN_EXPECTED="$(cfg auth.adminRoute.expectedStatus)"
+
+[[ -z "$AUTH_CONTENT_TYPE" ]] && AUTH_CONTENT_TYPE="application/json"
+[[ -z "$AUTH_EMAIL_FIELD" ]] && AUTH_EMAIL_FIELD="email"
+[[ -z "$AUTH_PASSWORD_FIELD" ]] && AUTH_PASSWORD_FIELD="password"
+[[ -z "$AUTH_RESPONSE_TOKEN_FIELD" ]] && AUTH_RESPONSE_TOKEN_FIELD="token"
+[[ -z "$AUTH_HEADER_NAME_CFG" ]] && AUTH_HEADER_NAME_CFG="Authorization"
+[[ -z "$AUTH_HEADER_PREFIX" ]] && AUTH_HEADER_PREFIX="Bearer "
+[[ -z "$AUTH_PROTECTED_EXPECTED" ]] && AUTH_PROTECTED_EXPECTED="200"
+[[ -z "$AUTH_ADMIN_EXPECTED" ]] && AUTH_ADMIN_EXPECTED="200"
 
 TARGET_DIR="$(cd "${REPO_ROOT}/${TARGET_WORK_DIR}" && pwd)"
 APP_CONTAINER="zerodast-target"
@@ -82,8 +148,12 @@ ZAP_CONTAINER="zerodast-zap"
 NETWORK_NAME="zerodast-net"
 APP_HOST="${APP_CONTAINER}"
 SCANNER_BASE_ROOT="http://${APP_HOST}:${TARGET_PORT}"
-APP_JAR=""
 MANAGED_RUNTIME="true"
+
+AUTH_HEADER_NAME=""
+AUTH_HEADER_VALUE=""
+ADMIN_AUTH_HEADER_NAME=""
+ADMIN_AUTH_HEADER_VALUE=""
 
 if [[ "${TARGET_RUNTIME_MODE}" == "artifact" ]]; then
   if [[ -z "${TARGET_BUILD_COMMAND}" || -z "${TARGET_ARTIFACT_PATTERN}" ]]; then
@@ -104,6 +174,7 @@ else
   exit 1
 fi
 
+# --- Cleanup ---
 cleanup() {
   MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" rm -f "${ZAP_CONTAINER}" >/dev/null 2>&1 || true
   if [[ "${MANAGED_RUNTIME}" == "true" ]]; then
@@ -116,11 +187,91 @@ cleanup() {
 trap cleanup EXIT
 cleanup
 
+# --- Auth functions ---
+auth_login() {
+  local email="$1" password="$2"
+  local login_url="${SCANNER_BASE_ROOT}${AUTH_LOGIN_PATH}"
+  local extract_mode="token"
+  [[ "${AUTH_ADAPTER}" == "form-cookie-login" ]] && extract_mode="cookie"
+
+  MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" run --rm --network "${NETWORK_NAME}" \
+    -e "LOGIN_URL=${login_url}" \
+    -e "EMAIL=${email}" \
+    -e "PASSWORD=${password}" \
+    -e "EMAIL_FIELD=${AUTH_EMAIL_FIELD}" \
+    -e "PASSWORD_FIELD=${AUTH_PASSWORD_FIELD}" \
+    -e "TOKEN_FIELD=${AUTH_RESPONSE_TOKEN_FIELD}" \
+    -e "CONTENT_TYPE=${AUTH_CONTENT_TYPE}" \
+    -e "EXTRACT_MODE=${extract_mode}" \
+    "${HELPER_IMAGE}" node -e "${AUTH_LOGIN_SCRIPT}"
+}
+
+validate_route() {
+  local header_name="$1" header_value="$2" route_path="$3" expected_status="$4"
+  local route_url="${SCANNER_BASE_ROOT}${route_path}"
+
+  MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" run --rm --network "${NETWORK_NAME}" \
+    -e "ROUTE_URL=${route_url}" \
+    -e "HEADER_NAME=${header_name}" \
+    -e "HEADER_VALUE=${header_value}" \
+    -e "EXPECTED_STATUS=${expected_status}" \
+    "${HELPER_IMAGE}" node -e "${AUTH_VALIDATE_SCRIPT}"
+}
+
+write_operational_reliability() {
+  local total_runtime_seconds
+  total_runtime_seconds=$(( $(date +%s) - RUN_STARTED_AT ))
+
+  cat > "${RELIABILITY_JSON}" <<JSON
+{
+  "totalRuntimeSeconds": ${total_runtime_seconds},
+  "appReady": ${APP_READY},
+  "appReadySeconds": ${APP_READY_SECONDS:-null},
+  "authValidationAttempted": ${AUTH_VALIDATION_ATTEMPTED},
+  "authValidationPassed": ${AUTH_VALIDATION_PASSED},
+  "adminValidationAttempted": ${ADMIN_VALIDATION_ATTEMPTED},
+  "adminValidationPassed": ${ADMIN_VALIDATION_PASSED},
+  "zapRunRequested": ${ZAP_RUN_REQUESTED},
+  "zapRunCompleted": ${ZAP_RUN_COMPLETED},
+  "reportProduced": ${REPORT_PRODUCED},
+  "apiInventoryProduced": ${API_INVENTORY_PRODUCED},
+  "resultStateProduced": ${RESULT_STATE_PRODUCED},
+  "remediationGuideProduced": ${REMEDIATION_GUIDE_PRODUCED}
+}
+JSON
+
+  if [[ -f "${SCRIPTS_DIR}/build-operational-reliability.js" ]]; then
+    node "$(node_path "${SCRIPTS_DIR}/build-operational-reliability.js")" \
+      "$(node_path "${RELIABILITY_JSON}")" \
+      "$(node_path "${OP_RELIABILITY_JSON}")" \
+      "$(node_path "${OP_RELIABILITY_MD}")"
+  fi
+}
+
+# --- Build environment manifest ---
+if [[ -f "${SCRIPTS_DIR}/build-environment-manifest.js" ]]; then
+  ZERODAST_TARGET_NAME="$(cfg name)" \
+  ZERODAST_SCAN_PROFILE="${MODE}" \
+  ZERODAST_SCAN_TRIGGER="${ZERODAST_SCAN_TRIGGER:-ci}" \
+  ZERODAST_SCAN_MODE="model1" \
+  AUTH_BOOTSTRAP_MODE="${AUTH_ADAPTER}" \
+  AUTH_ADAPTER_SCRIPT="${AUTH_ADAPTER}" \
+  AUTH_PROTECTED_ROUTE_PATH="${AUTH_PROTECTED_ROUTE}" \
+  ADMIN_PROTECTED_ROUTE_PATH="${AUTH_ADMIN_ROUTE}" \
+  AUTH_BOOTSTRAP_URL="${SCANNER_BASE_ROOT}" \
+  APP_HEALTH_PATH="${TARGET_HEALTH_PATH}" \
+  OPENAPI_SPEC_URL="${SCANNER_BASE_ROOT}${TARGET_OPENAPI_PATH}" \
+  node "$(node_path "${SCRIPTS_DIR}/build-environment-manifest.js")" \
+    "$(node_path "${ENV_MANIFEST_JSON}")" \
+    "$(node_path "${ENV_MANIFEST_MD}")"
+fi
+
+# --- Start target ---
 APP_JAR_MOUNT=""
-RAW_SPEC_MOUNT="${RAW_SPEC}"
-SANITIZED_SPEC_MOUNT="${SANITIZED_SPEC}"
-AUTOMATION_MOUNT="${AUTOMATION_PATH}"
-REPORT_DIR_MOUNT="${REPORT_DIR}"
+RAW_SPEC_MOUNT="$(docker_path "${RAW_SPEC}")"
+SANITIZED_SPEC_MOUNT="$(docker_path "${SANITIZED_SPEC}")"
+AUTOMATION_MOUNT="$(docker_path "${AUTOMATION_PATH}")"
+REPORT_DIR_MOUNT="$(docker_path "${REPORT_DIR}")"
 
 if [[ "${TARGET_RUNTIME_MODE}" == "artifact" ]]; then
   (cd "${TARGET_DIR}" && eval "${TARGET_BUILD_COMMAND}")
@@ -129,6 +280,7 @@ if [[ "${TARGET_RUNTIME_MODE}" == "artifact" ]]; then
   artifact_matches=( "${TARGET_DIR}"/${TARGET_ARTIFACT_PATTERN} )
   shopt -u nullglob
 
+  APP_JAR=""
   for candidate in "${artifact_matches[@]}"; do
     if [[ "${candidate}" != *.original ]]; then
       APP_JAR="${candidate}"
@@ -141,38 +293,42 @@ if [[ "${TARGET_RUNTIME_MODE}" == "artifact" ]]; then
     exit 1
   fi
 
-  APP_JAR_MOUNT="${APP_JAR}"
-
-  if [[ "${DOCKER_REQUIRES_WINDOWS_PATHS}" == "true" ]]; then
-    APP_JAR_MOUNT="$(cygpath -w "${APP_JAR}")"
-    RAW_SPEC_MOUNT="$(cygpath -w "${RAW_SPEC}")"
-    SANITIZED_SPEC_MOUNT="$(cygpath -w "${SANITIZED_SPEC}")"
-    AUTOMATION_MOUNT="$(cygpath -w "${AUTOMATION_PATH}")"
-    REPORT_DIR_MOUNT="$(cygpath -w "${REPORT_DIR}")"
-  fi
+  APP_JAR_MOUNT="$(docker_path "${APP_JAR}")"
 
   MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" network create --internal "${NETWORK_NAME}" >/dev/null
 
+  START_CMD="${TARGET_START_COMMAND}"
+  if [[ -z "${START_CMD}" ]]; then
+    START_CMD="java -jar /app/app.jar"
+  fi
+
+  # shellcheck disable=SC2086
   MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" run -d --rm \
     --network "${NETWORK_NAME}" \
     --name "${APP_CONTAINER}" \
+    --cap-drop=ALL \
+    --security-opt=no-new-privileges:true \
+    --read-only \
+    --tmpfs /tmp:rw,noexec,nosuid,size=100m \
+    --memory=1g \
+    --memory-swap=1g \
+    --pids-limit=512 \
     -v "${APP_JAR_MOUNT}:/app/app.jar:ro" \
     "${APP_IMAGE}" \
-    java -jar /app/app.jar >/dev/null
+    ${START_CMD} >/dev/null
 else
-  if [[ "${DOCKER_REQUIRES_WINDOWS_PATHS}" == "true" ]]; then
-    RAW_SPEC_MOUNT="$(cygpath -w "${RAW_SPEC}")"
-    SANITIZED_SPEC_MOUNT="$(cygpath -w "${SANITIZED_SPEC}")"
-    AUTOMATION_MOUNT="$(cygpath -w "${AUTOMATION_PATH}")"
-    REPORT_DIR_MOUNT="$(cygpath -w "${REPORT_DIR}")"
-  fi
   (cd "${TARGET_DIR}" && eval "${COMPOSE_UP_COMMAND}")
 fi
 
+# --- Wait for health ---
 wait_for_health() {
-  local attempts="${1:-45}"
+  local attempts="${1:-60}"
+  local start_ts
+  start_ts="$(date +%s)"
   for ((i=0; i<attempts; i++)); do
     if MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e "${HELPER_SCRIPT}" "${SCANNER_BASE_ROOT}${TARGET_HEALTH_PATH}" >/dev/null 2>&1; then
+      APP_READY=true
+      APP_READY_SECONDS=$(( $(date +%s) - start_ts ))
       return 0
     fi
     sleep 2
@@ -182,27 +338,78 @@ wait_for_health() {
 
 if ! wait_for_health 60; then
   echo "Timed out waiting for target health endpoint at ${SCANNER_BASE_ROOT}${TARGET_HEALTH_PATH}" >&2
+  write_operational_reliability
   exit 1
 fi
+echo "Target healthy at ${SCANNER_BASE_ROOT}${TARGET_HEALTH_PATH}"
 
-MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e "${HELPER_SCRIPT}" "${SCANNER_BASE_ROOT}${TARGET_OPENAPI_PATH}" > "${RAW_SPEC}"
+# --- Auth bootstrap ---
+if [[ -n "${AUTH_ADAPTER}" && -n "${AUTH_LOGIN_PATH}" ]]; then
+  echo "Running auth adapter: ${AUTH_ADAPTER}"
 
-node "${PREPARE_OPENAPI_SCRIPT_NODE}" "${CONFIG_PATH_NODE}" "${MODE}" "${RAW_SPEC_NODE}" "${SANITIZED_SPEC_NODE}" "${REQUESTS_JSON_NODE}" > "${PREPARED_CONFIG}"
+  user_token="$(auth_login "${AUTH_USER_EMAIL}" "${AUTH_USER_PASSWORD}")"
+  if [[ "${AUTH_ADAPTER}" == "form-cookie-login" ]]; then
+    AUTH_HEADER_NAME="Cookie"
+    AUTH_HEADER_VALUE="${user_token}"
+  else
+    AUTH_HEADER_NAME="${AUTH_HEADER_NAME_CFG}"
+    AUTH_HEADER_VALUE="${AUTH_HEADER_PREFIX}${user_token}"
+  fi
+  echo "User auth obtained"
 
-SCANNER_BASE_URL="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.scannerBaseUrl);" "${PREPARED_CONFIG_NODE}")"
-SPIDER_TARGET_URL="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(c.spiderTargetUrl || (c.scannerBaseUrl + '/swagger-ui/index.html'));" "${PREPARED_CONFIG_NODE}")"
-ENABLE_SPIDER="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.enableSpider !== false));" "${PREPARED_CONFIG_NODE}")"
-SPIDER_MINUTES="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.spiderMinutes || 2));" "${PREPARED_CONFIG_NODE}")"
-SPIDER_MAX_DEPTH="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.spiderMaxDepth || 5));" "${PREPARED_CONFIG_NODE}")"
-SPIDER_MAX_CHILDREN="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.spiderMaxChildren || 50));" "${PREPARED_CONFIG_NODE}")"
-PASSIVE_WAIT_MINUTES="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.passiveWaitMinutes || 2));" "${PREPARED_CONFIG_NODE}")"
-SCAN_MINUTES="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.maxDurationMinutes || 15));" "${PREPARED_CONFIG_NODE}")"
-THREAD_PER_HOST="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.threadPerHost || 4));" "${PREPARED_CONFIG_NODE}")"
-DEFAULT_STRENGTH="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.defaultStrength || 'medium'));" "${PREPARED_CONFIG_NODE}")"
-DEFAULT_THRESHOLD="$(node -e "const fs=require('fs'); const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); process.stdout.write(String(c.modeConfig.defaultThreshold || 'low'));" "${PREPARED_CONFIG_NODE}")"
+  if [[ -n "${AUTH_ADMIN_EMAIL}" && -n "${AUTH_ADMIN_PASSWORD}" ]]; then
+    admin_token="$(auth_login "${AUTH_ADMIN_EMAIL}" "${AUTH_ADMIN_PASSWORD}")"
+    if [[ "${AUTH_ADAPTER}" == "form-cookie-login" ]]; then
+      ADMIN_AUTH_HEADER_NAME="Cookie"
+      ADMIN_AUTH_HEADER_VALUE="${admin_token}"
+    else
+      ADMIN_AUTH_HEADER_NAME="${AUTH_HEADER_NAME_CFG}"
+      ADMIN_AUTH_HEADER_VALUE="${AUTH_HEADER_PREFIX}${admin_token}"
+    fi
+    echo "Admin auth obtained"
+  fi
+
+  if [[ -n "${AUTH_PROTECTED_ROUTE}" ]]; then
+    AUTH_VALIDATION_ATTEMPTED=true
+    validate_route "${AUTH_HEADER_NAME}" "${AUTH_HEADER_VALUE}" "${AUTH_PROTECTED_ROUTE}" "${AUTH_PROTECTED_EXPECTED}"
+    AUTH_VALIDATION_PASSED=true
+    echo "Protected route validated: ${AUTH_PROTECTED_ROUTE}"
+  fi
+
+  if [[ -n "${AUTH_ADMIN_ROUTE}" && -n "${ADMIN_AUTH_HEADER_VALUE}" ]]; then
+    ADMIN_VALIDATION_ATTEMPTED=true
+    validate_route "${ADMIN_AUTH_HEADER_NAME}" "${ADMIN_AUTH_HEADER_VALUE}" "${AUTH_ADMIN_ROUTE}" "${AUTH_ADMIN_EXPECTED}"
+    ADMIN_VALIDATION_PASSED=true
+    echo "Admin route validated: ${AUTH_ADMIN_ROUTE}"
+  fi
+fi
+
+# --- Fetch OpenAPI spec ---
+MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e "${HELPER_SCRIPT}" "${SCANNER_BASE_ROOT}${TARGET_OPENAPI_PATH}" > "${RAW_SPEC}" 2>/dev/null || true
+
+# --- Prepare OpenAPI ---
+node "$(node_path "${PREPARE_OPENAPI_SCRIPT}")" \
+  "$(node_path "${CONFIG_PATH}")" \
+  "${MODE}" \
+  "$(node_path "${RAW_SPEC}")" \
+  "$(node_path "${SANITIZED_SPEC}")" \
+  "$(node_path "${REQUESTS_JSON}")" > "${PREPARED_CONFIG}"
+
+SCANNER_BASE_URL="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(c.scannerBaseUrl);" "$(node_path "${PREPARED_CONFIG}")")"
+SPIDER_TARGET_URL="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(c.spiderTargetUrl||(c.scannerBaseUrl+'/'));" "$(node_path "${PREPARED_CONFIG}")")"
+ENABLE_SPIDER="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.enableSpider!==false));" "$(node_path "${PREPARED_CONFIG}")")"
+SPIDER_MINUTES="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.spiderMinutes||2));" "$(node_path "${PREPARED_CONFIG}")")"
+SPIDER_MAX_DEPTH="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.spiderMaxDepth||5));" "$(node_path "${PREPARED_CONFIG}")")"
+SPIDER_MAX_CHILDREN="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.spiderMaxChildren||50));" "$(node_path "${PREPARED_CONFIG}")")"
+PASSIVE_WAIT_MINUTES="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.passiveWaitMinutes||2));" "$(node_path "${PREPARED_CONFIG}")")"
+SCAN_MINUTES="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.maxDurationMinutes||15));" "$(node_path "${PREPARED_CONFIG}")")"
+THREAD_PER_HOST="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.threadPerHost||4));" "$(node_path "${PREPARED_CONFIG}")")"
+DEFAULT_STRENGTH="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.defaultStrength||'medium'));" "$(node_path "${PREPARED_CONFIG}")")"
+DEFAULT_THRESHOLD="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));process.stdout.write(String(c.modeConfig.defaultThreshold||'low'));" "$(node_path "${PREPARED_CONFIG}")")"
 ZAP_IMAGE="zaproxy/zap-stable:${ZAP_VERSION}"
 SPEC_MODE="raw"
 
+# --- Write ZAP automation config ---
 write_config() {
   local api_url="$1"
   {
@@ -218,6 +425,22 @@ env:
     failOnError: true
     progressToStdout: true
 jobs:
+EOF
+    if [[ -n "${AUTH_HEADER_VALUE}" ]]; then
+      cat <<EOF
+  - type: replacer
+    parameters:
+      deleteAllRules: true
+    rules:
+      - description: "ZeroDAST auth header"
+        matchType: REQ_HEADER
+        matchString: "${AUTH_HEADER_NAME}"
+        matchRegex: false
+        replacementString: "${AUTH_HEADER_VALUE}"
+        initiators: []
+EOF
+    fi
+    cat <<EOF
   - type: openapi
     parameters:
       apiUrl: "${api_url}"
@@ -226,7 +449,7 @@ jobs:
   - type: requestor
     requests:
 EOF
-    node -e "const fs=require('fs'); const requests=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); for (const url of requests) { console.log('      - url: \"' + url + '\"'); console.log('        method: \"GET\"'); }" "${REQUESTS_JSON_NODE}"
+    node -e "const fs=require('fs');const requests=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));for(const url of requests){console.log('      - url: \"'+url+'\"');console.log('        method: \"GET\"');}" "$(node_path "${REQUESTS_JSON}")"
     if [[ "${ENABLE_SPIDER}" == "true" ]]; then
       cat <<EOF
   - type: spider
@@ -257,23 +480,30 @@ EOF
       template: "traditional-json"
       reportDir: "/zap/wrk"
       reportFile: "zap-report.json"
+  - type: report
+    parameters:
+      template: "traditional-html"
+      reportDir: "/zap/wrk"
+      reportFile: "zap-report.html"
 EOF
   } > "${AUTOMATION_PATH}"
 }
 
+# --- Run ZAP ---
 run_zap() {
   MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" rm -f "${ZAP_CONTAINER}" >/dev/null 2>&1 || true
   MSYS_NO_PATHCONV=1 "${DOCKER_CMD}" run --rm --name "${ZAP_CONTAINER}" \
     --network "${NETWORK_NAME}" \
     -v "${AUTOMATION_MOUNT}:/zap/wrk/config.yaml:Z" \
-    -v "${RAW_SPEC_MOUNT}:/zap/wrk/openapi-raw.json:Z" \
-    -v "${SANITIZED_SPEC_MOUNT}:/zap/wrk/openapi-sanitized.json:Z" \
+    -v "$(docker_path "${RAW_SPEC}"):/zap/wrk/openapi-raw.json:Z" \
+    -v "$(docker_path "${SANITIZED_SPEC}"):/zap/wrk/openapi-sanitized.json:Z" \
     -v "${REPORT_DIR_MOUNT}:/zap/wrk:Z" \
     "${ZAP_IMAGE}" zap.sh -cmd -autorun /zap/wrk/config.yaml
 }
 
 SECONDS=0
 write_config "file:///zap/wrk/openapi-raw.json"
+ZAP_RUN_REQUESTED=true
 set +e
 run_zap > "${LOG_PATH}" 2>&1
 zap_exit=$?
@@ -288,12 +518,19 @@ if [[ ! -f "${REPORT_PATH}" ]] || grep -Eq 'Failed to import OpenAPI definition|
   set -e
 fi
 
+ZAP_RUN_COMPLETED=true
+
 if [[ ! -f "${REPORT_PATH}" ]]; then
   echo "ZAP did not generate a report at ${REPORT_PATH}" >&2
+  write_operational_reliability
   exit 1
 fi
 
-seeded_count=$(node -e "const fs=require('fs'); console.log(JSON.parse(fs.readFileSync(process.argv[1],'utf8')).length);" "${REQUESTS_JSON_NODE}")
+REPORT_PRODUCED=true
+echo "ZAP finished with exit code ${zap_exit}"
+
+# --- Operator artifacts ---
+seeded_count=$(node -e "const fs=require('fs');console.log(JSON.parse(fs.readFileSync(process.argv[1],'utf8')).length);" "$(node_path "${REQUESTS_JSON}")")
 cold_run_seconds="${SECONDS}"
 cat > "${METRICS_PATH}" <<EOF
 {
@@ -305,6 +542,51 @@ cat > "${METRICS_PATH}" <<EOF
 }
 EOF
 
-node "${VERIFY_REPORT_SCRIPT_NODE}" "${REPORT_PATH_NODE}" "${METRICS_PATH_NODE}" "${PREPARED_CONFIG_NODE}" "${LOG_PATH_NODE}" "${REQUESTS_JSON_NODE}" | tee "${SUMMARY_PATH}"
+if [[ -f "${SCRIPTS_DIR}/build-api-inventory.js" && -f "${LOG_PATH}" ]]; then
+  node "$(node_path "${SCRIPTS_DIR}/build-api-inventory.js")" \
+    "$(node_path "${REPORT_PATH}")" \
+    "$(node_path "${LOG_PATH}")" \
+    "$(node_path "${RAW_SPEC}")" \
+    "$(node_path "${API_INVENTORY_JSON}")" \
+    "$(node_path "${API_INVENTORY_MD}")" \
+    "$(node_path "${ROUTE_HINTS_JSON}")" || true
+  if [[ -f "${API_INVENTORY_JSON}" ]]; then
+    API_INVENTORY_PRODUCED=true
+  fi
+fi
 
+if [[ -f "${SCRIPTS_DIR}/build-result-state.js" ]]; then
+  local_baseline="${BASELINE_PATH}"
+  [[ ! -f "${local_baseline}" ]] && local_baseline="/dev/null"
+  local_finding_baseline="${FINDING_BASELINE_PATH}"
+  [[ ! -f "${local_finding_baseline}" ]] && local_finding_baseline=""
 
+  node "$(node_path "${SCRIPTS_DIR}/build-result-state.js")" \
+    "$(node_path "${REPORT_PATH}")" \
+    "$(node_path "${local_baseline}")" \
+    "$(node_path "${RESULT_STATE_JSON}")" \
+    "$(node_path "${RESULT_STATE_MD}")" \
+    ${local_finding_baseline:+"$(node_path "${local_finding_baseline}")"} || true
+  if [[ -f "${RESULT_STATE_JSON}" ]]; then
+    RESULT_STATE_PRODUCED=true
+  fi
+fi
+
+if [[ -f "${SCRIPTS_DIR}/build-remediation-guide.js" && -f "${RESULT_STATE_JSON}" ]]; then
+  node "$(node_path "${SCRIPTS_DIR}/build-remediation-guide.js")" \
+    "$(node_path "${RESULT_STATE_JSON}")" \
+    "$(node_path "${REMEDIATION_MD}")" || true
+  if [[ -f "${REMEDIATION_MD}" ]]; then
+    REMEDIATION_GUIDE_PRODUCED=true
+  fi
+fi
+
+write_operational_reliability
+
+# --- Summary ---
+node "$(node_path "${VERIFY_REPORT_SCRIPT}")" \
+  "$(node_path "${REPORT_PATH}")" \
+  "$(node_path "${METRICS_PATH}")" \
+  "$(node_path "${PREPARED_CONFIG}")" \
+  "$(node_path "${LOG_PATH}")" \
+  "$(node_path "${REQUESTS_JSON}")" | tee "${SUMMARY_PATH}"

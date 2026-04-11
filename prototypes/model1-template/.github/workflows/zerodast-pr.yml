@@ -23,12 +23,6 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -52,8 +46,12 @@ jobs:
       - name: Write summary
         if: always()
         run: |
-          if [ -f zerodast/reports/summary.md ]; then
-            cat zerodast/reports/summary.md >> "$GITHUB_STEP_SUMMARY"
-          else
+          for f in zerodast/reports/summary.md zerodast/reports/operational-reliability.md zerodast/reports/result-state.md zerodast/reports/api-inventory.md; do
+            if [ -f "$f" ]; then
+              cat "$f" >> "$GITHUB_STEP_SUMMARY"
+              echo "" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+          if [ ! -f zerodast/reports/summary.md ]; then
             echo 'ZeroDAST summary not produced.' >> "$GITHUB_STEP_SUMMARY"
           fi

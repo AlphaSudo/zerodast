@@ -2,6 +2,7 @@
   "name": "zerodast-petclinic-example",
   "target": {
     "runtimeMode": "artifact",
+    "startCommand": "java -jar /app/app.jar",
     "buildCommand": "./mvnw -q -DskipTests package",
     "artifactPattern": "target/spring-petclinic-rest-*.jar",
     "workingDirectory": ".",
@@ -16,6 +17,32 @@
       "downCommand": "",
       "networkName": "",
       "appHost": ""
+    }
+  },
+  "auth": {
+    "adapter": "",
+    "loginPath": "",
+    "contentType": "application/json",
+    "emailField": "email",
+    "passwordField": "password",
+    "responseTokenField": "token",
+    "headerName": "Authorization",
+    "headerPrefix": "Bearer ",
+    "user": {
+      "email": "",
+      "password": ""
+    },
+    "admin": {
+      "email": "",
+      "password": ""
+    },
+    "protectedRoute": {
+      "path": "",
+      "expectedStatus": 200
+    },
+    "adminRoute": {
+      "path": "",
+      "expectedStatus": 200
     }
   },
   "scan": {

@@ -1,27 +1,23 @@
 {
-  "name": "zerodast-prototype",
+  "name": "zerodast-medusa",
   "target": {
     "runtimeMode": "compose",
-    "startCommand": "",
-    "buildCommand": "",
-    "artifactPattern": "",
     "workingDirectory": ".",
-    "port": 8080,
+    "port": 9000,
     "basePath": "",
-    "apiSignalPathPrefix": "/api/",
+    "apiSignalPathPrefix": "/admin/",
     "healthPath": "/health",
-    "openApiPath": "/api/docs",
-    "appImage": "node:20-alpine",
+    "openApiPath": "/api/openapi.json",
     "compose": {
       "upCommand": "docker compose up -d",
       "downCommand": "docker compose down -v --remove-orphans",
       "networkName": "",
-      "appHost": ""
+      "appHost": "medusa"
     }
   },
   "auth": {
-    "adapter": "",
-    "loginPath": "",
+    "adapter": "json-token-login",
+    "loginPath": "/auth/user/emailpass",
     "contentType": "application/json",
     "emailField": "email",
     "passwordField": "password",
@@ -29,26 +25,26 @@
     "headerName": "Authorization",
     "headerPrefix": "Bearer ",
     "user": {
-      "email": "",
-      "password": ""
+      "email": "testuser@zerodast.local",
+      "password": "Test123!"
     },
     "admin": {
-      "email": "",
-      "password": ""
+      "email": "admin@zerodast.local",
+      "password": "Admin123!"
     },
     "protectedRoute": {
-      "path": "",
+      "path": "/store/customers/me",
       "expectedStatus": 200
     },
     "adminRoute": {
-      "path": "",
+      "path": "/admin/products",
       "expectedStatus": 200
     }
   },
   "scan": {
     "zapVersion": "2.17.0",
     "helperImage": "node:20-alpine",
-    "spiderPath": "",
+    "spiderPath": "/",
     "mode": {
       "pr": {
         "maxDurationMinutes": 5,
@@ -73,12 +69,17 @@
         "defaultThreshold": "low"
       }
     },
-    "requestSeeds": []
+    "requestSeeds": [
+      "/admin/products",
+      "/admin/orders",
+      "/admin/customers",
+      "/store/products",
+      "/store/collections"
+    ]
   },
   "reporting": {
     "successMode": "route_exercise",
-    "minApiAlertUris": 1,
     "minObservedApiRequestorUrls": 1,
-    "minSeedObservationRatio": 0.8
+    "minSeedObservationRatio": 0.5
   }
 }

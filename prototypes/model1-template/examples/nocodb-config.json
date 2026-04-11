@@ -1,54 +1,50 @@
 {
-  "name": "zerodast-prototype",
+  "name": "zerodast-nocodb",
   "target": {
     "runtimeMode": "compose",
-    "startCommand": "",
-    "buildCommand": "",
-    "artifactPattern": "",
     "workingDirectory": ".",
     "port": 8080,
     "basePath": "",
     "apiSignalPathPrefix": "/api/",
-    "healthPath": "/health",
-    "openApiPath": "/api/docs",
-    "appImage": "node:20-alpine",
+    "healthPath": "/api/v1/health",
+    "openApiPath": "/api/v1/swagger.json",
     "compose": {
       "upCommand": "docker compose up -d",
       "downCommand": "docker compose down -v --remove-orphans",
       "networkName": "",
-      "appHost": ""
+      "appHost": "nocodb"
     }
   },
   "auth": {
-    "adapter": "",
-    "loginPath": "",
+    "adapter": "json-token-login",
+    "loginPath": "/api/v1/auth/user/signin",
     "contentType": "application/json",
     "emailField": "email",
     "passwordField": "password",
     "responseTokenField": "token",
-    "headerName": "Authorization",
-    "headerPrefix": "Bearer ",
+    "headerName": "xc-auth",
+    "headerPrefix": "",
     "user": {
-      "email": "",
-      "password": ""
+      "email": "testuser@zerodast.local",
+      "password": "Test123!"
     },
     "admin": {
-      "email": "",
-      "password": ""
+      "email": "admin@zerodast.local",
+      "password": "Admin123!"
     },
     "protectedRoute": {
-      "path": "",
+      "path": "/api/v1/meta/tables",
       "expectedStatus": 200
     },
     "adminRoute": {
-      "path": "",
+      "path": "/api/v1/users",
       "expectedStatus": 200
     }
   },
   "scan": {
     "zapVersion": "2.17.0",
     "helperImage": "node:20-alpine",
-    "spiderPath": "",
+    "spiderPath": "/dashboard",
     "mode": {
       "pr": {
         "maxDurationMinutes": 5,
@@ -73,12 +69,15 @@
         "defaultThreshold": "low"
       }
     },
-    "requestSeeds": []
+    "requestSeeds": [
+      "/api/v1/meta/tables",
+      "/api/v1/users",
+      "/api/v1/db/meta/projects"
+    ]
   },
   "reporting": {
     "successMode": "route_exercise",
-    "minApiAlertUris": 1,
     "minObservedApiRequestorUrls": 1,
-    "minSeedObservationRatio": 0.8
+    "minSeedObservationRatio": 0.5
   }
 }
