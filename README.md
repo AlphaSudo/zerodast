@@ -141,34 +141,9 @@ Vanilla ZAP can't handle non-standard headers (`xc-auth`), nested token fields (
 
 ZeroDAST uses a **two-lane privilege-isolated CI architecture** that separates untrusted PR code execution from trusted DAST scanning:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    LANE 1: UNTRUSTED PR CI                      │
-│  pull_request → lint → tests → semgrep → gitleaks → build      │
-│  → upload artifacts (image tar, delta endpoints, overlay SQL)   │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │  workflow_run (CI success)
-                            ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    LANE 2: TRUSTED DAST                         │
-│  download artifacts → validate overlay → isolated scan runtime  │
-│  → auth bootstrap → ZAP scan → parse → PR report               │
-│                                                                 │
-│  ┌──────────── Docker --internal Network ──────────┐            │
-│  │  ┌─────┐    ┌─────┐    ┌─────┐                  │            │
-│  │  │ DB  │◄──►│ App │◄──►│ ZAP │                  │            │
-│  │  └─────┘    └─────┘    └─────┘                  │            │
-│  │  • read-only root FS    • cap-drop ALL          │            │
-│  │  • no-new-privileges    • memory/PID limits     │            │
-│  └─────────────────────────────────────────────────┘            │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│              NIGHTLY / MAINLINE DAST                             │
-│  push main or schedule → build → full isolated scan             │
-│  → report artifact → threshold check → issue on breach          │
-└─────────────────────────────────────────────────────────────────┘
-```
+<p align="center">
+  <img src="docs/arch.png" alt="ZeroDAST Architecture — Two-Lane Privilege-Isolated CI Pipeline" width="800">
+</p>
 
 ### Three-Layer Defense Model
 
