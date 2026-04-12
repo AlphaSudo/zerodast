@@ -2,10 +2,11 @@
 
 This document is the **Stage 3** comparison package from [POST_CHECKLIST_PROOF_ROADMAP.md](POST_CHECKLIST_PROOF_ROADMAP.md).
 
-It answers the core claim with structured evidence across three comparison columns:
+It answers the core claim with structured evidence across **four** comparison columns:
 
 | Column | Role In The Comparison | Evidence Source |
 | --- | --- | --- |
+| **No DAST** | The **absence baseline** — what you get if you never run dynamic application security testing in CI | Definition only (no scan job, no findings, no DAST artifacts) |
 | **Vanilla ZAP** | The **floor** — what a small team reaches for today without any framework | Executable baseline scripts + existing T5 evidence |
 | **ZeroDAST** | The **subject** — what the repo provides today | Existing CI-proven benchmark evidence |
 | **Enterprise DAST** | The **ceiling** — what ZeroDAST claims to nearly match for its niche | Publicly available Checkmarx documentation, pricing, and capability data |
@@ -545,6 +546,34 @@ CI proof: [AlphaSudo/directus zerodast-install](https://github.com/AlphaSudo/dir
 | NocoDB | 48k+ | xc-auth token | 242s | 257 | 11M / 15L / 8I (34) | 4/4 |
 | Strapi | 67k+ | Bearer JWT (nested) | 171s | 12 | 8M / 10L / 8I (26) | 4/4 |
 | Directus | 29k+ | Bearer JWT (nested) | 343s | 38 | 13M / 12L / 26I (51) | 11/11 |
+
+### Model 1 fleet: Nightly scan — four-way comparison (NocoDB, Strapi, Directus)
+
+Same GitHub-hosted Linux runners, same ZAP `2.17.0` for Vanilla vs ZeroDAST. **No DAST** means no DAST workflow runs: other CI (unit tests, lint, etc.) may still run; numbers here are **DAST-only**.
+
+| Target | No DAST | Vanilla ZAP nightly (measured) | ZeroDAST Nightly (measured) | Enterprise DAST (est.) |
+| --- | --- | --- | --- | --- |
+| **NocoDB** | DAST job **0s**; findings **0**; API reach **none**; DAST artifacts **none** | **202s** (~3.4 min); 8M/15L/7I (30); **0 API URIs** | **242s** (~4 min); 11M/15L/8I (34); **7 API** + 4 frontend URIs | **15–60 min** typical full scan; platform reports + dashboards |
+| **Strapi** | Same **0** DAST signal | **135s** (~2.3 min); 3M/7L/4I (14); **0 API** | **171s** (~2.9 min); 8M/10L/8I (26); **8 API** + 2 frontend | **15–60 min** |
+| **Directus** | Same **0** DAST signal | **185s** (~3.1 min); 10M/10L/8I (28); **0 API** | **343s** (~5.7 min); 13M/12L/26I (51); **30 API** + 1 frontend | **15–60 min** |
+| **Fleet totals** | **0** DAST time; **0** DAST findings | **~522s** (~8.7 min) ZAP-only; **72** instances; **0** API URIs | **~756s** (~12.6 min) full pipeline; **111** instances; **45** API URIs | Cost + runtime dominated by platform policy |
+
+### Model 1 fleet: PR scan — Vanilla ZAP vs ZeroDAST (shorter budget)
+
+PR jobs use a **tighter** ZAP budget aligned with `config.json` → `scan.mode.pr`: `maxDurationMinutes: 8`, `spiderMinutes: 1`, `passiveWaitMinutes: 2`, `threadPerHost: 10`. **PR Vanilla ZAP** mirrors that (spider **1m**, passive **1m**, active **≤8m**, `threadPerHost: 10`) via `vanilla-zap-baseline-pr.yml`. **PR ZeroDAST** runs `ZERODAST_MODE=pr` via `zerodast-pr.yml`.
+
+Workflows exist on `zerodast-install` for [NocoDB](https://github.com/AlphaSudo/nocodb/tree/zerodast-install), [Strapi](https://github.com/AlphaSudo/strapi/tree/zerodast-install), [Directus](https://github.com/AlphaSudo/directus/tree/zerodast-install). Trigger: `pull_request` to `main` / `develop` / `zerodast-install` (path-filtered) or **`workflow_dispatch`** for a manual measurement run.
+
+| Target | PR Vanilla ZAP | PR ZeroDAST |
+| --- | --- | --- |
+| **Workflow** | `vanilla-zap-baseline-pr.yml` | `zerodast-pr.yml` |
+| **ZAP / scan budget** | Spider 1m, passive 1m, active max 8m, `threadPerHost: 10` | Same engine; PR mode: active cap **8m**, spider **1m**, passive wait **2m**, `threadPerHost: 10` |
+| **Typical wall time** | **Lower than nightly** — less spider + active time; **compose/build** still applies (Strapi build dominates) | **Lower than nightly** — same compose/build as nightly, shorter ZAP phase |
+| **NocoDB** | *Fill from Actions artifact `vanilla-pr-summary.json` after first PR or dispatch* | *Fill from `zerodast-pr-report` / job duration after first PR or dispatch* |
+| **Strapi** | *Same* | *Same* |
+| **Directus** | *Same* | *Same* |
+
+After the first successful runs, replace the last three rows with measured job durations and parsed alert totals from the uploaded artifacts.
 
 ### Vanilla ZAP vs ZeroDAST: Model 1 Fleet Signal Comparison (All Measured)
 
