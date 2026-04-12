@@ -1,3 +1,6 @@
+# Model 1 PR scan aligned with canonical ZeroDAST PR timing and git-diff delta:
+# main repo: .github/workflows/dast-pr.yml + scripts/delta-detect.sh + generate-delta-scan.sh
+# Forks: zerodast/pr-canonical/delta-detect-model1.sh + run-scan.sh (ZERODAST_CANONICAL_PR=1).
 name: ZeroDAST PR
 
 on:
@@ -9,20 +12,43 @@ permissions:
   contents: read
 
 concurrency:
-  group: zerodast-pr-${{ github.event.pull_request.number }}
+  group: zerodast-pr-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   scan:
     runs-on: ubuntu-22.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+
+      - name: Fetch base for PR delta
+        if: github.event_name == 'pull_request'
+        run: git fetch origin "${{ github.base_ref }}" --depth=100
+
+      - name: Fetch main for workflow_dispatch delta
+        if: github.event_name != 'pull_request'
+        run: git fetch origin main --depth=100 || true
+
+      - name: Set BASE_REF
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "BASE_REF=origin/${{ github.base_ref }}" >> "$GITHUB_ENV"
+          else
+            echo "BASE_REF=origin/main" >> "$GITHUB_ENV"
+          fi
+
+      - name: PR route delta (canonical-style)
+        run: |
+          chmod +x zerodast/pr-canonical/delta-detect-model1.sh
+          export HEAD_REF=HEAD
+          zerodast/pr-canonical/delta-detect-model1.sh | tee /tmp/zerodast-pr-delta.txt
+          echo "Delta (first line): $(head -1 /tmp/zerodast-pr-delta.txt)"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -32,6 +58,8 @@ jobs:
       - name: Run ZeroDAST PR scan
         env:
           ZERODAST_MODE: pr
+          ZERODAST_CANONICAL_PR: "1"
+          ZERODAST_PR_DELTA_FILE: /tmp/zerodast-pr-delta.txt
         run: |
           chmod +x zerodast/run-scan.sh
           zerodast/run-scan.sh

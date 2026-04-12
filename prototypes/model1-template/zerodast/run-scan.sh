@@ -16,7 +16,7 @@ HELPER_SCRIPT='fetch(process.argv[1]).then(async r => { if (!r.ok) process.exit(
 
 AUTH_LOGIN_SCRIPT='const body={};body[process.env.EMAIL_FIELD||"email"]=process.env.EMAIL;body[process.env.PASSWORD_FIELD||"password"]=process.env.PASSWORD;const ct=process.env.CONTENT_TYPE||"application/json";const bs=ct.includes("json")?JSON.stringify(body):new URLSearchParams(body).toString();fetch(process.env.LOGIN_URL,{method:"POST",headers:{"Content-Type":ct},body:bs,redirect:"manual"}).then(async r=>{if(process.env.EXTRACT_MODE==="cookie"){const c=r.headers.get("set-cookie");if(!c){console.error(await r.text());process.exit(1);}process.stdout.write(c.split(";")[0]);return;}if(!r.ok){console.error(await r.text());process.exit(1);}const d=await r.json();const fields=(process.env.TOKEN_FIELD||"token").split(".");let t=d;for(const f of fields){t=t&&t[f];}if(!t){console.error(JSON.stringify(d));process.exit(1);}process.stdout.write(String(t));}).catch(e=>{console.error(e.message);process.exit(1);});'
 
-AUTH_VALIDATE_SCRIPT='const h={};if(process.env.HEADER_NAME&&process.env.HEADER_VALUE)h[process.env.HEADER_NAME]=process.env.HEADER_VALUE;fetch(process.env.ROUTE_URL,{headers:h}).then(async r=>{if(String(r.status)!==process.env.EXPECTED_STATUS){console.error(await r.text());process.exit(1);}}).catch(e=>{console.error(e.message);process.exit(1);});'
+AUTH_VALIDATE_SCRIPT='const h={};if(process.env.HEADER_NAME&&process.env.HEADER_VALUE)h[process.env.HEADER_NAME]=process.env.HEADER_VALUE;fetch(process.env.ROUTE_URL,{headers:h}).then(async r=>{const st=String(r.status);const raw=process.env.EXPECTED_STATUS||"200";let ok;if(raw.trim().startsWith("[")){try{ok=JSON.parse(raw).map(String);}catch{ok=raw.split(",").map(s=>s.trim()).filter(Boolean);}}else{ok=raw.split(",").map(s=>s.trim()).filter(Boolean);}if(!ok.includes(st)){console.error("expected status one of "+ok.join(",")+", got "+st);console.error(await r.text());process.exit(1);}}).catch(e=>{console.error(e.message);process.exit(1);});'
 
 if [[ "${DOCKER_CMD}" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
   DOCKER_REQUIRES_WINDOWS_PATHS="true"
@@ -422,6 +422,40 @@ DEFAULT_THRESHOLD="$(node -e "const fs=require('fs');const c=JSON.parse(fs.readF
 ZAP_IMAGE="zaproxy/zap-stable:${ZAP_VERSION}"
 SPEC_MODE="raw"
 
+# --- Canonical PR (main-repo dast-pr style): 30m active, 4 threads, 2m passive; optional git delta scope ---
+PR_SCOPED_INCLUDE_LIST=""
+if [[ "$MODE" == "pr" && "${ZERODAST_CANONICAL_PR:-}" == "1" ]]; then
+  SCAN_MINUTES="30"
+  THREAD_PER_HOST="4"
+  PASSIVE_WAIT_MINUTES="2"
+  pr_delta="${ZERODAST_PR_DELTA_FILE:-}"
+  if [[ -n "$pr_delta" && -f "$pr_delta" ]]; then
+    fl="$(head -1 "$pr_delta" | tr -d '\r\n')"
+    if [[ -n "$fl" && "$fl" != "FULL" ]]; then
+      ENABLE_SPIDER="false"
+      PR_SCOPED_INCLUDE_LIST="${REPORT_DIR}/.pr-scoped-paths.txt"
+      grep -v '^[[:space:]]*$' "$pr_delta" | sort -u > "${PR_SCOPED_INCLUDE_LIST}"
+    fi
+  fi
+fi
+
+write_include_paths() {
+  if [[ -n "${PR_SCOPED_INCLUDE_LIST:-}" && -f "${PR_SCOPED_INCLUDE_LIST}" ]]; then
+    while IFS= read -r ep || [[ -n "${ep}" ]]; do
+      ep="${ep#"${ep%%[![:space:]]*}"}"
+      ep="${ep%"${ep##*[![:space:]]}"}"
+      [[ -z "$ep" || "$ep" == "FULL" ]] && continue
+      local path="$ep"
+      [[ "$path" != /* ]] && path="/${path}"
+      local esc_path
+      esc_path=$(printf '%s' "$path" | sed 's/[.[\*^$()+?{}|]/\\&/g')
+      printf '        - "%s%s.*"\n' "${SCANNER_BASE_URL}" "${esc_path}"
+    done < "${PR_SCOPED_INCLUDE_LIST}"
+  else
+    printf '        - "%s.*"\n' "${SCANNER_BASE_URL}"
+  fi
+}
+
 # --- Write ZAP automation config ---
 write_config() {
   local api_url="$1"
@@ -433,7 +467,9 @@ env:
       urls:
         - "${SCANNER_BASE_URL}"
       includePaths:
-        - "${SCANNER_BASE_URL}.*"
+EOF
+    write_include_paths
+    cat <<EOF
   parameters:
     failOnError: false
     progressToStdout: true

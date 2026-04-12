@@ -4,6 +4,7 @@
 # no ZeroDAST orchestration, no operator artifacts, no trusted/untrusted split.
 set -euo pipefail
 
+ENGINE_BIN="${CONTAINER_ENGINE_BIN:-docker}"
 ZAP_VERSION="${ZAP_VERSION:-2.17.0}"
 ZAP_IMAGE="zaproxy/zap-stable:${ZAP_VERSION}"
 DB_IMAGE="${DB_IMAGE:-postgres:16-alpine}"
@@ -17,21 +18,38 @@ APP_URL="http://${APP_CONTAINER}:8080"
 DATABASE_URL="postgresql://testuser:throwaway_ci_test_pass@${DB_CONTAINER}:5432/testdb"
 JWT_SECRET="zerodast-test-jwt-secret-not-for-production"
 
+engine() {
+  if [[ "$ENGINE_BIN" == *.exe ]]; then
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" "$ENGINE_BIN" "$@"
+  else
+    "$ENGINE_BIN" "$@"
+  fi
+}
+
+host_path() {
+  local path="$1"
+  if [[ "$ENGINE_BIN" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "$path"
+  else
+    printf '%s\n' "$path"
+  fi
+}
+
 mkdir -p "${REPORTS_DIR}"
 chmod 0777 "${REPORTS_DIR}" 2>/dev/null || true
 
 cleanup() {
-  docker rm -f "${ZAP_CONTAINER}" "${APP_CONTAINER}" "${DB_CONTAINER}" >/dev/null 2>&1 || true
-  docker network rm "${NETWORK_NAME}" >/dev/null 2>&1 || true
+  engine rm -f "${ZAP_CONTAINER}" "${APP_CONTAINER}" "${DB_CONTAINER}" >/dev/null 2>&1 || true
+  engine network rm "${NETWORK_NAME}" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 cleanup
 
 SECONDS=0
 
-docker network create "${NETWORK_NAME}" >/dev/null
+engine network create "${NETWORK_NAME}" >/dev/null 2>&1 || true
 
-docker run -d --rm \
+engine run -d --rm \
   --network "${NETWORK_NAME}" \
   --name "${DB_CONTAINER}" \
   -e POSTGRES_DB=testdb \
@@ -40,13 +58,13 @@ docker run -d --rm \
   "${DB_IMAGE}" >/dev/null
 
 for i in $(seq 1 30); do
-  if docker exec "${DB_CONTAINER}" sh -c "PGPASSWORD=throwaway_ci_test_pass psql -h 127.0.0.1 -U testuser -d testdb -c 'select 1' >/dev/null 2>&1"; then
+  if engine exec "${DB_CONTAINER}" sh -c "PGPASSWORD=throwaway_ci_test_pass psql -h 127.0.0.1 -U testuser -d testdb -c 'select 1' >/dev/null 2>&1"; then
     break
   fi
   sleep 1
 done
 
-docker run -d --rm \
+engine run -d --rm \
   --network "${NETWORK_NAME}" \
   --name "${APP_CONTAINER}" \
   -e DATABASE_URL="${DATABASE_URL}" \
@@ -54,17 +72,15 @@ docker run -d --rm \
   "${APP_IMAGE}" >/dev/null
 
 for i in $(seq 1 30); do
-  if docker exec "${APP_CONTAINER}" wget -qO- "http://127.0.0.1:8080/health" >/dev/null 2>&1; then
+  if engine exec "${APP_CONTAINER}" wget -qO- "http://127.0.0.1:8080/health" >/dev/null 2>&1; then
     break
   fi
   sleep 1
 done
 
 # --- Auth bootstrap: manual curl-equivalent via helper container ---
-# A vanilla user would register + login to get a bearer token.
-# This is the simplest reasonable path without any adapter framework.
 REGISTER_BODY='{"email":"alice@test.local","password":"Test123!"}'
-docker run --rm --network "${NETWORK_NAME}" node:20-alpine node -e "
+engine run --rm --network "${NETWORK_NAME}" node:20-alpine node -e "
   fetch('${APP_URL}/api/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -73,7 +89,7 @@ docker run --rm --network "${NETWORK_NAME}" node:20-alpine node -e "
 " >/dev/null 2>&1 || true
 
 LOGIN_BODY='{"email":"alice@test.local","password":"Test123!"}'
-AUTH_TOKEN="$(docker run --rm --network "${NETWORK_NAME}" node:20-alpine node -e "
+AUTH_TOKEN="$(engine run --rm --network "${NETWORK_NAME}" node:20-alpine node -e "
   fetch('${APP_URL}/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -150,12 +166,14 @@ YAML
 
 # --- Run ZAP ---
 LOG_PATH="${REPORTS_DIR}/zap-run.log"
+HOST_CONFIG="$(host_path "${CONFIG_PATH}")"
+HOST_REPORTS="$(host_path "${REPORTS_DIR}")"
 set +e
-docker run --rm \
+engine run --rm \
   --network "${NETWORK_NAME}" \
   --name "${ZAP_CONTAINER}" \
-  -v "${CONFIG_PATH}:/zap/wrk/config.yaml:ro" \
-  -v "${REPORTS_DIR}:/zap/wrk:rw" \
+  -v "${HOST_CONFIG}:/zap/wrk/config.yaml:ro" \
+  -v "${HOST_REPORTS}:/zap/wrk:rw" \
   "${ZAP_IMAGE}" \
   zap.sh -cmd -autorun /zap/wrk/config.yaml \
   2>&1 | tee "${LOG_PATH}"

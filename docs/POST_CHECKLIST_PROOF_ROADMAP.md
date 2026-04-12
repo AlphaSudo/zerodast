@@ -155,6 +155,13 @@ Goal:
 - explicit "where ZeroDAST is weaker" notes
 - explicit "where ZeroDAST is stronger" notes
 
+### Current note
+The comparison framework and vanilla baseline scripts now exist:
+- [NEAR_LOSSLESS_COMPARISON.md](NEAR_LOSSLESS_COMPARISON.md)
+- [Vanilla baseline runners](../benchmarks/vanilla-baseline/)
+
+The comparison tables are structured across all three columns (vanilla ZAP, ZeroDAST, enterprise DAST) with the seven required axes. Some measurement cells remain pending execution of the vanilla baseline scripts.
+
 ### Exit
 
 - the "near-lossless for the target niche" claim is backed by benchmark evidence

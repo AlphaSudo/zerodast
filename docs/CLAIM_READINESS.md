@@ -8,11 +8,11 @@ Its job is simple:
 - identify the remaining blockers to the strongest intended positioning
 
 Current assessment date:
-- `2026-04-11` (updated after Model 1 CI proof on 3 external repos)
+- `2026-04-12` (updated after Model 1 CI proof on 4 external repos including Medusa)
 
 Current repo state reviewed:
 - branch: `main`
-- Model 1 CI proof: `zerodast-install` branches on AlphaSudo/nocodb, AlphaSudo/strapi, AlphaSudo/directus
+- Model 1 CI proof: `zerodast-install` branches on AlphaSudo/nocodb, AlphaSudo/strapi, AlphaSudo/directus, AlphaSudo/medusa (Medusa: ZeroDAST Nightly + frozen bundle [`tmp-ci-proof-medusa/`](../tmp-ci-proof-medusa/))
 
 ## Intended Positioning Under Review
 
@@ -45,8 +45,8 @@ The two remaining blockers from the previous assessment are now closed:
 
 1. **Near-lossless comparison proof is closed**
 - vanilla baselines executed on 3 targets (demo app, FastAPI, Petclinic)
-- Model 1 CI fleet proof on 3 high-profile open-source repos (NocoDB 48k+, Strapi 67k+, Directus 29k+ stars)
-- all three Model 1 targets passed in GitHub Actions with real findings, validated auth, and within the nightly timing budget
+- Model 1 CI fleet proof on 4 open-source forks (NocoDB 48k+, Strapi 67k+, Directus 29k+, Medusa upstream monorepo / starter-based scan)
+- all four Model 1 nightly targets passed in GitHub Actions with real findings, validated auth (where configured), and within the nightly timing budget; Medusa artifact + log frozen under `tmp-ci-proof-medusa/`
 - see [NEAR_LOSSLESS_COMPARISON.md](NEAR_LOSSLESS_COMPARISON.md) for the full comparison package
 
 2. **Adoption/operator proof is closed**
@@ -164,20 +164,19 @@ This shorter version is also defensible:
 ## Former Blockers (Now Closed)
 
 1. ~~Finish the near-lossless comparison package across the chosen hard targets~~
-   - **CLOSED**: vanilla baselines executed + Model 1 CI fleet proof on NocoDB, Strapi, Directus
+   - **CLOSED**: vanilla baselines executed + Model 1 CI fleet proof on NocoDB, Strapi, Directus, Medusa (nightly + `tmp-ci-proof-medusa/`)
    - documented in [NEAR_LOSSLESS_COMPARISON.md](NEAR_LOSSLESS_COMPARISON.md)
 
 2. ~~Strengthen adoption/operator proof for Model 1~~
-   - **CLOSED**: 3 independent repos with Model 1 installed and CI-green
+   - **CLOSED**: 4 independent forks with Model 1 installed and CI-green (Medusa: ZeroDAST Nightly)
 
 ## Remaining Improvement Opportunities (Not Blockers)
 
 These would strengthen the claim further but are not required for the current positioning:
 
-1. **Medusa as 4th target**: Medusa (e-commerce engine) is being fixed as an additional CI proof target
-2. **Repeated baselines**: median timing with confidence intervals across multiple runs
-3. **PR-profile proof on Model 1 targets**: current proof is nightly-only; PR scans would add evidence
-4. **Additional auth styles**: form-cookie or session-based auth on a Model 1 target
+1. **Repeated baselines**: median timing with confidence intervals across multiple runs
+2. **PR-profile proof on Model 1 targets**: add **`zerodast-pr.yml`** on the Medusa fork if you want ZeroDAST PR parity (Vanilla ZAP Baseline PR is already present)
+3. **Additional auth styles**: form-cookie or session-based auth on a Model 1 target
 
 ## Practical Recommendation
 
@@ -200,12 +199,12 @@ This means:
 ZeroDAST is:
 - **implementation-mature and proof-complete for the defined niche**
 - **ready for the strongest final claim within the niche boundary**
-- **backed by CI-proven evidence on 6 external targets across 3 language stacks**
+- **backed by CI-proven evidence on 7 external targets across 3 language stacks** (includes 4 Model 1 forks)
 
 ### Short version
 
 - Ready for Phase 6: **yes**
 - Ready for strongest final positioning claim: **yes**
-- CI fleet proof: **3/3 green** (NocoDB, Strapi, Directus)
+- CI fleet proof: **4/4 green** (NocoDB, Strapi, Directus, Medusa nightly)
 - Near-lossless comparison: **closed**
 - Adoption proof: **closed**

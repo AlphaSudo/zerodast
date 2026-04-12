@@ -8,6 +8,7 @@ set -euo pipefail
 : "${TARGET_DIR:?TARGET_DIR is required (path to spring-petclinic-rest clone)}"
 : "${APP_JAR:?APP_JAR is required (path to the built petclinic jar)}"
 
+ENGINE_BIN="${CONTAINER_ENGINE_BIN:-docker}"
 ZAP_VERSION="${ZAP_VERSION:-2.17.0}"
 ZAP_IMAGE="zaproxy/zap-stable:${ZAP_VERSION}"
 APP_IMAGE="${APP_IMAGE:-eclipse-temurin:17-jre-jammy}"
@@ -20,29 +21,46 @@ BASE_URL="http://${APP_CONTAINER}:9966/petclinic"
 HEALTH_URL="${BASE_URL}/actuator/health"
 API_DOCS_URL="${BASE_URL}/v3/api-docs"
 
+engine() {
+  if [[ "$ENGINE_BIN" == *.exe ]]; then
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" "$ENGINE_BIN" "$@"
+  else
+    "$ENGINE_BIN" "$@"
+  fi
+}
+
+host_path() {
+  local path="$1"
+  if [[ "$ENGINE_BIN" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "$path"
+  else
+    printf '%s\n' "$path"
+  fi
+}
+
 mkdir -p "${REPORTS_DIR}"
 chmod 0777 "${REPORTS_DIR}" 2>/dev/null || true
 
 cleanup() {
-  docker rm -f "${ZAP_CONTAINER}" "${APP_CONTAINER}" >/dev/null 2>&1 || true
-  docker network rm "${NETWORK_NAME}" >/dev/null 2>&1 || true
+  engine rm -f "${ZAP_CONTAINER}" "${APP_CONTAINER}" >/dev/null 2>&1 || true
+  engine network rm "${NETWORK_NAME}" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 cleanup
 
 SECONDS=0
 
-docker network create "${NETWORK_NAME}" >/dev/null
+engine network create "${NETWORK_NAME}" >/dev/null 2>&1 || true
 
-docker run -d --rm \
+engine run -d --rm \
   --network "${NETWORK_NAME}" \
   --name "${APP_CONTAINER}" \
-  -v "${APP_JAR}:/app/petclinic.jar:ro" \
+  -v "$(host_path "${APP_JAR}"):/app/petclinic.jar:ro" \
   "${APP_IMAGE}" \
   java -jar /app/petclinic.jar >/dev/null
 
 for i in $(seq 1 60); do
-  if docker run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e \
+  if engine run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e \
     "fetch(process.argv[1]).then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))" \
     "${HEALTH_URL}" >/dev/null 2>&1; then
     break
@@ -52,7 +70,7 @@ done
 
 # --- Fetch and store the OpenAPI spec ---
 RAW_SPEC="${REPORTS_DIR}/petclinic-openapi.json"
-docker run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e \
+engine run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e \
   "fetch(process.argv[1]).then(async r=>{if(!r.ok)process.exit(1);process.stdout.write(await r.text())}).catch(()=>process.exit(1))" \
   "${API_DOCS_URL}" > "${RAW_SPEC}"
 
@@ -109,13 +127,16 @@ YAML
 
 # --- Run ZAP ---
 LOG_PATH="${REPORTS_DIR}/zap-run.log"
+HOST_CONFIG="$(host_path "${CONFIG_PATH}")"
+HOST_SPEC="$(host_path "${RAW_SPEC}")"
+HOST_REPORTS="$(host_path "${REPORTS_DIR}")"
 set +e
-docker run --rm \
+engine run --rm \
   --network "${NETWORK_NAME}" \
   --name "${ZAP_CONTAINER}" \
-  -v "${CONFIG_PATH}:/zap/wrk/config.yaml:ro" \
-  -v "${RAW_SPEC}:/zap/wrk/petclinic-openapi.json:ro" \
-  -v "${REPORTS_DIR}:/zap/wrk:rw" \
+  -v "${HOST_CONFIG}:/zap/wrk/config.yaml:ro" \
+  -v "${HOST_SPEC}:/zap/wrk/petclinic-openapi.json:ro" \
+  -v "${HOST_REPORTS}:/zap/wrk:rw" \
   "${ZAP_IMAGE}" \
   zap.sh -cmd -autorun /zap/wrk/config.yaml \
   2>&1 | tee "${LOG_PATH}"

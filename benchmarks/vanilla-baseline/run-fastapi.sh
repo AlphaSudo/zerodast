@@ -6,6 +6,7 @@ set -euo pipefail
 
 : "${TARGET_DIR:?TARGET_DIR is required (path to fullstack-fastapi-template clone)}"
 
+ENGINE_BIN="${CONTAINER_ENGINE_BIN:-docker}"
 ZAP_VERSION="${ZAP_VERSION:-2.17.0}"
 ZAP_IMAGE="zaproxy/zap-stable:${ZAP_VERSION}"
 HELPER_IMAGE="${HELPER_IMAGE:-node:20-alpine}"
@@ -18,12 +19,29 @@ LOGIN_URL="${API_BASE}/login/access-token"
 HEALTH_URL="${API_BASE}/utils/health-check/"
 DOCS_URL="${BACKEND_URL}/docs"
 
+engine() {
+  if [[ "$ENGINE_BIN" == *.exe ]]; then
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL="*" "$ENGINE_BIN" "$@"
+  else
+    "$ENGINE_BIN" "$@"
+  fi
+}
+
+host_path() {
+  local path="$1"
+  if [[ "$ENGINE_BIN" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "$path"
+  else
+    printf '%s\n' "$path"
+  fi
+}
+
 mkdir -p "${REPORTS_DIR}"
 chmod 0777 "${REPORTS_DIR}" 2>/dev/null || true
 
 cleanup() {
-  (cd "${TARGET_DIR}" && COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME}" docker compose down -v --remove-orphans >/dev/null 2>&1 || true)
-  docker rm -f vanilla-fastapi-zap >/dev/null 2>&1 || true
+  (cd "${TARGET_DIR}" && COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME}" ${ENGINE_BIN} compose down -v --remove-orphans >/dev/null 2>&1 || true)
+  engine rm -f vanilla-fastapi-zap >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 cleanup
@@ -32,10 +50,10 @@ SECONDS=0
 
 mkdir -p "${TARGET_DIR}/backend/htmlcov"
 
-(cd "${TARGET_DIR}" && COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME}" docker compose up -d db prestart backend)
+(cd "${TARGET_DIR}" && COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME}" ${ENGINE_BIN} compose up -d db prestart backend)
 
 for i in $(seq 1 80); do
-  if docker run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e \
+  if engine run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e \
     "fetch(process.argv[1]).then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))" \
     "${HEALTH_URL}" >/dev/null 2>&1; then
     break
@@ -44,7 +62,7 @@ for i in $(seq 1 80); do
 done
 
 # --- Auth bootstrap: manual login to get a bearer token ---
-AUTH_TOKEN="$(docker run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e "
+AUTH_TOKEN="$(engine run --rm --network "${NETWORK_NAME}" "${HELPER_IMAGE}" node -e "
   const body = new URLSearchParams({ username: 'admin@example.com', password: 'changethis' });
   fetch('${LOGIN_URL}', {
     method: 'POST',
@@ -122,12 +140,14 @@ YAML
 
 # --- Run ZAP ---
 LOG_PATH="${REPORTS_DIR}/zap-run.log"
+HOST_CONFIG="$(host_path "${CONFIG_PATH}")"
+HOST_REPORTS="$(host_path "${REPORTS_DIR}")"
 set +e
-docker run --rm \
+engine run --rm \
   --network "${NETWORK_NAME}" \
   --name vanilla-fastapi-zap \
-  -v "${CONFIG_PATH}:/zap/wrk/config.yaml:ro" \
-  -v "${REPORTS_DIR}:/zap/wrk:rw" \
+  -v "${HOST_CONFIG}:/zap/wrk/config.yaml:ro" \
+  -v "${HOST_REPORTS}:/zap/wrk:rw" \
   "${ZAP_IMAGE}" \
   zap.sh -cmd -autorun /zap/wrk/config.yaml \
   2>&1 | tee "${LOG_PATH}"

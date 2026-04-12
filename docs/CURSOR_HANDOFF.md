@@ -242,20 +242,24 @@ Benchmark docs:
 
 ## Model 1 CI Fleet Proof (Latest Major Milestone)
 
-Three high-profile open-source repos with ZeroDAST Model 1 installed and running autonomously in GitHub Actions:
+Four open-source forks with ZeroDAST Model 1 installed and running autonomously in GitHub Actions:
 
 | Target | Stars | Auth Style | Runtime | Findings | Seeds Hit | CI Status |
 | --- | ---: | --- | --- | --- | --- | --- |
 | NocoDB | 48k+ | xc-auth token | 242s | 4M / 3L / 3I | 4/4 | **PASS** |
 | Strapi | 67k+ | Bearer JWT (nested data.token) | 171s | 2M / 3L / 3I | 4/4 | **PASS** |
 | Directus | 29k+ | Bearer JWT (nested data.access_token) | 343s | 4M / 4L / 6I | 11/11 | **PASS** |
+| Medusa | 27k+ (upstream) | Bearer JWT (`/auth/user/emailpass`) | 108s `coldRun` (~6m+ GHA job) | 4M / 2L / 0I | 5/5 | **PASS** |
 
 Repos:
 - [AlphaSudo/nocodb zerodast-install](https://github.com/AlphaSudo/nocodb/tree/zerodast-install)
 - [AlphaSudo/strapi zerodast-install](https://github.com/AlphaSudo/strapi/tree/zerodast-install)
 - [AlphaSudo/directus zerodast-install](https://github.com/AlphaSudo/directus/tree/zerodast-install)
+- [AlphaSudo/medusa zerodast-install](https://github.com/AlphaSudo/medusa/tree/zerodast-install)
 
-This closes the near-lossless comparison blocker and the adoption/operator proof blocker.
+Frozen Medusa bundle + Actions log: [`tmp-ci-proof-medusa/`](../tmp-ci-proof-medusa/) — [run 24307557281](https://github.com/AlphaSudo/medusa/actions/runs/24307557281).
+
+This closes the near-lossless comparison blocker and the adoption/operator proof blocker (fourth target added).
 
 ## What Has Been Proven Recently
 
@@ -317,23 +321,19 @@ Django session auth profile:
 
 Most important open items, in practical order:
 
-1. **Medusa 4th target (in progress)**
-- Medusa (e-commerce engine) is being fixed as a 4th Model 1 CI proof target
-- not blocking — 3/3 main targets are green
-
-2. **Phase 5 repo-fleet tracking**
+1. **Phase 5 repo-fleet tracking**
 - there is still no lightweight multi-target registry/overview for onboarded repos
 - the Model 1 CI fleet proof makes this more natural now
 
-3. **PR-profile proof on Model 1 targets**
+2. **PR-profile proof on Model 1 targets**
 - current proof is nightly-only
 - PR scans would strengthen the timing claim further
 
-4. **Phase 2 external rerun debt**
+3. **Phase 2 external rerun debt**
 - external reruns with the newer scan-quality model
 - signal uplift vs timing comparison
 
-5. **UI-side proof debt**
+4. **UI-side proof debt**
 - PR comment rendering with `### Policy Summary`
 - nightly issue dedupe/update behavior
 
