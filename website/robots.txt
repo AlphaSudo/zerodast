@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://alphasudo.github.io/zerodast/sitemap.xml

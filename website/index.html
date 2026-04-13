@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ZeroDAST — Free open-source DAST for GitHub Actions &amp; REST APIs</title>
+    <meta
+      name="description"
+      content="ZeroDAST runs enterprise-style DAST in CI: OWASP ZAP, authenticated REST scanning, PR deltas, baselines, and artifacts—free, Apache 2.0, no vendor lock-in."
+    />
+    <link rel="canonical" href="https://alphasudo.github.io/zerodast/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://alphasudo.github.io/zerodast/" />
+    <meta
+      property="og:title"
+      content="ZeroDAST — Free open-source DAST for GitHub Actions"
+    />
+    <meta
+      property="og:description"
+      content="CI-first DAST for OpenAPI-backed REST APIs. Auth adapters, isolated pipelines, PR comments, nightly rollups—proven on major OSS targets."
+    />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="ZeroDAST — Free open-source DAST for GitHub Actions" />
+    <meta
+      name="twitter:description"
+      content="Run OWASP ZAP in hardened GitHub Actions with real API coverage—not zero-endpoint vanilla scans."
+    />
+
+    <meta name="theme-color" content="#0d1117" />
+    <link rel="icon" href="https://github.com/AlphaSudo.png?size=64" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareSourceCode",
+        "name": "ZeroDAST",
+        "description": "Open-source CI DAST orchestration for REST APIs using OWASP ZAP, with auth adapters and GitHub Actions integration.",
+        "license": "https://www.apache.org/licenses/LICENSE-2.0",
+        "codeRepository": "https://github.com/AlphaSudo/zerodast",
+        "programmingLanguage": ["JavaScript", "Shell", "Python"],
+        "runtimePlatform": "GitHub Actions",
+        "url": "https://alphasudo.github.io/zerodast/"
+      }
+    </script>
+
+    <style>
+      :root {
+        --bg: #0d1117;
+        --surface: #161b22;
+        --border: #30363d;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --accent: #58a6ff;
+        --accent-dim: #388bfd66;
+        --maxw: 40rem;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        font-size: 1.05rem;
+      }
+      .wrap {
+        max-width: calc(var(--maxw) + 3rem);
+        margin: 0 auto;
+        padding: 2.5rem 1.5rem 4rem;
+      }
+      header {
+        margin-bottom: 2.5rem;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--accent);
+        border: 1px solid var(--accent-dim);
+        padding: 0.2rem 0.55rem;
+        border-radius: 999px;
+        margin-bottom: 1rem;
+      }
+      h1 {
+        font-size: clamp(1.85rem, 5vw, 2.35rem);
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
+        margin: 0 0 0.75rem;
+      }
+      .lede {
+        color: var(--muted);
+        font-size: 1.1rem;
+        max-width: var(--maxw);
+        margin: 0 0 1.75rem;
+      }
+      .cta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 2.75rem;
+      }
+      .cta a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.65rem 1.15rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+        border: 1px solid var(--border);
+        transition: background 0.15s ease, border-color 0.15s ease;
+      }
+      .cta a.primary {
+        background: var(--accent);
+        color: #0d1117;
+        border-color: var(--accent);
+      }
+      .cta a.primary:hover {
+        filter: brightness(1.08);
+      }
+      .cta a.secondary {
+        background: var(--surface);
+        color: var(--text);
+      }
+      .cta a.secondary:hover {
+        border-color: var(--muted);
+      }
+      section {
+        margin-bottom: 2.25rem;
+        padding: 1.35rem 1.25rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        max-width: var(--maxw);
+      }
+      section h2 {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin: 0 0 0.85rem;
+      }
+      ul {
+        margin: 0;
+        padding-left: 1.2rem;
+      }
+      li {
+        margin-bottom: 0.45rem;
+      }
+      li:last-child {
+        margin-bottom: 0;
+      }
+      footer {
+        margin-top: 2.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.85rem;
+        color: var(--muted);
+        max-width: var(--maxw);
+      }
+      footer a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <span class="badge">Open source · Apache 2.0</span>
+        <h1>ZeroDAST</h1>
+        <p class="lede">
+          Enterprise-style <strong>dynamic application security testing (DAST)</strong> in GitHub Actions—built on
+          <a href="https://www.zaproxy.org/" style="color: var(--accent)">OWASP ZAP</a>—with authenticated REST
+          coverage, PR deltas, baselines, and operator-ready artifacts. <strong>$0</strong>, no vendor lock-in.
+        </p>
+        <div class="cta">
+          <a class="primary" href="https://github.com/AlphaSudo/zerodast">View on GitHub</a>
+          <a class="secondary" href="https://github.com/AlphaSudo/zerodast/blob/main/docs/QUICK_START.md">Quick start</a>
+          <a class="secondary" href="https://github.com/AlphaSudo/zerodast/blob/main/README.md">Full README</a>
+        </div>
+      </header>
+
+      <section aria-labelledby="h-what">
+        <h2 id="h-what">What you get</h2>
+        <ul>
+          <li>CI DAST tuned for <strong>OpenAPI-backed REST APIs</strong> and real auth (adapters, not one-off scripts).</li>
+          <li><strong>PR scans</strong> with delta scope and bot comments; <strong>nightly</strong> full scans with rollup triage.</li>
+          <li>Hardened, privilege-isolated pipeline: artifacts, inventories, remediation hints—built for maintainers.</li>
+        </ul>
+      </section>
+
+      <section aria-labelledby="h-why">
+        <h2 id="h-why">Why not vanilla ZAP alone?</h2>
+        <p style="margin: 0; color: var(--muted)">
+          On many real APIs, unauthenticated or misconfigured scans reach <strong>zero useful endpoints</strong>. ZeroDAST
+          focuses on <strong>token bootstrap + headers + roles</strong> so ZAP actually exercises your API surface in CI.
+        </p>
+      </section>
+
+      <section aria-labelledby="h-seo">
+        <h2 id="h-seo">For site owners &amp; SEO</h2>
+        <p style="margin: 0; color: var(--muted); font-size: 0.95rem">
+          This domain is the <strong>canonical</strong> landing page for the project. Submit
+          <a href="https://alphasudo.github.io/zerodast/sitemap.xml">the sitemap</a> in
+          <a href="https://search.google.com/search-console">Google Search Console</a> (property:
+          <code style="color: var(--text)">https://alphasudo.github.io/zerodast/</code> or URL-prefix). The repository
+          remains the source of truth for code and deep docs.
+        </p>
+      </section>
+
+      <footer>
+        <p style="margin: 0 0 0.5rem">
+          © ZeroDAST contributors ·
+          <a href="https://github.com/AlphaSudo/zerodast/blob/main/LICENSE">Apache License 2.0</a>
+        </p>
+        <p style="margin: 0">
+          <a href="https://alphasudo.github.io/zerodast/sitemap.xml">sitemap.xml</a>
+          ·
+          <a href="https://alphasudo.github.io/zerodast/robots.txt">robots.txt</a>
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>

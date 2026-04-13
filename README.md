@@ -380,6 +380,12 @@ We believe in honest claims. Here's what is **not** currently supported:
 
 ## 📚 Documentation
 
+### Project site (canonical landing & SEO)
+
+| Resource | Description |
+|---|---|
+| [alphasudo.github.io/zerodast](https://alphasudo.github.io/zerodast/) | Single-page site: meta tags, sitemap, and Search Console–friendly canonical URL |
+
 ### Core
 
 | Document | Description |
