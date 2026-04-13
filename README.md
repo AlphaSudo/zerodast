@@ -432,7 +432,9 @@ To report a security issue in ZeroDAST itself, see [SECURITY.md](SECURITY.md).
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING_SECURITY.md](docs/CONTRIBUTING_SECURITY.md) for security-sensitive contribution guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution guide (prerequisites, running tests, overlay validation, and PR checklist).
+
+For security-sensitive changes, also read [CONTRIBUTING_SECURITY.md](docs/CONTRIBUTING_SECURITY.md).
 
 ---
 
