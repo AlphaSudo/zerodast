@@ -1,10 +1,9 @@
 const fs = require("fs");
 const path = require("path");
-
-const args = process.argv.slice(2);
+const { parseArgs } = require("node:util");
 
 function printHelp() {
-  console.log(`Usage: node scripts/parse-zap-report.js [report-path]
+  console.log(`Usage: node scripts/parse-zap-report.js [options] [report-path]
 
 Parse a ZAP JSON report, print a markdown summary, and exit non-zero when findings meet the configured failure threshold.
 
@@ -21,16 +20,40 @@ Environment:
 
 Exit codes:
   0                           Success / no findings at or above threshold
-  1                           Missing path, invalid path, invalid JSON, or findings at/above threshold
+  1                           Invalid CLI, missing path, invalid path, invalid JSON, or findings at/above threshold
 `);
 }
 
-if (args.includes("--help") || args.includes("-h")) {
+let parsed;
+try {
+  parsed = parseArgs({
+    args: process.argv.slice(2),
+    allowPositionals: true,
+    strict: true,
+    options: {
+      help: { type: "boolean", short: "h" },
+    },
+  });
+} catch (err) {
+  console.error(err.message || String(err));
+  console.error("Tip: run with --help for usage.");
+  process.exit(1);
+}
+
+const { values, positionals } = parsed;
+
+if (values.help) {
   printHelp();
   process.exit(0);
 }
 
-const reportPath = args[0] || "reports/zap-report.json";
+if (positionals.length > 1) {
+  console.error("Error: Too many arguments. Expected at most one report-path.");
+  console.error("Tip: run with --help for usage.");
+  process.exit(1);
+}
+
+const reportPath = positionals[0] || "reports/zap-report.json";
 const failLevel = (process.env.ZAP_FAIL_LEVEL || "High").toLowerCase();
 const levelOrder = ["critical", "high", "medium", "low", "informational"];
 const counts = {
