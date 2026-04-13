@@ -7,7 +7,8 @@
   "nightlyIssue": {
     "enabled": true,
     "mode": "threshold_or_new_findings",
-    "titlePrefix": "ZeroDAST nightly triage",
-    "labels": ["security", "dast"]
+    "rollupLabel": "dast-nightly-rollup",
+    "rollupTitle": "ZeroDAST nightly DAST rollup",
+    "labels": ["security", "dast", "dast-nightly-rollup"]
   }
 }

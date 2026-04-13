@@ -138,10 +138,18 @@ jobs:
               console.log(`Skipping nightly issue creation due to policy mode=${mode}`);
               return;
             }
-            const titlePrefix = issuePolicy.titlePrefix || 'ZeroDAST nightly triage';
-            const title = `${titlePrefix} (${context.sha.slice(0, 7)})`;
+            const rollupLabel = issuePolicy.rollupLabel || 'dast-nightly-rollup';
+            const rollupTitle =
+              issuePolicy.rollupTitle ||
+              issuePolicy.titlePrefix ||
+              'ZeroDAST nightly DAST rollup';
+            const issueLabels = Array.isArray(issuePolicy.labels)
+              ? issuePolicy.labels
+              : ['security', 'dast', rollupLabel];
             const body = [
               'Nightly DAST produced an actionable result according to report policy.',
+              '',
+              `**Commit:** \`${context.sha}\``,
               '',
               '### Policy Summary',
               '',
@@ -154,30 +162,64 @@ jobs:
               summary,
               '',
               `Workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
+              '_This issue is the single rollup for nightly DAST; CI updates it instead of opening a new issue each run._',
             ].join('\n');
-            const labelFilter = Array.isArray(issuePolicy.labels) ? issuePolicy.labels.join(',') : 'security,dast';
-            const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: labelFilter,
-              per_page: 100,
-            });
-            const existing = issues.find((issue) => issue.title.startsWith(titlePrefix));
+            async function listOpenRollupIssues() {
+              const out = [];
+              for (let page = 1; page <= 20; page += 1) {
+                const { data } = await github.rest.issues.listForRepo({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open',
+                  labels: rollupLabel,
+                  per_page: 100,
+                  page,
+                });
+                out.push(...data);
+                if (data.length < 100) break;
+              }
+              return out;
+            }
+            const rollupIssues = await listOpenRollupIssues();
+            rollupIssues.sort((a, b) => a.number - b.number);
+            const existing = rollupIssues[0];
             if (existing) {
               await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: existing.number,
-                title,
+                title: rollupTitle,
                 body,
+                state: 'open',
               });
+              if (rollupIssues.length > 1) {
+                const dupes = rollupIssues.slice(1);
+                for (const dupe of dupes) {
+                  await github.rest.issues.createComment({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: dupe.number,
+                    body:
+                      'Closed automatically: duplicate nightly rollup. Canonical rollup: #' +
+                      existing.number +
+                      '.',
+                  });
+                  await github.rest.issues.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: dupe.number,
+                    state: 'closed',
+                    state_reason: 'not_planned',
+                  });
+                }
+              }
               return;
             }
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title,
+              title: rollupTitle,
               body,
-              labels: Array.isArray(issuePolicy.labels) ? issuePolicy.labels : ['security', 'dast'],
+              labels: issueLabels,
             });
