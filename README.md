@@ -4,11 +4,11 @@
     <strong>Enterprise-grade CI DAST for open-source repositories. Zero cost. Zero vendor lock-in.</strong>
   </p>
   <p align="center">
-    <a href="https://github.com/AlphaSudo/zerodast/actions"><img src="https://img.shields.io/github/actions/workflow/status/AlphaSudo/zerodast/dast-nightly.yml?branch=main&label=Nightly%20DAST&style=flat-square" alt="Nightly DAST"></a>
-    <a href="https://github.com/AlphaSudo/zerodast/actions"><img src="https://img.shields.io/github/actions/workflow/status/AlphaSudo/zerodast/ci.yml?branch=main&label=CI&style=flat-square" alt="CI"></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square" alt="License"></a>
-    <img src="https://img.shields.io/badge/release-alpha-orange?style=flat-square" alt="Alpha">
-    <img src="https://img.shields.io/badge/cost-%240-brightgreen?style=flat-square" alt="Cost: $0">
+    <a href="https://github.com/AlphaSudo/zerodast/actions"><img src="https://img.shields.io/github/actions/workflow/status/AlphaSudo/zerodast/dast-nightly.yml?branch=main&label=Nightly%20DAST&style=flat-square" alt="Nightly DAST workflow status"></a>
+    <a href="https://github.com/AlphaSudo/zerodast/actions"><img src="https://img.shields.io/github/actions/workflow/status/AlphaSudo/zerodast/ci.yml?branch=main&label=CI&style=flat-square" alt="CI build status for main branch"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square" alt="License: Apache 2.0"></a>
+    <img src="https://img.shields.io/badge/release-alpha-orange?style=flat-square" alt="Release status: Alpha">
+    <img src="https://img.shields.io/badge/cost-%240-brightgreen?style=flat-square" alt="Cost: $0 — no licensing fees">
   </p>
 </p>
 
