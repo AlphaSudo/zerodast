@@ -1,7 +1,36 @@
 const fs = require("fs");
 const path = require("path");
 
-const reportPath = process.argv[2] || "reports/zap-report.json";
+const args = process.argv.slice(2);
+
+function printHelp() {
+  console.log(`Usage: node scripts/parse-zap-report.js [report-path]
+
+Parse a ZAP JSON report, print a markdown summary, and exit non-zero when findings meet the configured failure threshold.
+
+Arguments:
+  [report-path]               Path to the ZAP JSON report file
+                              Default: reports/zap-report.json
+
+Options:
+  -h, --help                  Show this help message
+
+Environment:
+  ZAP_FAIL_LEVEL              Failure threshold: informational, low, medium, high, critical
+                              Default: High
+
+Exit codes:
+  0                           Success / no findings at or above threshold
+  1                           Missing path, invalid path, invalid JSON, or findings at/above threshold
+`);
+}
+
+if (args.includes("--help") || args.includes("-h")) {
+  printHelp();
+  process.exit(0);
+}
+
+const reportPath = args[0] || "reports/zap-report.json";
 const failLevel = (process.env.ZAP_FAIL_LEVEL || "High").toLowerCase();
 const levelOrder = ["critical", "high", "medium", "low", "informational"];
 const counts = {
@@ -122,13 +151,36 @@ function parseRequestorUrls(logText) {
   }
   return urls;
 }
-
 if (!fs.existsSync(reportPath)) {
-  console.error(`ZAP report not found: ${reportPath}`);
+  console.error(`Error: ZAP report not found: ${reportPath}`);
+  console.error("Tip: pass a valid report path or run with --help for usage.");
   process.exit(1);
 }
 
-const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+let stat;
+try {
+  stat = fs.statSync(reportPath);
+} catch (error) {
+  console.error(`Error: Unable to access report path: ${reportPath}`);
+  console.error(error.message);
+  process.exit(1);
+}
+
+if (!stat.isFile()) {
+  console.error(`Error: Report path is not a file: ${reportPath}`);
+  console.error("Tip: pass a JSON report file path or run with --help for usage.");
+  process.exit(1);
+}
+
+let report;
+try {
+  report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+} catch (error) {
+  console.error(`Error: Failed to read or parse JSON report: ${reportPath}`);
+  console.error(error.message);
+  process.exit(1);
+}
+
 const delta = parseDeltaEndpoints();
 const logText = fs.existsSync(logPath) ? fs.readFileSync(logPath, "utf8") : "";
 
