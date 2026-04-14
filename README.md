@@ -14,7 +14,16 @@
 
 ---
 
-> **ZeroDAST achieves near-lossless parity with enterprise DAST for CI-first REST API scanning — at zero cost — proven on high-profile open-source targets in real CI environments.**
+> **ZeroDAST is an alpha CI-first DAST orchestration framework for REST APIs. The V2 surgical-image path is implemented behind opt-in flags, but the current April 14, 2026 demo-core proof still misses ZAP rule `40026` (DOM XSS), so Medium+ parity is not yet complete.**
+
+## V2 Status
+
+- V2 interfaces now exist in-repo: `ZAP_IMAGE`, `SCAN_PROFILE`, `CAPTURE_ZAP_INTERNALS`, and `CAPTURE_MEMORY`.
+- Existing GitHub workflows still default to stock ZAP with no profile; enabling V2 behavior is explicit.
+- Local demo-core evidence on April 14, 2026 measured `zerodast-scanner:2.17.0` at `1.37 GB` versus `zaproxy/zap-stable:2.17.0` at `2.23 GB`.
+- The current surgical proof does **not** meet the V2 acceptance bar yet because `verify-alert-parity.sh demo-core` still reports missing Medium+ alert type `40026` (`Cross Site Scripting (DOM Based)`).
+- `CAPTURE_ZAP_INTERNALS` currently records installed addon inventory from the scan image, not a live loaded-class inventory.
+- See [docs/V2_SHIP_STATUS.md](docs/V2_SHIP_STATUS.md) for the exact commands, measured outputs, and current blocker.
 
 ---
 

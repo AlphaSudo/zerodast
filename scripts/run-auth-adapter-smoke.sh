@@ -18,6 +18,8 @@ host_path() {
   local path="$1"
   if [[ "$ENGINE_BIN" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
     cygpath -w "$path"
+  elif [[ "$ENGINE_BIN" == *.exe ]] && command -v wslpath >/dev/null 2>&1; then
+    wslpath -w "$path"
   else
     printf '%s\n' "$path"
   fi

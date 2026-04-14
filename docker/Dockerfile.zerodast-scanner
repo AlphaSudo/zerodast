@@ -1,41 +1,78 @@
 # ZeroDAST Surgical Scanner — only what the automation pipeline uses
-# Base: zap-bare (minimal ZAP, no Python scripts, no Firefox, no Webswing)
+# Base: ZAP bare image (Alpine-based minimal runtime)
 FROM ghcr.io/zaproxy/zaproxy:2.17.0-bare
 
 USER root
-
-# Install only curl for health checks (no GCC, no Python, no Firefox)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
 
 USER zap
 
 ENV ZAP_PORT=8080
 
+# DOM XSS scanning needs an actual browser runtime; the bare image does not ship one.
+USER root
+RUN apk add --no-cache firefox-esr
+USER zap
+
 # Install ONLY the addons ZeroDAST's automation.yaml requires
 # Core orchestration
-RUN zap.sh -cmd -addoninstall commonlib
-RUN zap.sh -cmd -addoninstall network
-RUN zap.sh -cmd -addoninstall automation
+RUN /zap/zap.sh -cmd -addoninstall commonlib
+RUN /zap/zap.sh -cmd -addoninstall network
+RUN /zap/zap.sh -cmd -addoninstall automation
 
 # Scan jobs used in automation.yaml
-RUN zap.sh -cmd -addoninstall replacer
-RUN zap.sh -cmd -addoninstall openapi
-RUN zap.sh -cmd -addoninstall spider
-RUN zap.sh -cmd -addoninstall pscan
-RUN zap.sh -cmd -addoninstall pscanrules
-RUN zap.sh -cmd -addoninstall ascanrules
-RUN zap.sh -cmd -addoninstall reports
+RUN /zap/zap.sh -cmd -addoninstall replacer
+RUN /zap/zap.sh -cmd -addoninstall openapi
+RUN /zap/zap.sh -cmd -addoninstall spider
+RUN /zap/zap.sh -cmd -addoninstall pscan
+RUN /zap/zap.sh -cmd -addoninstall pscanrules
+RUN /zap/zap.sh -cmd -addoninstall ascanrules
+RUN /zap/zap.sh -cmd -addoninstall reports
 
 # Transitive dependencies required by ascanrules
-RUN zap.sh -cmd -addoninstall oast
-RUN zap.sh -cmd -addoninstall custompayloads
+RUN /zap/zap.sh -cmd -addoninstall oast
+RUN /zap/zap.sh -cmd -addoninstall custompayloads
 
 # Localization
-RUN zap.sh -cmd -addoninstall coreLang
+RUN /zap/zap.sh -cmd -addoninstall coreLang
 
-# Verify installation (count lines mentioning installed addons; do not fail build)
-RUN zap.sh -cmd -addonlist 2>&1 | grep -c "installed" || true
+# Prune clearly irrelevant heavy addons and stale bundled duplicates from the base image.
+USER root
+RUN rm -f \
+    /zap/plugin/ascanrules-release-78.zap \
+    /zap/plugin/ascanrules-release-80.zap \
+    /zap/plugin/automation-beta-0.58.0.zap \
+    /zap/plugin/commonlib-release-1.39.0.zap \
+    /zap/plugin/network-beta-0.25.0.zap \
+    /zap/plugin/openapi-beta-48.zap \
+    /zap/plugin/openapi-beta-52.zap \
+    /zap/plugin/pscanrules-release-70.zap \
+    /zap/plugin/pscanrules-release-71.zap \
+    /zap/plugin/replacer-release-21.zap \
+    /zap/plugin/reports-release-0.43.0.zap \
+    /zap/plugin/spider-release-0.18.0.zap \
+    /zap/plugin/spider-release-0.19.0.zap \
+    /zap/plugin/authhelper-beta-0.34.0.zap \
+    /zap/plugin/authhelper-beta-0.35.0.zap \
+    /zap/plugin/client-alpha-0.20.0.zap \
+    /zap/plugin/formhandler-beta-6.8.0.zap \
+    /zap/plugin/fuzz-beta-13.16.0.zap \
+    /zap/plugin/graphql-alpha-0.29.0.zap \
+    /zap/plugin/graphql-alpha-0.32.0.zap \
+    /zap/plugin/hud-beta-0.19.0.zap \
+    /zap/plugin/postman-alpha-0.9.0.zap \
+    /zap/plugin/requester-beta-7.9.0.zap \
+    /zap/plugin/requester-beta-7.10.0.zap \
+    /zap/plugin/scripts-release-45.17.0.zap \
+    /zap/plugin/soap-beta-29.zap \
+    /zap/plugin/spiderAjax-release-23.29.0.zap \
+    /zap/plugin/websocket-release-35.zap \
+    /zap/plugin/websocket-release-36.zap \
+    /zap/plugin/zest-beta-48.11.0.zap \
+    /zap/plugin/zest-beta-48.12.0.zap 2>/dev/null || true
+
+USER zap
+
+# Verify installation by counting installed addon archives.
+RUN find /zap/plugin /home/zap/.ZAP/plugin -maxdepth 1 -name '*.zap' 2>/dev/null | wc -l
 
 HEALTHCHECK CMD curl --silent --output /dev/null --fail http://localhost:8080/ || exit 1

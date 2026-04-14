@@ -24,6 +24,45 @@ host_path() {
   local path="$1"
   if [[ "$ENGINE_BIN" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
     cygpath -w "$path"
+  elif [[ "$ENGINE_BIN" == *.exe ]] && command -v wslpath >/dev/null 2>&1; then
+    wslpath -w "$path"
+  else
+    printf '%s\n' "$path"
+  fi
+}
+
+resolve_node_bin() {
+  local candidate=""
+  if command -v node >/dev/null 2>&1; then
+    command -v node
+    return 0
+  fi
+
+  if [[ -n "${NODE_PATH:-}" && -x "${NODE_PATH:-}" ]]; then
+    printf '%s\n' "$NODE_PATH"
+    return 0
+  fi
+
+  for candidate in \
+    /mnt/c/Users/CM/AppData/Local/fnm_multishells/*/node.exe \
+    /mnt/c/Users/CM/AppData/Roaming/fnm/node-versions/*/installation/node.exe \
+    "/mnt/c/Program Files/nodejs/node.exe"
+  do
+    if [[ -x "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+NODE_BIN="${NODE_BIN:-$(resolve_node_bin || true)}"
+
+host_node_path() {
+  local path="$1"
+  if [[ "${NODE_BIN:-}" == *.exe ]] && command -v wslpath >/dev/null 2>&1; then
+    wslpath -w "$path"
   else
     printf '%s\n' "$path"
   fi
@@ -65,21 +104,10 @@ APP_IMAGE="$APP_IMAGE" \
 bash "$ROOT_DIR/security/run-dast-env.sh" "$APP_IMAGE"
 
 echo "[3/5] Parsing report summary"
-NODE_BIN=""
-if command -v node >/dev/null 2>&1; then
-  NODE_BIN="node"
-elif [[ -x "${NODE_PATH:-}" ]]; then
-  NODE_BIN="$NODE_PATH"
-elif [[ -x "C:/Users/CM/AppData/Roaming/fnm/node-versions/v22.15.0/installation/node.exe" ]]; then
-  NODE_BIN="C:/Users/CM/AppData/Roaming/fnm/node-versions/v22.15.0/installation/node.exe"
-fi
-
 if [[ -n "$NODE_BIN" ]]; then
-  REPORT_PATH="$REPORTS_DIR/zap-report.json"
-  if [[ "$NODE_BIN" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
-    REPORT_PATH="$(cygpath -w "$REPORT_PATH")"
-  fi
-  "$NODE_BIN" "$ROOT_DIR/scripts/parse-zap-report.js" "$REPORT_PATH" || true
+  REPORT_PATH="$(host_node_path "$REPORTS_DIR/zap-report.json")"
+  SCRIPT_PATH="$(host_node_path "$ROOT_DIR/scripts/parse-zap-report.js")"
+  "$NODE_BIN" "$SCRIPT_PATH" "$REPORT_PATH" || true
 else
   echo "Warning: node not found, skipping report parsing" >&2
 fi

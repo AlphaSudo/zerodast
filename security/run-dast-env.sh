@@ -10,13 +10,14 @@ DB_IMAGE="${DB_IMAGE:-postgres:16-alpine}"
 ZAP_VERSION="${ZAP_VERSION:-2.17.0}"
 ZAP_IMAGE="${ZAP_IMAGE:-zaproxy/zap-stable:${ZAP_VERSION}}"
 SCAN_PROFILE="${SCAN_PROFILE:-}"
-ZAP_PROFILE_MERGED_PATH="${ZAP_PROFILE_MERGED_PATH:-${TMPDIR:-/tmp}/zap-profile-merged.yaml}"
+ZAP_PROFILE_MERGED_PATH="${ZAP_PROFILE_MERGED_PATH:-}"
 CAPTURE_ZAP_INTERNALS="${CAPTURE_ZAP_INTERNALS:-false}"
 CAPTURE_MEMORY="${CAPTURE_MEMORY:-false}"
 APP_IMAGE="${1:-${APP_IMAGE:-zerodast-demo-app:local}}"
 ZAP_CONFIG_PATH="${ZAP_CONFIG_PATH:-/tmp/zap-config.yaml}"
 REPORTS_DIR="${REPORTS_DIR:-$(pwd)/reports}"
 WORKSPACE_DIR="${WORKSPACE_DIR:-$(pwd)}"
+HOST_STATE_DIR="${HOST_STATE_DIR:-$WORKSPACE_DIR/.tmp/zerodast}"
 DATABASE_URL="${DATABASE_URL:-postgresql://testuser:throwaway_ci_test_pass@${DB_CONTAINER}:5432/testdb}"
 JWT_SECRET="${JWT_SECRET:-zerodast-test-jwt-secret-not-for-production}"
 SCHEMA_SQL="${SCHEMA_SQL:-}"
@@ -102,9 +103,65 @@ host_path() {
   local path="$1"
   if [[ "$ENGINE_BIN" == *.exe ]] && command -v cygpath >/dev/null 2>&1; then
     cygpath -w "$path"
+  elif [[ "$ENGINE_BIN" == *.exe ]] && command -v wslpath >/dev/null 2>&1; then
+    wslpath -w "$path"
   else
     printf '%s\n' "$path"
   fi
+}
+
+resolve_node_bin() {
+  local candidate=""
+  if command -v node >/dev/null 2>&1; then
+    command -v node
+    return 0
+  fi
+
+  if [[ -n "${NODE_PATH:-}" && -x "${NODE_PATH:-}" ]]; then
+    printf '%s\n' "$NODE_PATH"
+    return 0
+  fi
+
+  for candidate in \
+    /mnt/c/Users/CM/AppData/Local/fnm_multishells/*/node.exe \
+    /mnt/c/Users/CM/AppData/Roaming/fnm/node-versions/*/installation/node.exe \
+    "/mnt/c/Program Files/nodejs/node.exe"
+  do
+    if [[ -x "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+NODE_BIN="${NODE_BIN:-$(resolve_node_bin || true)}"
+
+host_node_path() {
+  local path="$1"
+  if [[ "${NODE_BIN:-}" == *.exe ]] && command -v wslpath >/dev/null 2>&1; then
+    wslpath -w "$path"
+  else
+    printf '%s\n' "$path"
+  fi
+}
+
+run_host_node() {
+  local arg=""
+  local converted=()
+  if [[ -z "${NODE_BIN:-}" ]]; then
+    echo "Node.js is required for host-side ZeroDAST tooling but was not found. Set NODE_BIN or NODE_PATH." >&2
+    exit 1
+  fi
+  for arg in "$@"; do
+    if [[ "$arg" == /* ]]; then
+      converted+=("$(host_node_path "$arg")")
+    else
+      converted+=("$arg")
+    fi
+  done
+  "$NODE_BIN" "${converted[@]}"
 }
 
 next_delay() {
@@ -139,7 +196,7 @@ write_operational_reliability() {
 }
 JSON
 
-  node "$WORKSPACE_DIR/scripts/build-operational-reliability.js" \
+  run_host_node "$WORKSPACE_DIR/scripts/build-operational-reliability.js" \
     "$RELIABILITY_METRICS_JSON_PATH" \
     "$OPERATIONAL_RELIABILITY_JSON_PATH" \
     "$OPERATIONAL_RELIABILITY_MD_PATH"
@@ -200,7 +257,7 @@ legacy_token_from_header() {
 cleanup() {
   engine rm -f "$ZAP_CONTAINER" "$APP_CONTAINER" "$DB_CONTAINER" >/dev/null 2>&1 || true
   engine network rm "$NETWORK_NAME" >/dev/null 2>&1 || true
-  rm -f /tmp/zap-runtime-config.yaml 2>/dev/null || true
+  rm -f "$HOST_STATE_DIR/zap-runtime-config.yaml" 2>/dev/null || true
 }
 trap cleanup EXIT
 
@@ -247,7 +304,12 @@ HOST_ZAP_CONFIG_PATH="$(host_path "$ZAP_CONFIG_PATH")"
 HOST_REPORTS_DIR="$(host_path "$REPORTS_DIR")"
 
 mkdir -p "$REPORTS_DIR"
+mkdir -p "$HOST_STATE_DIR"
 chmod 0777 "$REPORTS_DIR" >/dev/null 2>&1 || true
+
+if [[ -z "$ZAP_PROFILE_MERGED_PATH" ]]; then
+  ZAP_PROFILE_MERGED_PATH="$HOST_STATE_DIR/zap-profile-merged.yaml"
+fi
 
 ZERODAST_TARGET_NAME="${ZERODAST_TARGET_NAME:-zerodast-demo-app}" \
 ZERODAST_SCAN_PROFILE="${ZERODAST_SCAN_PROFILE:-full}" \
@@ -263,7 +325,7 @@ AUTH_BOOTSTRAP_URL="${AUTH_BOOTSTRAP_URL:-}" \
 APP_HEALTH_PATH="${APP_HEALTH_PATH:-}" \
 OPENAPI_SPEC_URL="${OPENAPI_SPEC_URL:-}" \
 ROUTE_HINT_DIRS="${ROUTE_HINT_DIRS:-}" \
-node "$WORKSPACE_DIR/scripts/build-environment-manifest.js" \
+run_host_node "$WORKSPACE_DIR/scripts/build-environment-manifest.js" \
   "$ENVIRONMENT_MANIFEST_JSON_PATH" \
   "$ENVIRONMENT_MANIFEST_MD_PATH"
 
@@ -371,7 +433,7 @@ fi
 
 if [[ -n "${SCAN_PROFILE:-}" && -f "$SCAN_PROFILE" ]]; then
   echo "Applying scan profile: $SCAN_PROFILE"
-  node "$WORKSPACE_DIR/scripts/build-profiled-automation.js" \
+  run_host_node "$WORKSPACE_DIR/scripts/build-profiled-automation.js" \
     --base "$ZAP_CONFIG_BASE" \
     --profile "$SCAN_PROFILE" \
     --rest-base "$WORKSPACE_DIR/security/profiles/base-rest-api.yaml" \
@@ -385,7 +447,7 @@ if [[ "$SKIP_ZAP_RUN" == "true" ]]; then
   exit 0
 fi
 
-ZAP_RUNTIME_CONFIG="/tmp/zap-runtime-config.yaml"
+ZAP_RUNTIME_CONFIG="$HOST_STATE_DIR/zap-runtime-config.yaml"
 escape_sed_replacement() {
   printf '%s' "$1" | sed -e 's/[&|]/\\&/g'
 }
@@ -475,11 +537,11 @@ if [[ -f "$REPORTS_DIR/zap-report.json" && -f "$REPORTS_DIR/zap-run.log" ]]; the
       fi
     done
     if [[ "${#hint_args[@]}" -gt 0 ]]; then
-      node "$WORKSPACE_DIR/scripts/extract-route-hints.js" "${hint_args[@]}" > "$ROUTE_HINTS_JSON_PATH"
+      run_host_node "$WORKSPACE_DIR/scripts/extract-route-hints.js" "${hint_args[@]}" > "$ROUTE_HINTS_JSON_PATH"
     fi
   fi
 
-  node "$WORKSPACE_DIR/scripts/build-api-inventory.js" \
+  run_host_node "$WORKSPACE_DIR/scripts/build-api-inventory.js" \
     "$REPORTS_DIR/zap-report.json" \
     "$REPORTS_DIR/zap-run.log" \
     "$OPENAPI_SPEC_PATH" \
@@ -490,7 +552,7 @@ if [[ -f "$REPORTS_DIR/zap-report.json" && -f "$REPORTS_DIR/zap-run.log" ]]; the
     API_INVENTORY_PRODUCED=true
   fi
 
-  node "$WORKSPACE_DIR/scripts/build-result-state.js" \
+  run_host_node "$WORKSPACE_DIR/scripts/build-result-state.js" \
     "$REPORTS_DIR/zap-report.json" \
     "$BASELINE_SUPPRESSIONS_PATH" \
     "$RESULT_STATE_JSON_PATH" \
@@ -500,7 +562,7 @@ if [[ -f "$REPORTS_DIR/zap-report.json" && -f "$REPORTS_DIR/zap-run.log" ]]; the
     RESULT_STATE_PRODUCED=true
   fi
 
-  node "$WORKSPACE_DIR/scripts/build-remediation-guide.js" \
+  run_host_node "$WORKSPACE_DIR/scripts/build-remediation-guide.js" \
     "$RESULT_STATE_JSON_PATH" \
     "$REMEDIATION_GUIDE_MD_PATH"
   if [[ -f "$REMEDIATION_GUIDE_MD_PATH" ]]; then

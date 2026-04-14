@@ -6,7 +6,19 @@
 
 ---
 
-> **ZeroDAST achieves near-lossless parity with enterprise DAST for CI-first REST API scanning — at zero cost — proven on high-profile open-source targets in real CI environments.**
+> **These alpha release notes describe the broader ZeroDAST project direction. As of the V2 ship-readiness pass on April 14, 2026, the new surgical-image path is still experimental and does not yet achieve full Medium+ parity on `demo-core` because ZAP rule `40026` (`Cross Site Scripting (DOM Based)`) is still missing in the surgical run.**
+
+## V2 Ship-Readiness Note
+
+- V2 adds opt-in interfaces for `ZAP_IMAGE`, `SCAN_PROFILE`, `CAPTURE_ZAP_INTERNALS`, and `CAPTURE_MEMORY`.
+- Default CI behavior remains unchanged: stock ZAP image and no scan profile unless explicitly enabled.
+- Current local demo-core evidence:
+  - stock image: `2.23 GB`
+  - surgical image: `1.37 GB`
+  - surgical installed addon inventory: `45`
+  - surgical peak observed memory: `356.3 MiB`
+- Current blocker: `scripts/verify-alert-parity.sh demo-core` still fails on missing Medium+ alert type `40026`.
+- Detailed commands and measurements are captured in [docs/V2_SHIP_STATUS.md](docs/V2_SHIP_STATUS.md).
 
 ---
 

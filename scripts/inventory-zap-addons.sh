@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
+ENGINE_BIN="${CONTAINER_ENGINE_BIN:-docker}"
+
+engine() {
+  "$ENGINE_BIN" "$@"
+}
+
 # Inventory the stock zap-stable image addons and output to JSON
 IMAGE="${1:-zaproxy/zap-stable:2.17.0}"
 OUTDIR="${2:-reports}"
@@ -8,7 +14,7 @@ mkdir -p "$OUTDIR"
 echo "=== Inventorying $IMAGE ==="
 
 # Count and list installed addons
-docker run --rm "$IMAGE" sh -c '
+engine run --rm "$IMAGE" sh -c '
   echo "=== /zap/plugin/ ==="
   ls -1 /zap/plugin/*.zap 2>/dev/null | sort
   echo "=== count ==="
@@ -16,11 +22,11 @@ docker run --rm "$IMAGE" sh -c '
 ' | tee "$OUTDIR/stock-addon-inventory.txt"
 
 # Image size
-docker image inspect "$IMAGE" --format='{{.Size}}' \
+engine image inspect "$IMAGE" --format='{{.Size}}' \
   > "$OUTDIR/stock-image-size.txt"
 
 # Layer breakdown
-docker history "$IMAGE" --no-trunc \
+engine history "$IMAGE" --no-trunc \
   > "$OUTDIR/stock-image-layers.txt"
 
 echo "Inventory saved to $OUTDIR/"
