@@ -1,0 +1,70 @@
+# ZeroDAST Base Profile: REST-API-JWT
+# Consumed by scripts/build-profiled-automation.js (not raw ZAP automation).
+
+passiveScanConfig:
+  type: passiveScan-config
+  parameters:
+    disableAllRules: false
+    maxAlertsPerRule: 10
+    scanOnlyInScope: true
+
+activeScanPolicy:
+  policyDefinition:
+    defaultStrength: medium
+    defaultThreshold: medium
+    rules:
+      - id: 40018
+        name: "SQL Injection"
+        threshold: low
+        strength: insane
+      - id: 40022
+        name: "SQL Injection - PostgreSQL"
+        threshold: low
+        strength: insane
+      - id: 40024
+        name: "SQL Injection - SQLite"
+        threshold: low
+        strength: high
+      - id: 40012
+        name: "Cross Site Scripting (Reflected)"
+        threshold: low
+        strength: high
+      - id: 40035
+        name: "Hidden File Found"
+        threshold: low
+        strength: medium
+      - id: 40034
+        name: ".env Information Leak"
+        threshold: low
+        strength: medium
+      - id: 40032
+        name: ".htaccess Information Leak"
+        threshold: low
+        strength: medium
+      - id: 6
+        name: "Path Traversal"
+        threshold: low
+        strength: high
+      - id: 40046
+        name: "Server Side Request Forgery"
+        threshold: medium
+        strength: medium
+      - id: 90020
+        name: "Remote OS Command Injection"
+        threshold: medium
+        strength: medium
+      - id: 40014
+        name: "Cross Site Scripting (Persistent)"
+        threshold: "off"
+      - id: 40026
+        name: "Cross Site Scripting (DOM Based)"
+        threshold: "off"
+      - id: 90019
+        name: "Server Side Code Injection - ASP.NET"
+        threshold: "off"
+      - id: 10045
+        name: "Source Code Disclosure - /WEB-INF"
+        threshold: "off"
+      - id: 40028
+        name: "ELMAH Information Leak"
+        threshold: "off"

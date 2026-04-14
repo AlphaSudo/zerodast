@@ -1,0 +1,17 @@
+# Directus Profile — REST API (Node), JWT Bearer, OpenAPI available
+extends: base-rest-api
+target: directus
+notes:
+  - "OpenAPI spec available but imported 0 URLs in frozen proof"
+  - "Largest URL surface (38 spider URLs)"
+  - "Key finding: .env/.htaccess/trace.axd file leaks — keep file probes"
+  - "Vulnerable JS Library found (10003) — keep retire addon if available"
+
+overrides:
+  skipOpenApi: false
+  spider:
+    maxDuration: 3
+    maxChildren: 50
+  activeScan:
+    maxScanDurationInMins: 20
+    threadPerHost: 4

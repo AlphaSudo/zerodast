@@ -1,0 +1,41 @@
+# ZeroDAST Surgical Scanner — only what the automation pipeline uses
+# Base: zap-bare (minimal ZAP, no Python scripts, no Firefox, no Webswing)
+FROM ghcr.io/zaproxy/zaproxy:2.17.0-bare
+
+USER root
+
+# Install only curl for health checks (no GCC, no Python, no Firefox)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+USER zap
+
+ENV ZAP_PORT=8080
+
+# Install ONLY the addons ZeroDAST's automation.yaml requires
+# Core orchestration
+RUN zap.sh -cmd -addoninstall commonlib
+RUN zap.sh -cmd -addoninstall network
+RUN zap.sh -cmd -addoninstall automation
+
+# Scan jobs used in automation.yaml
+RUN zap.sh -cmd -addoninstall replacer
+RUN zap.sh -cmd -addoninstall openapi
+RUN zap.sh -cmd -addoninstall spider
+RUN zap.sh -cmd -addoninstall pscan
+RUN zap.sh -cmd -addoninstall pscanrules
+RUN zap.sh -cmd -addoninstall ascanrules
+RUN zap.sh -cmd -addoninstall reports
+
+# Transitive dependencies required by ascanrules
+RUN zap.sh -cmd -addoninstall oast
+RUN zap.sh -cmd -addoninstall custompayloads
+
+# Localization
+RUN zap.sh -cmd -addoninstall coreLang
+
+# Verify installation (count lines mentioning installed addons; do not fail build)
+RUN zap.sh -cmd -addonlist 2>&1 | grep -c "installed" || true
+
+HEALTHCHECK CMD curl --silent --output /dev/null --fail http://localhost:8080/ || exit 1

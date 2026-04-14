@@ -1,0 +1,16 @@
+# Medusa Profile — REST API (Express/Node), JWT Bearer
+extends: base-rest-api
+target: medusa
+notes:
+  - "No OpenAPI spec available — skip openapi job"
+  - "Small URL surface (11 spider URLs)"
+  - "Key finding: Hidden File Found (40035) — keep file probes enabled"
+
+overrides:
+  skipOpenApi: true
+  spider:
+    maxDuration: 1
+    maxChildren: 5
+  activeScan:
+    maxScanDurationInMins: 10
+    threadPerHost: 2

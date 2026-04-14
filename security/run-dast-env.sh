@@ -8,6 +8,11 @@ APP_CONTAINER="${APP_CONTAINER:-untrusted-app}"
 ZAP_CONTAINER="${ZAP_CONTAINER:-dast-zap}"
 DB_IMAGE="${DB_IMAGE:-postgres:16-alpine}"
 ZAP_VERSION="${ZAP_VERSION:-2.17.0}"
+ZAP_IMAGE="${ZAP_IMAGE:-zaproxy/zap-stable:${ZAP_VERSION}}"
+SCAN_PROFILE="${SCAN_PROFILE:-}"
+ZAP_PROFILE_MERGED_PATH="${ZAP_PROFILE_MERGED_PATH:-${TMPDIR:-/tmp}/zap-profile-merged.yaml}"
+CAPTURE_ZAP_INTERNALS="${CAPTURE_ZAP_INTERNALS:-false}"
+CAPTURE_MEMORY="${CAPTURE_MEMORY:-false}"
 APP_IMAGE="${1:-${APP_IMAGE:-zerodast-demo-app:local}}"
 ZAP_CONFIG_PATH="${ZAP_CONFIG_PATH:-/tmp/zap-config.yaml}"
 REPORTS_DIR="${REPORTS_DIR:-$(pwd)/reports}"
@@ -358,9 +363,20 @@ if [[ -n "${ADMIN_AUTH_TOKEN:-}" ]]; then
   printf '%s' "$ADMIN_AUTH_TOKEN" > "$ADMIN_AUTH_TOKEN_PATH"
 fi
 
-if [[ ! -f "$ZAP_CONFIG_PATH" ]]; then
-  echo "ZAP config not found: $ZAP_CONFIG_PATH" >&2
+ZAP_CONFIG_BASE="${ZAP_CONFIG_PATH}"
+if [[ ! -f "$ZAP_CONFIG_BASE" ]]; then
+  echo "ZAP config not found: $ZAP_CONFIG_BASE" >&2
   exit 1
+fi
+
+if [[ -n "${SCAN_PROFILE:-}" && -f "$SCAN_PROFILE" ]]; then
+  echo "Applying scan profile: $SCAN_PROFILE"
+  node "$WORKSPACE_DIR/scripts/build-profiled-automation.js" \
+    --base "$ZAP_CONFIG_BASE" \
+    --profile "$SCAN_PROFILE" \
+    --rest-base "$WORKSPACE_DIR/security/profiles/base-rest-api.yaml" \
+    --output "$ZAP_PROFILE_MERGED_PATH"
+  ZAP_CONFIG_PATH="$ZAP_PROFILE_MERGED_PATH"
 fi
 
 if [[ "$SKIP_ZAP_RUN" == "true" ]]; then
@@ -394,6 +410,20 @@ HOST_ZAP_RUNTIME_PATH="$(host_path "$ZAP_RUNTIME_CONFIG")"
 ZAP_RUN_LOG="$REPORTS_DIR/zap-run.log"
 rm -f "$ZAP_RUN_LOG" 2>/dev/null || true
 
+MEMORY_PID=""
+if [[ "${CAPTURE_MEMORY:-false}" == "true" ]]; then
+  rm -f "$REPORTS_DIR/memory-samples.txt" 2>/dev/null || true
+  (
+    until engine inspect "$ZAP_CONTAINER" >/dev/null 2>&1; do sleep 0.5; done
+    while engine inspect "$ZAP_CONTAINER" >/dev/null 2>&1; do
+      engine stats --no-stream --format '{{.MemUsage}}' "$ZAP_CONTAINER" 2>/dev/null \
+        >> "$REPORTS_DIR/memory-samples.txt"
+      sleep 5
+    done
+  ) &
+  MEMORY_PID=$!
+fi
+
 ZAP_RUN_REQUESTED=true
 set +e
 engine run --rm \
@@ -402,7 +432,7 @@ engine run --rm \
   -e ZAP_JVM_OPTS="-Xmx3g -Xms1g" \
   -v "$HOST_ZAP_RUNTIME_PATH:/zap/wrk/config.yaml:ro" \
   -v "$HOST_REPORTS_DIR:/zap/wrk:rw" \
-  "zaproxy/zap-stable:${ZAP_VERSION}" \
+  "${ZAP_IMAGE}" \
   zap.sh -cmd -autorun /zap/wrk/config.yaml \
   -config check.onstart=false \
   -config api.disablekey=true \
@@ -410,6 +440,20 @@ engine run --rm \
 ZAP_EXIT=${PIPESTATUS[0]}
 set -e
 ZAP_RUN_COMPLETED=true
+
+if [[ -n "${MEMORY_PID:-}" ]]; then
+  kill "$MEMORY_PID" 2>/dev/null || true
+  wait "$MEMORY_PID" 2>/dev/null || true
+fi
+
+if [[ "${CAPTURE_ZAP_INTERNALS:-false}" == "true" ]]; then
+  echo "=== Capturing installed addon inventory ==="
+  engine run --rm \
+    -v "$HOST_REPORTS_DIR:/zap/wrk:rw" \
+    "${ZAP_IMAGE}" \
+    sh -c 'ls -1 /zap/plugin/*.zap /home/zap/.ZAP/plugin/*.zap 2>/dev/null | sort' \
+    > "$REPORTS_DIR/installed-addon-inventory.txt" 2>/dev/null || true
+fi
 
 if [[ "${ZAP_EXIT:-0}" -gt 3 ]]; then
   write_operational_reliability

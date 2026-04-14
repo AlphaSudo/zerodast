@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "name": "zerodast-scripts-tooling",
+  "dependencies": {
+    "yaml": "^2.7.0"
+  }
+}
