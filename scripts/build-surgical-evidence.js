@@ -13,13 +13,44 @@ if (requestedRoot && path.resolve(requestedRoot) !== ROOT) {
 }
 
 const REPORTS = path.join(ROOT, "reports");
+const SURGICAL_DIR_PREFIX = "surgical-proof-";
+const SAFE_TARGET_NAME = /^[a-z0-9._-]+$/i;
+
+function resolveWithin(baseDir, ...segments) {
+  const resolved = path.resolve(baseDir, ...segments);
+  const relative = path.relative(baseDir, resolved);
+  if (relative.startsWith("..") || path.isAbsolute(relative)) {
+    throw new Error(`Resolved path escapes base directory: ${resolved}`);
+  }
+  return resolved;
+}
+
+function parseTargetFromDirName(name) {
+  if (!name.startsWith(SURGICAL_DIR_PREFIX)) {
+    return null;
+  }
+
+  const target = name.slice(SURGICAL_DIR_PREFIX.length);
+  if (!SAFE_TARGET_NAME.test(target)) {
+    return null;
+  }
+
+  return target;
+}
 
 function listSurgicalDirs() {
   if (!fs.existsSync(REPORTS)) return [];
   return fs
     .readdirSync(REPORTS)
-    .filter((name) => name.startsWith("surgical-proof-"))
-    .map((name) => path.join(REPORTS, name));
+    .map((name) => {
+      const target = parseTargetFromDirName(name);
+      if (!target) return null;
+      return {
+        target,
+        dir: resolveWithin(REPORTS, `${SURGICAL_DIR_PREFIX}${target}`),
+      };
+    })
+    .filter(Boolean);
 }
 
 function readJson(p) {
@@ -138,7 +169,11 @@ function diffSets(left, right) {
 }
 
 function compareAgainstFrozenStock(target, report) {
-  const frozenPath = path.join(ROOT, `tmp-ci-proof-${target}`, "zap-report.json");
+  if (!SAFE_TARGET_NAME.test(target)) {
+    throw new Error(`Unsafe target name: ${target}`);
+  }
+
+  const frozenPath = resolveWithin(ROOT, `tmp-ci-proof-${target}`, "zap-report.json");
   if (!fs.existsSync(frozenPath) || !report) {
     return {
       comparedToFrozenStock: false,
@@ -174,13 +209,13 @@ function compareAgainstFrozenStock(target, report) {
   };
 }
 
-function summarize(dir) {
-  const target = path.basename(dir).replace(/^surgical-proof-/, "");
-  const reportPath = path.join(dir, "zap-report.json");
-  const timingPath = path.join(dir, "timing.json");
-  const metricsPath = path.join(dir, "metrics.json");
-  const addonInventoryPath = path.join(dir, "installed-addon-inventory.txt");
-  const memorySamplesPath = path.join(dir, "memory-samples.txt");
+function summarize(entry) {
+  const { target, dir } = entry;
+  const reportPath = resolveWithin(dir, "zap-report.json");
+  const timingPath = resolveWithin(dir, "timing.json");
+  const metricsPath = resolveWithin(dir, "metrics.json");
+  const addonInventoryPath = resolveWithin(dir, "installed-addon-inventory.txt");
+  const memorySamplesPath = resolveWithin(dir, "memory-samples.txt");
   const report = fs.existsSync(reportPath) ? readJson(reportPath) : null;
   const alerts = report ? extractAlerts(report) : [];
   const pluginIds = [...new Set(alerts.map((a) => a.pluginid))].sort();
@@ -215,8 +250,8 @@ const summary = {
   targets: dirs.map(summarize),
 };
 
-const outJson = path.join(REPORTS, "surgical-evidence-summary.json");
-const outMd = path.join(REPORTS, "surgical-evidence-summary.md");
+const outJson = resolveWithin(REPORTS, "surgical-evidence-summary.json");
+const outMd = resolveWithin(REPORTS, "surgical-evidence-summary.md");
 fs.mkdirSync(REPORTS, { recursive: true });
 fs.writeFileSync(outJson, JSON.stringify(summary, null, 2), "utf8");
 
