@@ -6,6 +6,8 @@ Date: April 15, 2026
 
 The V2 surgical-image/tooling path is implemented and locally runnable, and the refreshed `demo-core` proof now restores the Medium+ parity gate. The remaining work is to rerun the broader target set before making any fleet-wide V2 parity claim.
 
+For the dedicated measured before/after benchmark on merged `main`, see [V2_BENCHMARK_SUMMARY.md](V2_BENCHMARK_SUMMARY.md).
+
 What is in place:
 
 - `ZAP_IMAGE` override support in `security/run-dast-env.sh`
