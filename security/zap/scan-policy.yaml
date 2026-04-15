@@ -13,17 +13,17 @@ policyDefinition:
       strength: high
       enabled: true
     - id: 40026
-      name: Cross-Domain Misconfiguration
+      name: Cross Site Scripting (DOM Based)
       threshold: low
       strength: medium
       enabled: true
     - id: 40014
-      name: Path Traversal
+      name: Cross Site Scripting (Persistent)
       threshold: medium
       strength: high
       enabled: true
     - id: 40028
-      name: Open Redirect / SSRF style checks
+      name: ELMAH Information Leak
       threshold: medium
       strength: medium
       enabled: true

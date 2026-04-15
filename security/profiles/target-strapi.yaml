@@ -1,0 +1,20 @@
+# Strapi Profile — REST API (Node), JWT Bearer
+extends: base-rest-api
+target: strapi
+notes:
+  - "XSS Reflected in JSON triggered (40012) — keep XSS rules at high"
+  - "Small URL surface (12 spider URLs)"
+
+overrides:
+  skipOpenApi: true
+  spider:
+    maxDuration: 1
+    maxChildren: 10
+  activeScan:
+    maxScanDurationInMins: 15
+    threadPerHost: 2
+  policyOverrides:
+    - id: 40012
+      name: "Cross Site Scripting (Reflected)"
+      threshold: low
+      strength: insane

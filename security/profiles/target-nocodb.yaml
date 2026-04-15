@@ -1,0 +1,16 @@
+# NocoDB Profile — REST API (Node), JWT (xc-auth header)
+extends: base-rest-api
+target: nocodb
+notes:
+  - "Largest spider surface (257 URLs) — needs more time"
+  - "Uses xc-auth header instead of Authorization Bearer"
+  - "SRI check fired (90003) — some HTML content present"
+
+overrides:
+  skipOpenApi: true
+  spider:
+    maxDuration: 5
+    maxChildren: 50
+  activeScan:
+    maxScanDurationInMins: 30
+    threadPerHost: 4
