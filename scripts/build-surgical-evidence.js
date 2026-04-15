@@ -7,7 +7,7 @@ const path = require("path");
 const ROOT = process.cwd();
 const requestedRoot = process.argv[2];
 
-if (requestedRoot && path.resolve(requestedRoot) !== ROOT) {
+if (requestedRoot && path.normalize(requestedRoot) !== ROOT) {
   console.error("build-surgical-evidence.js runs relative to the current working directory; cd to the repo root before invoking it.");
   process.exit(1);
 }
@@ -15,14 +15,25 @@ if (requestedRoot && path.resolve(requestedRoot) !== ROOT) {
 const REPORTS = path.join(ROOT, "reports");
 const SURGICAL_DIR_PREFIX = "surgical-proof-";
 const SAFE_TARGET_NAME = /^[a-z0-9._-]+$/i;
+const SAFE_PATH_SEGMENT = /^[a-z0-9._-]+$/i;
 
 function resolveWithin(baseDir, ...segments) {
-  const resolved = path.resolve(baseDir, ...segments);
-  const relative = path.relative(baseDir, resolved);
-  if (relative.startsWith("..") || path.isAbsolute(relative)) {
-    throw new Error(`Resolved path escapes base directory: ${resolved}`);
+  const sanitizedSegments = segments.map((segment) => {
+    if (!SAFE_PATH_SEGMENT.test(segment)) {
+      throw new Error(`Unsafe path segment: ${segment}`);
+    }
+    return segment;
+  });
+
+  const resolved = [baseDir, ...sanitizedSegments].join(path.sep);
+  const normalizedBase = `${baseDir}${path.sep}`;
+  const normalizedResolved = path.normalize(resolved);
+
+  if (!normalizedResolved.startsWith(normalizedBase)) {
+    throw new Error(`Resolved path escapes base directory: ${normalizedResolved}`);
   }
-  return resolved;
+
+  return normalizedResolved;
 }
 
 function parseTargetFromDirName(name) {
