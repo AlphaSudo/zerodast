@@ -49,10 +49,19 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build surgical ZAP image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./docker
+          file: ./docker/Dockerfile.zerodast-scanner
+          load: true
+          tags: zerodast-scanner:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Pre-pull trusted images
         run: |
           docker pull postgres:16-alpine &
-          docker pull zaproxy/zap-stable:2.17.0 &
           docker pull node:20-alpine &
           wait
 
@@ -68,7 +77,7 @@ jobs:
 
       - name: Run nightly DAST
         env:
-          ZAP_IMAGE: zaproxy/zap-stable:2.17.0
+          ZAP_IMAGE: zerodast-scanner:${{ github.sha }}
           SCAN_PROFILE: ""
           ZERODAST_TARGET_NAME: zerodast-demo-app
           ZERODAST_SCAN_PROFILE: nightly-full
