@@ -6,7 +6,7 @@ Date: April 15, 2026
 
 The V2 surgical-image/tooling path is implemented and locally runnable. The refreshed `demo-core` proof restores the Medium+ parity gate, and the rebuilt shared surgical image now also passes the same Medium+ gate on the four external targets `nocodb`, `strapi`, `directus`, and `medusa`.
 
-For the dedicated measured before/after benchmark on merged `main`, see [V2_BENCHMARK_SUMMARY.md](V2_BENCHMARK_SUMMARY.md).
+For the dedicated measured before/after benchmark on merged `main`, see [V2_BENCHMARK_SUMMARY.md](V2_BENCHMARK_SUMMARY.md). For the same-environment stock-vs-surgical benchmark on the four external validation targets, see [V2_EXTERNAL_TARGET_BENCHMARKS.md](V2_EXTERNAL_TARGET_BENCHMARKS.md).
 
 What is in place:
 
@@ -58,6 +58,7 @@ Targets revalidated under that flow:
 - The DOM XSS fix came from exposing `firefox` in the surgical image so the browser-backed rule path matches stock
 - The Directus `10003` parity regression was fixed by removing add-on self-upgrades and keeping the stock `2.17.0` add-on set in the surgical image
 - External-target Medium+ parity after the rebuild: `4/4 PASS` on `nocodb`, `strapi`, `directus`, and `medusa`
+- External-target stock-vs-surgical benchmark pass now exists for `nocodb`, `strapi`, `directus`, and `medusa`, with same-environment timing plus Medium+ parity results
 
 ## Acceptance status
 

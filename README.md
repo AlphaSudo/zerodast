@@ -27,6 +27,7 @@
 - After removing add-on self-upgrades and realigning the image to the stock `2.17.0` add-on set, the rebuilt shared surgical image now passes the Medium+ parity gate across the four external targets: `NocoDB`, `Strapi`, `Directus`, and `Medusa`.
 - `CAPTURE_ZAP_INTERNALS` currently records installed addon inventory from the scan image, not a live loaded-class inventory.
 - See [docs/V2_BENCHMARK_SUMMARY.md](docs/V2_BENCHMARK_SUMMARY.md) for the measured demo-core before/after benchmark on merged `main`.
+- See [docs/V2_EXTERNAL_TARGET_BENCHMARKS.md](docs/V2_EXTERNAL_TARGET_BENCHMARKS.md) for the same-environment stock-vs-surgical benchmark across `NocoDB`, `Strapi`, `Directus`, and `Medusa`.
 - See [docs/V2_SHIP_STATUS.md](docs/V2_SHIP_STATUS.md) for the exact commands, measured outputs, and remaining validation gap.
 
 ---
