@@ -4,7 +4,14 @@
 const fs = require("fs");
 const path = require("path");
 
-const ROOT = process.argv[2] || process.cwd();
+const ROOT = process.cwd();
+const requestedRoot = process.argv[2];
+
+if (requestedRoot && path.resolve(requestedRoot) !== ROOT) {
+  console.error("build-surgical-evidence.js runs relative to the current working directory; cd to the repo root before invoking it.");
+  process.exit(1);
+}
+
 const REPORTS = path.join(ROOT, "reports");
 
 function listSurgicalDirs() {

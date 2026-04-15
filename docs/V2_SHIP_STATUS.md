@@ -28,7 +28,7 @@ CONTAINER_ENGINE_BIN="/mnt/c/Users/CM/AppData/Local/Programs/Podman/podman.exe" 
 CONTAINER_ENGINE_BIN="/mnt/c/Users/CM/AppData/Local/Programs/Podman/podman.exe" RUNS=1 bash scripts/benchmark-ab.sh demo-core
 bash scripts/verify-alert-parity.sh demo-core
 CONTAINER_ENGINE_BIN="/mnt/c/Users/CM/AppData/Local/Programs/Podman/podman.exe" CAPTURE_ZAP_INTERNALS=true CAPTURE_MEMORY=true REPORTS_DIR="$(pwd)/reports/surgical-proof-demo-core" bash security/run-dast-env.sh
-node scripts/build-surgical-evidence.js "C:\\Java Developer\\DAST"
+node scripts/build-surgical-evidence.js
 ```
 
 ## Measured outputs
@@ -56,3 +56,4 @@ node scripts/build-surgical-evidence.js "C:\\Java Developer\\DAST"
 - The parity script treats **missing Medium+ alert types** as failures and records URI/count drift separately.
 - Current workflows remain stock-image / no-profile by default; V2 behavior is opt-in.
 - The surgical evidence run captures memory samples separately from the benchmark run, so timing data and peak memory come from different proof directories unless you standardize that flow later.
+- `build-surgical-evidence.js` now reads the repo root from the current working directory instead of accepting an arbitrary path argument.
