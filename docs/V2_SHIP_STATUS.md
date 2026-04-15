@@ -4,12 +4,13 @@ Date: April 15, 2026
 
 ## Current state
 
-The V2 surgical-image/tooling path is implemented and locally runnable, and the refreshed `demo-core` proof now restores the Medium+ parity gate. The remaining work is to rerun the broader target set before making any fleet-wide V2 parity claim.
+The V2 surgical-image/tooling path is implemented and locally runnable. The refreshed `demo-core` proof restores the Medium+ parity gate, and the rebuilt shared surgical image now also passes the same Medium+ gate on the four external targets `nocodb`, `strapi`, `directus`, and `medusa`.
 
 For the dedicated measured before/after benchmark on merged `main`, see [V2_BENCHMARK_SUMMARY.md](V2_BENCHMARK_SUMMARY.md).
 
 What is in place:
 
+- one shared surgical scanner image (`zerodast-scanner:2.17.0`) used across targets
 - `ZAP_IMAGE` override support in `security/run-dast-env.sh`
 - `SCAN_PROFILE` merge support without overwriting the tracked automation file
 - `CAPTURE_ZAP_INTERNALS` and `CAPTURE_MEMORY` hooks
@@ -18,8 +19,9 @@ What is in place:
 
 What is still blocking a ready-to-ship V2 claim:
 
-- only `demo-core` has been revalidated after the DOM XSS parity fix
-- the broader target set still needs to be rerun under the same V2 proof flow
+- the rebuilt image should still be rerun through hosted GitHub Actions if you want hosted proof instead of local proof only
+- profiled-vs-unprofiled validation still has not been rerun on the broader target set
+- public messaging should continue to distinguish the shared surgical image that exists today from any future per-target image generation idea
 
 ## Commands run locally
 
@@ -33,14 +35,29 @@ CONTAINER_ENGINE_BIN="/mnt/c/Users/CM/AppData/Local/Programs/Podman/podman.exe" 
 node scripts/build-surgical-evidence.js
 ```
 
+External-target confirmation flow on April 15, 2026 used the existing `zerodast-install` target branches with the rebuilt shared surgical image forced through `ZAP_IMAGE`:
+
+```bash
+ZAP_IMAGE="localhost/zerodast-scanner:2.17.0" bash zerodast/run-scan.sh
+```
+
+Targets revalidated under that flow:
+
+- `nocodb`
+- `strapi`
+- `directus`
+- `medusa`
+
 ## Measured outputs
 
 - Stock image size: `2.23 GB`
-- Surgical image size: `1.36 GB`
-- Surgical installed addon inventory count: `45`
+- Rebuilt surgical image size after add-on realignment: `1.01 GB`
+- Rebuilt surgical installed addon inventory count: `42`
 - Surgical demo-core benchmark parity: `PASS` for missing Medium+ alert types
 - Surgical evidence summary parity vs frozen stock: `PASS`
 - The DOM XSS fix came from exposing `firefox` in the surgical image so the browser-backed rule path matches stock
+- The Directus `10003` parity regression was fixed by removing add-on self-upgrades and keeping the stock `2.17.0` add-on set in the surgical image
+- External-target Medium+ parity after the rebuild: `4/4 PASS` on `nocodb`, `strapi`, `directus`, and `medusa`
 
 ## Acceptance status
 
@@ -51,6 +68,7 @@ node scripts/build-surgical-evidence.js
 - Demo-core benchmark run: pass
 - Surgical evidence generation: pass
 - Medium+ parity on demo-core: **pass**
+- Medium+ parity on external target reruns: **pass** (`4/4`)
 
 ## Notes on semantics
 
@@ -59,3 +77,4 @@ node scripts/build-surgical-evidence.js
 - Current workflows remain stock-image / no-profile by default; V2 behavior is opt-in.
 - The surgical evidence run captures memory samples separately from the benchmark run, so timing data and peak memory come from different proof directories unless you standardize that flow later.
 - `build-surgical-evidence.js` now reads the repo root from the current working directory instead of accepting an arbitrary path argument.
+- The current implementation uses one shared surgical scanner image across targets. Per-target dynamic scanner image generation is still architecture direction, not implemented behavior.
