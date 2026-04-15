@@ -24,6 +24,7 @@
 - The refreshed local demo-core proof on April 15, 2026 now passes `verify-alert-parity.sh` with **no missing Medium+ alert types**.
 - That parity restoration came from exposing `firefox` in the surgical image so ZAP's DOM XSS rule can execute the same browser-backed path as stock.
 - `CAPTURE_ZAP_INTERNALS` currently records installed addon inventory from the scan image, not a live loaded-class inventory.
+- See [docs/V2_BENCHMARK_SUMMARY.md](docs/V2_BENCHMARK_SUMMARY.md) for the measured demo-core before/after benchmark on merged `main`.
 - See [docs/V2_SHIP_STATUS.md](docs/V2_SHIP_STATUS.md) for the exact commands, measured outputs, and remaining validation gap.
 
 ---
