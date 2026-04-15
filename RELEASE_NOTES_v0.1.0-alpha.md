@@ -6,7 +6,7 @@
 
 ---
 
-> **These alpha release notes describe the broader ZeroDAST project direction. As of the V2 ship-readiness pass on April 14, 2026, the new surgical-image path is still experimental and does not yet achieve full Medium+ parity on `demo-core` because ZAP rule `40026` (`Cross Site Scripting (DOM Based)`) is still missing in the surgical run.**
+> **These alpha release notes describe the broader ZeroDAST project direction. As of the V2 parity fix on April 15, 2026, the surgical-image path now restores Medium+ parity on `demo-core`, but it is still experimental until the broader target set is rerun under the same validation flow.**
 
 ## V2 Ship-Readiness Note
 
@@ -14,10 +14,11 @@
 - Default CI behavior remains unchanged: stock ZAP image and no scan profile unless explicitly enabled.
 - Current local demo-core evidence:
   - stock image: `2.23 GB`
-  - surgical image: `1.37 GB`
+  - surgical image: `1.36 GB`
   - surgical installed addon inventory: `45`
-  - surgical peak observed memory: `356.3 MiB`
-- Current blocker: `scripts/verify-alert-parity.sh demo-core` still fails on missing Medium+ alert type `40026`.
+  - surgical benchmark parity: `PASS` for missing Medium+ alert types
+- DOM XSS parity was restored by exposing `firefox` in the surgical image so the DOM XSS rule can execute the browser-backed path expected by ZAP.
+- Remaining validation work is now breadth, not the original blocker: rerun the broader target set before making any fleet-wide V2 parity claim.
 - Detailed commands and measurements are captured in [docs/V2_SHIP_STATUS.md](docs/V2_SHIP_STATUS.md).
 
 ---

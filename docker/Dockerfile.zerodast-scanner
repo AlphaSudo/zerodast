@@ -10,7 +10,8 @@ ENV ZAP_PORT=8080
 
 # DOM XSS scanning needs an actual browser runtime; the bare image does not ship one.
 USER root
-RUN apk add --no-cache firefox-esr
+RUN apk add --no-cache firefox-esr \
+    && ln -sf /usr/bin/firefox-esr /usr/bin/firefox
 USER zap
 
 # Install ONLY the addons ZeroDAST's automation.yaml requires
