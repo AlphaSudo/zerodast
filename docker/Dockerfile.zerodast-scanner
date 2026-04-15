@@ -1,5 +1,8 @@
-# ZeroDAST Surgical Scanner — only what the automation pipeline uses
-# Base: ZAP bare image (Alpine-based minimal runtime)
+# ZeroDAST Surgical Scanner
+# Base: ZAP bare image (Alpine-based minimal runtime) with the stock 2.17.0 add-on set.
+# We intentionally keep the bundled stock-era automation/discovery add-ons instead of
+# upgrading them in-place, because newer add-on versions introduced Directus parity drift
+# (notably missing 10003 / Retire.js coverage on admin JS assets).
 FROM ghcr.io/zaproxy/zaproxy:2.17.0-bare
 
 USER root
@@ -14,62 +17,33 @@ RUN apk add --no-cache firefox-esr \
     && ln -sf /usr/bin/firefox-esr /usr/bin/firefox
 USER zap
 
-# Install ONLY the addons ZeroDAST's automation.yaml requires
-# Core orchestration
-RUN /zap/zap.sh -cmd -addoninstall commonlib
-RUN /zap/zap.sh -cmd -addoninstall network
-RUN /zap/zap.sh -cmd -addoninstall automation
-
-# Scan jobs used in automation.yaml
-RUN /zap/zap.sh -cmd -addoninstall replacer
-RUN /zap/zap.sh -cmd -addoninstall openapi
-RUN /zap/zap.sh -cmd -addoninstall spider
-RUN /zap/zap.sh -cmd -addoninstall pscan
-RUN /zap/zap.sh -cmd -addoninstall pscanrules
-RUN /zap/zap.sh -cmd -addoninstall ascanrules
-RUN /zap/zap.sh -cmd -addoninstall reports
-
-# Transitive dependencies required by ascanrules
-RUN /zap/zap.sh -cmd -addoninstall oast
-RUN /zap/zap.sh -cmd -addoninstall custompayloads
-
-# Localization
-RUN /zap/zap.sh -cmd -addoninstall coreLang
-
-# Prune clearly irrelevant heavy addons and stale bundled duplicates from the base image.
+# Prune stale duplicate archives and a few clearly irrelevant extras, but keep the
+# stock discovery/passive-analysis stack intact to preserve parity.
 USER root
 RUN rm -f \
     /zap/plugin/ascanrules-release-78.zap \
-    /zap/plugin/ascanrules-release-80.zap \
-    /zap/plugin/automation-beta-0.58.0.zap \
-    /zap/plugin/commonlib-release-1.39.0.zap \
-    /zap/plugin/network-beta-0.25.0.zap \
-    /zap/plugin/openapi-beta-48.zap \
-    /zap/plugin/openapi-beta-52.zap \
-    /zap/plugin/pscanrules-release-70.zap \
-    /zap/plugin/pscanrules-release-71.zap \
-    /zap/plugin/replacer-release-21.zap \
-    /zap/plugin/reports-release-0.43.0.zap \
-    /zap/plugin/spider-release-0.18.0.zap \
-    /zap/plugin/spider-release-0.19.0.zap \
     /zap/plugin/authhelper-beta-0.34.0.zap \
-    /zap/plugin/authhelper-beta-0.35.0.zap \
-    /zap/plugin/client-alpha-0.20.0.zap \
-    /zap/plugin/formhandler-beta-6.8.0.zap \
-    /zap/plugin/fuzz-beta-13.16.0.zap \
+    /zap/plugin/encoder-release-1.8.0.zap \
+    /zap/plugin/exim-beta-0.16.0.zap \
+    /zap/plugin/graaljs-alpha-0.12.0.zap \
+    /zap/plugin/openapi-beta-48.zap \
+    /zap/plugin/pscanrules-release-70.zap \
+    /zap/plugin/quickstart-release-53.zap \
+    /zap/plugin/requester-beta-7.9.0.zap \
+    /zap/plugin/retire-release-0.52.0.zap \
+    /zap/plugin/selenium-release-15.43.0.zap \
+    /zap/plugin/spider-release-0.18.0.zap \
     /zap/plugin/graphql-alpha-0.29.0.zap \
     /zap/plugin/graphql-alpha-0.32.0.zap \
     /zap/plugin/hud-beta-0.19.0.zap \
     /zap/plugin/postman-alpha-0.9.0.zap \
-    /zap/plugin/requester-beta-7.9.0.zap \
-    /zap/plugin/requester-beta-7.10.0.zap \
-    /zap/plugin/scripts-release-45.17.0.zap \
+    /zap/plugin/formhandler-beta-6.8.0.zap \
+    /zap/plugin/fuzz-beta-13.16.0.zap \
     /zap/plugin/soap-beta-29.zap \
-    /zap/plugin/spiderAjax-release-23.29.0.zap \
-    /zap/plugin/websocket-release-35.zap \
-    /zap/plugin/websocket-release-36.zap \
     /zap/plugin/zest-beta-48.11.0.zap \
-    /zap/plugin/zest-beta-48.12.0.zap 2>/dev/null || true
+    /zap/plugin/zest-beta-48.12.0.zap \
+    /zap/plugin/websocket-release-35.zap \
+    /zap/plugin/insights-alpha-0.0.1.zap 2>/dev/null || true
 
 USER zap
 

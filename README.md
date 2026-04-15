@@ -14,15 +14,17 @@
 
 ---
 
-> **ZeroDAST is an alpha CI-first DAST orchestration framework for REST APIs. The V2 surgical-image path is implemented behind opt-in flags, and the refreshed demo-core proof on April 15, 2026 restores Medium+ parity after fixing DOM XSS browser runtime wiring. Broader target reruns are still pending before making any fleet-wide V2 parity claim.**
+> **ZeroDAST is an alpha CI-first DAST orchestration framework for REST APIs. The V2 surgical-image path is implemented behind opt-in flags, and as of April 15, 2026 the rebuilt shared surgical image preserves the Medium+ parity gate on `demo-core`, `NocoDB`, `Strapi`, `Directus`, and `Medusa` after restoring DOM XSS browser runtime wiring and aligning the image back to the stock 2.17.0 add-on set.**
 
 ## V2 Status
 
 - V2 interfaces now exist in-repo: `ZAP_IMAGE`, `SCAN_PROFILE`, `CAPTURE_ZAP_INTERNALS`, and `CAPTURE_MEMORY`.
 - Existing GitHub workflows still default to stock ZAP with no profile; enabling V2 behavior is explicit.
+- V2 currently uses one shared surgical scanner image across targets; it does not yet generate a different scanner image per target.
 - Local demo-core evidence on April 14, 2026 measured `zerodast-scanner:2.17.0` at `1.37 GB` versus `zaproxy/zap-stable:2.17.0` at `2.23 GB`.
 - The refreshed local demo-core proof on April 15, 2026 now passes `verify-alert-parity.sh` with **no missing Medium+ alert types**.
 - That parity restoration came from exposing `firefox` in the surgical image so ZAP's DOM XSS rule can execute the same browser-backed path as stock.
+- After removing add-on self-upgrades and realigning the image to the stock `2.17.0` add-on set, the rebuilt shared surgical image now passes the Medium+ parity gate across the four external targets: `NocoDB`, `Strapi`, `Directus`, and `Medusa`.
 - `CAPTURE_ZAP_INTERNALS` currently records installed addon inventory from the scan image, not a live loaded-class inventory.
 - See [docs/V2_BENCHMARK_SUMMARY.md](docs/V2_BENCHMARK_SUMMARY.md) for the measured demo-core before/after benchmark on merged `main`.
 - See [docs/V2_SHIP_STATUS.md](docs/V2_SHIP_STATUS.md) for the exact commands, measured outputs, and remaining validation gap.
