@@ -1,6 +1,6 @@
 # ZeroDAST V2 Ship Status
 
-Date: April 15, 2026
+Date: April 16, 2026
 
 ## Current state
 
@@ -19,7 +19,6 @@ What is in place:
 
 What is still blocking a ready-to-ship V2 claim:
 
-- the rebuilt image should still be rerun through hosted GitHub Actions if you want hosted proof instead of local proof only
 - profiled-vs-unprofiled validation still has not been rerun on the broader target set
 - public messaging should continue to distinguish the shared surgical image that exists today from any future per-target image generation idea
 
@@ -59,6 +58,7 @@ Targets revalidated under that flow:
 - The Directus `10003` parity regression was fixed by removing add-on self-upgrades and keeping the stock `2.17.0` add-on set in the surgical image
 - External-target Medium+ parity after the rebuild: `4/4 PASS` on `nocodb`, `strapi`, `directus`, and `medusa`
 - External-target stock-vs-surgical benchmark pass now exists for `nocodb`, `strapi`, `directus`, and `medusa`, with same-environment timing plus Medium+ parity results
+- Hosted GitHub Actions stock-vs-surgical benchmark pass now also exists for `nocodb`, `strapi`, `directus`, and `medusa`, with `4/4 PASS` on the Medium+ parity gate
 
 ## Acceptance status
 
