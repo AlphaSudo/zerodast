@@ -235,17 +235,72 @@ Profiled benchmark provenance note:
 
 - This pass was executed locally from the existing `zerodast-install` target branches, not from GitHub-hosted runners.
 - The `directus` row reflects a tuned rerun with `security/profiles/target-directus.yaml` set to `skipOpenApi: true` after confirming that the Directus nightly path imported `0` URLs from OpenAPI.
-- There are therefore **no GitHub Actions run links for the profiled-vs-unprofiled runs themselves** yet.
-- The closest hosted comparison we currently have is the stock-vs-surgical benchmark above, which used these GitHub Actions runs:
-- `nocodb` stock: [run 24506957601](https://github.com/AlphaSudo/nocodb/actions/runs/24506957601)
-- `nocodb` surgical: [run 24506958587](https://github.com/AlphaSudo/nocodb/actions/runs/24506958587)
-- `strapi` stock: [run 24506959810](https://github.com/AlphaSudo/strapi/actions/runs/24506959810)
-- `strapi` surgical: [run 24506960955](https://github.com/AlphaSudo/strapi/actions/runs/24506960955)
-- `directus` stock: [run 24506962271](https://github.com/AlphaSudo/directus/actions/runs/24506962271)
-- `directus` surgical: [run 24506963354](https://github.com/AlphaSudo/directus/actions/runs/24506963354)
-- `medusa` stock: [run 24506964537](https://github.com/AlphaSudo/medusa/actions/runs/24506964537)
-- `medusa` surgical: [run 24506965841](https://github.com/AlphaSudo/medusa/actions/runs/24506965841)
-- If we want run URLs here later, we need a dedicated hosted benchmark lane for profiled vs unprofiled similar to the hosted stock-vs-surgical benchmark above.
+
+## Hosted GitHub Actions Profiled vs Unprofiled Benchmark
+
+### Environment
+
+- Branch used in each target repo: `codex/gha-benchmark`
+- Scanner image: hosted surgical scanner `zerodast-scanner:ci-benchmark`
+- Comparison mode:
+  - unprofiled surgical
+  - profiled surgical using `security/profiles/target-*.yaml` from `AlphaSudo/zerodast` branch `codex/nightly-v2-surgical`
+- Runner type: GitHub-hosted `ubuntu-22.04`
+
+### Hosted Profiled Wall Time
+
+This table uses GitHub Actions run creation/completion times for the hosted profiled benchmark lane.
+
+| Target | Unprofiled hosted wall seconds | Profiled hosted wall seconds | Delta | Change |
+|---|---:|---:|---:|---:|
+| `nocodb` | 288 | 213 | -75s | -26.0% |
+| `strapi` | 376 | 375 | -1s | -0.3% |
+| `directus` | 340 | 333 | -7s | -2.1% |
+| `medusa` | 360 | 345 | -15s | -4.2% |
+
+### Hosted Profiled Scanner-Phase Time
+
+This table uses each hosted run's `metrics.json` `coldRunSeconds` value.
+
+| Target | Unprofiled hosted scan seconds | Profiled hosted scan seconds | Delta | Change |
+|---|---:|---:|---:|---:|
+| `nocodb` | 208 | 130 | -78s | -37.5% |
+| `strapi` | 182 | 170 | -12s | -6.6% |
+| `directus` | 271 | 265 | -6s | -2.2% |
+| `medusa` | 81 | 54 | -27s | -33.3% |
+
+### Hosted Profiled Medium+ Parity
+
+| Target | Result | Notes |
+|---|---|---|
+| `nocodb` | `PASS` | No missing Medium+ alert types; Medium+ detail drift remains present on `10098` |
+| `strapi` | `PASS` | No missing Medium+ alert types; no Medium+ detail diff |
+| `directus` | `PASS` | No missing Medium+ alert types; no Medium+ detail diff |
+| `medusa` | `PASS` | No missing Medium+ alert types; no Medium+ detail diff |
+
+### Hosted Profiled Interpretation
+
+- The hosted GitHub Actions profiled benchmark also preserved the Medium+ gate on all four external targets versus hosted unprofiled surgical runs.
+- Hosted scanner time improved on all four targets.
+- Hosted wall time improved on all four targets as well, though the gain is small on `strapi` and `directus`.
+- `directus` remains the smallest hosted improvement case even after the profile tune, but it is no longer a hosted regression.
+
+### Hosted Profiled Evidence Location
+
+- `.tmp/gha-profiled-benchmark/run-metadata.json`
+- `.tmp/gha-profiled-benchmark/<target>/<variant>/`
+- `.tmp/gha-profiled-benchmark/parity-<target>/parity.txt`
+
+Hosted workflow runs used for this benchmark:
+
+- `nocodb` unprofiled: [run 24531398707](https://github.com/AlphaSudo/nocodb/actions/runs/24531398707)
+- `nocodb` profiled: [run 24531597669](https://github.com/AlphaSudo/nocodb/actions/runs/24531597669)
+- `strapi` unprofiled: [run 24531398760](https://github.com/AlphaSudo/strapi/actions/runs/24531398760)
+- `strapi` profiled: [run 24531597697](https://github.com/AlphaSudo/strapi/actions/runs/24531597697)
+- `directus` unprofiled: [run 24531398745](https://github.com/AlphaSudo/directus/actions/runs/24531398745)
+- `directus` profiled: [run 24531597646](https://github.com/AlphaSudo/directus/actions/runs/24531597646)
+- `medusa` unprofiled: [run 24531398734](https://github.com/AlphaSudo/medusa/actions/runs/24531398734)
+- `medusa` profiled: [run 24531597724](https://github.com/AlphaSudo/medusa/actions/runs/24531597724)
 
 ## What This Proves
 
@@ -254,9 +309,9 @@ Profiled benchmark provenance note:
 - the rebuilt image is not just demo-core-only evidence anymore; the broader target set now has both same-environment and hosted-runner benchmark data
 - the profile system preserves the Medium+ gate across the four external validation targets when compared to unprofiled surgical runs
 - the tuned Directus profile removes a dead OpenAPI import step and restores Directus as a performance win instead of a profile regression
+- the profiled-vs-unprofiled path now also has hosted GitHub Actions evidence, not just local reruns
 
 ## What It Does Not Prove Yet
 
 - long-run stability across repeated hosted nightly executions
-- hosted GitHub Actions profiled-vs-unprofiled timing for the four external targets
 - that every future target will benefit equally from the shared surgical image
