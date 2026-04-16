@@ -231,6 +231,21 @@ This table compares profiled surgical runs against unprofiled surgical runs.
 - `.tmp/profiled-target-benchmarks/parity-summary.json`
 - `.tmp/profiled-target-benchmarks/<target>/<variant>/`
 
+Profiled benchmark provenance note:
+
+- This pass was executed locally from the existing `zerodast-install` target branches, not from GitHub-hosted runners.
+- There are therefore **no GitHub Actions run links for the profiled-vs-unprofiled runs themselves** yet.
+- The closest hosted comparison we currently have is the stock-vs-surgical benchmark above, which used these GitHub Actions runs:
+- `nocodb` stock: [run 24506957601](https://github.com/AlphaSudo/nocodb/actions/runs/24506957601)
+- `nocodb` surgical: [run 24506958587](https://github.com/AlphaSudo/nocodb/actions/runs/24506958587)
+- `strapi` stock: [run 24506959810](https://github.com/AlphaSudo/strapi/actions/runs/24506959810)
+- `strapi` surgical: [run 24506960955](https://github.com/AlphaSudo/strapi/actions/runs/24506960955)
+- `directus` stock: [run 24506962271](https://github.com/AlphaSudo/directus/actions/runs/24506962271)
+- `directus` surgical: [run 24506963354](https://github.com/AlphaSudo/directus/actions/runs/24506963354)
+- `medusa` stock: [run 24506964537](https://github.com/AlphaSudo/medusa/actions/runs/24506964537)
+- `medusa` surgical: [run 24506965841](https://github.com/AlphaSudo/medusa/actions/runs/24506965841)
+- If we want run URLs here later, we need a dedicated hosted benchmark lane for profiled vs unprofiled similar to the hosted stock-vs-surgical benchmark above.
+
 ## What This Proves
 
 - the current shared V2 surgical image can be benchmarked successfully on the four external validation targets
