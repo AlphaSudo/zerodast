@@ -197,7 +197,7 @@ This table compares profiled surgical runs against unprofiled surgical runs.
 |---|---:|---:|---:|---:|
 | `nocodb` | 179 | 154 | -25s | -14.0% |
 | `strapi` | 467 | 180 | -287s | -61.5% |
-| `directus` | 197 | 239 | +42s | +21.3% |
+| `directus` | 197 | 108 | -89s | -45.2% |
 | `medusa` | 99 | 80 | -19s | -19.2% |
 
 ### Profiled Wall Time
@@ -206,7 +206,7 @@ This table compares profiled surgical runs against unprofiled surgical runs.
 |---|---:|---:|---:|---:|
 | `nocodb` | 245 | 213 | -32s | -13.1% |
 | `strapi` | 637 | 226 | -411s | -64.5% |
-| `directus` | 247 | 293 | +46s | +18.6% |
+| `directus` | 247 | 163 | -84s | -34.0% |
 | `medusa` | 581 | 391 | -190s | -32.7% |
 
 ### Profiled Medium+ Parity
@@ -221,9 +221,9 @@ This table compares profiled surgical runs against unprofiled surgical runs.
 ### Profiled Interpretation
 
 - Profiled mode preserved the Medium+ gate on all four external targets versus unprofiled surgical runs.
-- `nocodb`, `strapi`, and `medusa` all improved materially in the measured pass.
-- `directus` is the current exception: it preserved parity, but got slower in both scan time and total wall time.
-- That means the profile system is now **correctness-validated**, but not yet **universally performance-validated** across the full external target set.
+- `nocodb`, `strapi`, `directus`, and `medusa` all improved materially in the measured local pass.
+- The Directus gain came from tuning the target profile to skip the OpenAPI import step after verifying that Directus' nightly flow imported `0` URLs from the spec while still paying the setup cost.
+- That means the profile system is now **correctness-validated** and **locally performance-positive** across the current four-target external validation set.
 
 ### Profiled Evidence Location
 
@@ -234,6 +234,7 @@ This table compares profiled surgical runs against unprofiled surgical runs.
 Profiled benchmark provenance note:
 
 - This pass was executed locally from the existing `zerodast-install` target branches, not from GitHub-hosted runners.
+- The `directus` row reflects a tuned rerun with `security/profiles/target-directus.yaml` set to `skipOpenApi: true` after confirming that the Directus nightly path imported `0` URLs from OpenAPI.
 - There are therefore **no GitHub Actions run links for the profiled-vs-unprofiled runs themselves** yet.
 - The closest hosted comparison we currently have is the stock-vs-surgical benchmark above, which used these GitHub Actions runs:
 - `nocodb` stock: [run 24506957601](https://github.com/AlphaSudo/nocodb/actions/runs/24506957601)
@@ -252,9 +253,10 @@ Profiled benchmark provenance note:
 - the rebuilt image preserves the Medium+ parity gate across `nocodb`, `strapi`, `directus`, and `medusa`
 - the rebuilt image is not just demo-core-only evidence anymore; the broader target set now has both same-environment and hosted-runner benchmark data
 - the profile system preserves the Medium+ gate across the four external validation targets when compared to unprofiled surgical runs
+- the tuned Directus profile removes a dead OpenAPI import step and restores Directus as a performance win instead of a profile regression
 
 ## What It Does Not Prove Yet
 
 - long-run stability across repeated hosted nightly executions
-- that the current target profiles are performance wins on every target without further tuning
+- hosted GitHub Actions profiled-vs-unprofiled timing for the four external targets
 - that every future target will benefit equally from the shared surgical image
