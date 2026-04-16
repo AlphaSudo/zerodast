@@ -178,14 +178,68 @@ Hosted workflow runs used for this benchmark:
 - `medusa` stock: [run 24506964537](https://github.com/AlphaSudo/medusa/actions/runs/24506964537)
 - `medusa` surgical: [run 24506965841](https://github.com/AlphaSudo/medusa/actions/runs/24506965841)
 
+## Profiled vs Unprofiled Benchmark
+
+### Environment
+
+- Scanner image: `localhost/zerodast-scanner:2.17.0`
+- Comparison mode:
+  - unprofiled surgical
+  - profiled surgical using `security/profiles/target-*.yaml`
+- Profile merge source: `scripts/build-profiled-automation.js`
+- Runner context: local same-environment target runs on the existing `zerodast-install` branches
+
+### Profiled Scanner-Phase Time
+
+This table compares profiled surgical runs against unprofiled surgical runs.
+
+| Target | Unprofiled scan seconds | Profiled scan seconds | Delta | Change |
+|---|---:|---:|---:|---:|
+| `nocodb` | 179 | 154 | -25s | -14.0% |
+| `strapi` | 467 | 180 | -287s | -61.5% |
+| `directus` | 197 | 239 | +42s | +21.3% |
+| `medusa` | 99 | 80 | -19s | -19.2% |
+
+### Profiled Wall Time
+
+| Target | Unprofiled wall seconds | Profiled wall seconds | Delta | Change |
+|---|---:|---:|---:|---:|
+| `nocodb` | 245 | 213 | -32s | -13.1% |
+| `strapi` | 637 | 226 | -411s | -64.5% |
+| `directus` | 247 | 293 | +46s | +18.6% |
+| `medusa` | 581 | 391 | -190s | -32.7% |
+
+### Profiled Medium+ Parity
+
+| Target | Result | Notes |
+|---|---|---|
+| `nocodb` | `PASS` | No missing Medium+ alert types; Medium+ detail drift remains present |
+| `strapi` | `PASS` | No missing Medium+ alert types; no Medium+ detail diff |
+| `directus` | `PASS` | No missing Medium+ alert types; no Medium+ detail diff |
+| `medusa` | `PASS` | No missing Medium+ alert types; Medium+ detail drift remains present |
+
+### Profiled Interpretation
+
+- Profiled mode preserved the Medium+ gate on all four external targets versus unprofiled surgical runs.
+- `nocodb`, `strapi`, and `medusa` all improved materially in the measured pass.
+- `directus` is the current exception: it preserved parity, but got slower in both scan time and total wall time.
+- That means the profile system is now **correctness-validated**, but not yet **universally performance-validated** across the full external target set.
+
+### Profiled Evidence Location
+
+- `.tmp/profiled-target-benchmarks/summary.json`
+- `.tmp/profiled-target-benchmarks/parity-summary.json`
+- `.tmp/profiled-target-benchmarks/<target>/<variant>/`
+
 ## What This Proves
 
 - the current shared V2 surgical image can be benchmarked successfully on the four external validation targets
 - the rebuilt image preserves the Medium+ parity gate across `nocodb`, `strapi`, `directus`, and `medusa`
 - the rebuilt image is not just demo-core-only evidence anymore; the broader target set now has both same-environment and hosted-runner benchmark data
+- the profile system preserves the Medium+ gate across the four external validation targets when compared to unprofiled surgical runs
 
 ## What It Does Not Prove Yet
 
-- profiled-vs-unprofiled performance on the broader target set
 - long-run stability across repeated hosted nightly executions
+- that the current target profiles are performance wins on every target without further tuning
 - that every future target will benefit equally from the shared surgical image

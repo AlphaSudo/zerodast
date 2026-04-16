@@ -19,7 +19,7 @@ What is in place:
 
 What is still blocking a ready-to-ship V2 claim:
 
-- profiled-vs-unprofiled validation still has not been rerun on the broader target set
+- profiled-vs-unprofiled validation now passes the Medium+ gate on the broader target set, but `directus` currently regresses runtime under the profile and still needs tuning before profile-by-default rollout
 - public messaging should continue to distinguish the shared surgical image that exists today from any future per-target image generation idea
 
 ## Commands run locally
@@ -59,6 +59,7 @@ Targets revalidated under that flow:
 - External-target Medium+ parity after the rebuild: `4/4 PASS` on `nocodb`, `strapi`, `directus`, and `medusa`
 - External-target stock-vs-surgical benchmark pass now exists for `nocodb`, `strapi`, `directus`, and `medusa`, with same-environment timing plus Medium+ parity results
 - Hosted GitHub Actions stock-vs-surgical benchmark pass now also exists for `nocodb`, `strapi`, `directus`, and `medusa`, with `4/4 PASS` on the Medium+ parity gate
+- Profiled-vs-unprofiled surgical benchmark pass now also exists for `nocodb`, `strapi`, `directus`, and `medusa`, with `4/4 PASS` on the Medium+ parity gate and mixed timing results (`directus` currently slower when profiled)
 
 ## Acceptance status
 
