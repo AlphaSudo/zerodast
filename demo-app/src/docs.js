@@ -1,48 +1,10 @@
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function renderOperation(path, method, operation) {
-  const tag = operation.tags && operation.tags.length > 0 ? operation.tags[0] : "General";
-  const auth = operation.security ? "Requires bearer auth" : "No auth";
-
-  return `
-    <article class="operation">
-      <div class="operation-header">
-        <span class="method method-${method}">${method.toUpperCase()}</span>
-        <code>${escapeHtml(path)}</code>
-      </div>
-      <p class="summary">${escapeHtml(operation.summary || "No summary provided.")}</p>
-      <div class="meta">
-        <span>${escapeHtml(tag)}</span>
-        <span>${escapeHtml(auth)}</span>
-      </div>
-    </article>
-  `;
-}
-
-function renderDocsPage(spec) {
-  const operations = Object.entries(spec.paths)
-    .flatMap(([path, methods]) =>
-      Object.entries(methods).map(([method, operation]) =>
-        renderOperation(path, method, operation)
-      )
-    )
-    .join("\n");
-
-  const specJson = escapeHtml(JSON.stringify(spec, null, 2));
-
+function renderDocsPage() {
   return `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>${escapeHtml(spec.info.title)} Docs</title>
+    <title>ZeroDAST Demo API Docs</title>
     <style>
       :root {
         color-scheme: light;
@@ -190,6 +152,13 @@ function renderDocsPage(spec) {
         border: 1px solid var(--line);
         background: #1f2430;
         color: #f8f8f2;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .loading,
+      .error {
+        color: var(--muted);
       }
 
       @media (max-width: 640px) {
@@ -208,9 +177,9 @@ function renderDocsPage(spec) {
   <body>
     <main>
       <section class="hero">
-        <h1>${escapeHtml(spec.info.title)}</h1>
-        <p>${escapeHtml(spec.info.description)}</p>
-        <p>OpenAPI version ${escapeHtml(spec.openapi)}. This lightweight page keeps the spec available without pulling in extra npm packages that were tripping the Socket report.</p>
+        <h1 id="title">ZeroDAST Demo API</h1>
+        <p id="description">Loading OpenAPI description...</p>
+        <p id="version">OpenAPI spec available at <code>/v3/api-docs</code>.</p>
         <div class="actions">
           <a class="button" href="/v3/api-docs">View raw OpenAPI JSON</a>
         </div>
@@ -219,16 +188,110 @@ function renderDocsPage(spec) {
       <section class="grid">
         <section class="panel">
           <h2>Endpoints</h2>
-          <div class="operations">${operations}</div>
+          <div id="operations" class="operations">
+            <p class="loading">Loading endpoints...</p>
+          </div>
         </section>
 
         <section class="panel">
           <h2>Spec Snapshot</h2>
           <p>The full JSON is still served at <code>/v3/api-docs</code> for scanners and tooling.</p>
-          <pre>${specJson}</pre>
+          <pre id="spec-json">Loading spec...</pre>
         </section>
       </section>
     </main>
+
+    <script>
+      const methodClassNames = {
+        get: "method-get",
+        post: "method-post",
+        put: "method-put",
+        delete: "method-delete",
+      };
+
+      function appendTextElement(parent, tagName, className, text) {
+        const node = document.createElement(tagName);
+        if (className) {
+          node.className = className;
+        }
+        node.textContent = text;
+        parent.appendChild(node);
+        return node;
+      }
+
+      function renderOperation(path, method, operation) {
+        const article = document.createElement("article");
+        article.className = "operation";
+
+        const header = document.createElement("div");
+        header.className = "operation-header";
+
+        const methodTag = document.createElement("span");
+        methodTag.className = "method " + (methodClassNames[method] || "method-get");
+        methodTag.textContent = method.toUpperCase();
+        header.appendChild(methodTag);
+
+        appendTextElement(header, "code", "", path);
+        article.appendChild(header);
+
+        appendTextElement(article, "p", "summary", operation.summary || "No summary provided.");
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        const tag = operation.tags && operation.tags.length > 0 ? operation.tags[0] : "General";
+        const auth = operation.security ? "Requires bearer auth" : "No auth";
+        appendTextElement(meta, "span", "", tag);
+        appendTextElement(meta, "span", "", auth);
+        article.appendChild(meta);
+
+        return article;
+      }
+
+      async function loadDocs() {
+        const title = document.getElementById("title");
+        const description = document.getElementById("description");
+        const version = document.getElementById("version");
+        const operations = document.getElementById("operations");
+        const specJson = document.getElementById("spec-json");
+
+        try {
+          const response = await fetch("/v3/api-docs");
+          if (!response.ok) {
+            throw new Error("Failed to load spec: " + response.status);
+          }
+
+          const spec = await response.json();
+
+          title.textContent = spec.info && spec.info.title ? spec.info.title : "ZeroDAST Demo API";
+          description.textContent =
+            spec.info && spec.info.description
+              ? spec.info.description
+              : "OpenAPI description unavailable.";
+          version.textContent = "OpenAPI version " + (spec.openapi || "unknown") + ".";
+          specJson.textContent = JSON.stringify(spec, null, 2);
+
+          operations.replaceChildren();
+          const paths = spec.paths || {};
+          Object.entries(paths).forEach(([path, methods]) => {
+            Object.entries(methods).forEach(([method, operation]) => {
+              operations.appendChild(renderOperation(path, method, operation));
+            });
+          });
+
+          if (!operations.hasChildNodes()) {
+            appendTextElement(operations, "p", "loading", "No endpoints were found in the spec.");
+          }
+        } catch (error) {
+          description.textContent = "Unable to load the OpenAPI description.";
+          version.textContent = "The raw spec is still expected at /v3/api-docs.";
+          operations.replaceChildren();
+          appendTextElement(operations, "p", "error", error.message);
+          specJson.textContent = error.message;
+        }
+      }
+
+      loadDocs();
+    </script>
   </body>
 </html>`;
 }
