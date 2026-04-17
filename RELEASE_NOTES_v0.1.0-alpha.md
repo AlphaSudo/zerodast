@@ -6,20 +6,35 @@
 
 ---
 
-> **These alpha release notes describe the broader ZeroDAST project direction. As of the V2 parity fix on April 15, 2026, the surgical-image path now restores Medium+ parity on `demo-core`, but it is still experimental until the broader target set is rerun under the same validation flow.**
+> **These alpha release notes describe the broader ZeroDAST project direction. For the V2 release scope, what is now implemented and validated is a shared surgical scanner image plus optional per-target scan profiles. As of April 17, 2026 that path preserves the Medium+ parity gate on `demo-core`, `NocoDB`, `Strapi`, `Directus`, and `Medusa`, with both local and hosted benchmark evidence captured in-repo.**
 
 ## V2 Ship-Readiness Note
 
 - V2 adds opt-in interfaces for `ZAP_IMAGE`, `SCAN_PROFILE`, `CAPTURE_ZAP_INTERNALS`, and `CAPTURE_MEMORY`.
 - Default CI behavior remains unchanged: stock ZAP image and no scan profile unless explicitly enabled.
-- Current local demo-core evidence:
+- Release scope is **shared surgical image + optional scan profiles**. V2 does **not** yet dynamically generate a different scanner image per target.
+- Current validated V2 evidence:
   - stock image: `2.23 GB`
-  - surgical image: `1.36 GB`
-  - surgical installed addon inventory: `45`
-  - surgical benchmark parity: `PASS` for missing Medium+ alert types
+  - rebuilt surgical image: `1.01 GB`
+  - rebuilt surgical installed addon inventory: `42`
+  - Medium+ parity: `PASS` on `demo-core`, `NocoDB`, `Strapi`, `Directus`, and `Medusa`
+  - hosted stock-vs-surgical benchmark evidence: present for `NocoDB`, `Strapi`, `Directus`, and `Medusa`
+  - hosted profiled-vs-unprofiled benchmark evidence: present for `NocoDB`, `Strapi`, `Directus`, and `Medusa`
 - DOM XSS parity was restored by exposing `firefox` in the surgical image so the DOM XSS rule can execute the browser-backed path expected by ZAP.
-- Remaining validation work is now breadth, not the original blocker: rerun the broader target set before making any fleet-wide V2 parity claim.
-- Detailed commands and measurements are captured in [docs/V2_SHIP_STATUS.md](docs/V2_SHIP_STATUS.md).
+- Directus parity was restored by removing add-on self-upgrades and keeping the stock `2.17.0` add-on set in the shared surgical image.
+- Current caveats:
+  - `CAPTURE_ZAP_INTERNALS` records installed addon inventory from the image, not live loaded classes
+  - `NocoDB` still shows acceptable Medium+ detail drift in some comparisons, but no missing Medium+ alert types in the validated passes
+  - future targets may still require profile tuning
+- Detailed commands and measurements are captured in [docs/V2_SHIP_STATUS.md](docs/V2_SHIP_STATUS.md), [docs/V2_BENCHMARK_SUMMARY.md](docs/V2_BENCHMARK_SUMMARY.md), and [docs/V2_EXTERNAL_TARGET_BENCHMARKS.md](docs/V2_EXTERNAL_TARGET_BENCHMARKS.md).
+
+## V2 Release Summary
+
+- Shared surgical scanner image is implemented and benchmarked.
+- Optional per-target scan profiles are implemented and benchmarked.
+- Medium+ parity is validated on five targets: `demo-core`, `NocoDB`, `Strapi`, `Directus`, and `Medusa`.
+- Hosted GitHub Actions evidence now exists for both stock-vs-surgical and profiled-vs-unprofiled comparisons on the four external validation targets.
+- Public claims should remain conservative: V2 is proven as a shared-image path, not as dynamic per-target image generation.
 
 ---
 

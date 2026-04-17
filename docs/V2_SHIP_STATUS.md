@@ -17,10 +17,11 @@ What is in place:
 - benchmark, parity, inventory, image-build, and surgical-evidence scripts
 - safer host-side Node resolution for mixed Windows/WSL environments
 
-What is still blocking a ready-to-ship V2 claim:
+Release caveats to keep in the messaging:
 
 - profiled-vs-unprofiled validation now passes the Medium+ gate on the broader target set both locally and on GitHub-hosted runners, and the tuned `directus` profile is back to being a positive hosted result rather than a regression
 - public messaging should continue to distinguish the shared surgical image that exists today from any future per-target image generation idea
+- `nocodb` still shows acceptable Medium+ detail drift in some comparisons even though the validated parity gate is passing
 
 ## Commands run locally
 
