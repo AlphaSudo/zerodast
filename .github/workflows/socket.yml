@@ -1,0 +1,68 @@
+name: Socket Security
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "demo-app/package.json"
+      - "demo-app/package-lock.json"
+      - ".github/workflows/socket.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "demo-app/package.json"
+      - "demo-app/package-lock.json"
+      - ".github/workflows/socket.yml"
+
+concurrency:
+  group: socket-scan-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  socket-security:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Skip when Socket CLI token is not configured
+        if: ${{ secrets.SOCKET_SECURITY_API_KEY == '' }}
+        run: |
+          echo "SOCKET_SECURITY_API_KEY is not configured for this repository."
+          echo "Skipping the Socket CLI workflow because the native Socket GitHub App checks already cover PR scanning."
+
+      - name: Checkout
+        if: ${{ secrets.SOCKET_SECURITY_API_KEY != '' }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+
+      - name: Setup Python
+        if: ${{ secrets.SOCKET_SECURITY_API_KEY != '' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Socket CLI
+        if: ${{ secrets.SOCKET_SECURITY_API_KEY != '' }}
+        run: pip install socketsecurity --upgrade
+
+      - name: Run Socket Security scan
+        if: ${{ secrets.SOCKET_SECURITY_API_KEY != '' }}
+        env:
+          SOCKET_SECURITY_API_TOKEN: ${{ secrets.SOCKET_SECURITY_API_KEY }}
+          GH_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=0
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_NUMBER=${{ github.event.pull_request.number }}
+          fi
+
+          socketcli \
+            --target-path "$GITHUB_WORKSPACE/demo-app" \
+            --scm github \
+            --pr-number "$PR_NUMBER"

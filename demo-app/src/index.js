@@ -1,9 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
-const swaggerUi = require("swagger-ui-express");
 
 const { waitForDatabase } = require("./db");
+const { renderDocsPage } = require("./docs");
 const swaggerSpec = require("./swagger");
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
@@ -24,7 +24,10 @@ app.get("/v3/api-docs", (_req, res) => {
   res.json(swaggerSpec);
 });
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get("/api-docs", (_req, res) => {
+  res.type("html").send(renderDocsPage(swaggerSpec));
+});
+
 app.use(healthRoutes);
 app.use(authRoutes);
 app.use(userRoutes);
