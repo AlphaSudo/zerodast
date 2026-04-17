@@ -1,12 +1,12 @@
 # ZeroDAST V2 Ship Status
 
-Date: April 15, 2026
+Date: April 16, 2026
 
 ## Current state
 
 The V2 surgical-image/tooling path is implemented and locally runnable. The refreshed `demo-core` proof restores the Medium+ parity gate, and the rebuilt shared surgical image now also passes the same Medium+ gate on the four external targets `nocodb`, `strapi`, `directus`, and `medusa`.
 
-For the dedicated measured before/after benchmark on merged `main`, see [V2_BENCHMARK_SUMMARY.md](V2_BENCHMARK_SUMMARY.md).
+For the dedicated measured before/after benchmark on merged `main`, see [V2_BENCHMARK_SUMMARY.md](V2_BENCHMARK_SUMMARY.md). For the same-environment stock-vs-surgical benchmark on the four external validation targets, see [V2_EXTERNAL_TARGET_BENCHMARKS.md](V2_EXTERNAL_TARGET_BENCHMARKS.md).
 
 What is in place:
 
@@ -17,11 +17,11 @@ What is in place:
 - benchmark, parity, inventory, image-build, and surgical-evidence scripts
 - safer host-side Node resolution for mixed Windows/WSL environments
 
-What is still blocking a ready-to-ship V2 claim:
+Release caveats to keep in the messaging:
 
-- the rebuilt image should still be rerun through hosted GitHub Actions if you want hosted proof instead of local proof only
-- profiled-vs-unprofiled validation still has not been rerun on the broader target set
+- profiled-vs-unprofiled validation now passes the Medium+ gate on the broader target set both locally and on GitHub-hosted runners, and the tuned `directus` profile is back to being a positive hosted result rather than a regression
 - public messaging should continue to distinguish the shared surgical image that exists today from any future per-target image generation idea
+- `nocodb` still shows acceptable Medium+ detail drift in some comparisons even though the validated parity gate is passing
 
 ## Commands run locally
 
@@ -58,6 +58,9 @@ Targets revalidated under that flow:
 - The DOM XSS fix came from exposing `firefox` in the surgical image so the browser-backed rule path matches stock
 - The Directus `10003` parity regression was fixed by removing add-on self-upgrades and keeping the stock `2.17.0` add-on set in the surgical image
 - External-target Medium+ parity after the rebuild: `4/4 PASS` on `nocodb`, `strapi`, `directus`, and `medusa`
+- External-target stock-vs-surgical benchmark pass now exists for `nocodb`, `strapi`, `directus`, and `medusa`, with same-environment timing plus Medium+ parity results
+- Hosted GitHub Actions stock-vs-surgical benchmark pass now also exists for `nocodb`, `strapi`, `directus`, and `medusa`, with `4/4 PASS` on the Medium+ parity gate
+- Profiled-vs-unprofiled surgical benchmark pass now also exists for `nocodb`, `strapi`, `directus`, and `medusa`, with `4/4 PASS` on the Medium+ parity gate in both local and hosted GitHub Actions runs
 
 ## Acceptance status
 

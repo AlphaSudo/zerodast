@@ -8,7 +8,7 @@ notes:
   - "Vulnerable JS Library found (10003) — keep retire addon if available"
 
 overrides:
-  skipOpenApi: false
+  skipOpenApi: true
   spider:
     maxDuration: 3
     maxChildren: 50

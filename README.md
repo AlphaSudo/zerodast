@@ -14,20 +14,27 @@
 
 ---
 
-> **ZeroDAST is an alpha CI-first DAST orchestration framework for REST APIs. The V2 surgical-image path is implemented behind opt-in flags, and as of April 15, 2026 the rebuilt shared surgical image preserves the Medium+ parity gate on `demo-core`, `NocoDB`, `Strapi`, `Directus`, and `Medusa` after restoring DOM XSS browser runtime wiring and aligning the image back to the stock 2.17.0 add-on set.**
+> **ZeroDAST is an alpha CI-first DAST orchestration framework for REST APIs. The V2 release scope is a shared surgical scanner image plus optional per-target scan profiles. As of April 17, 2026 that shared surgical path preserves the Medium+ parity gate on `demo-core`, `NocoDB`, `Strapi`, `Directus`, and `Medusa`, with both local and hosted benchmark evidence captured in-repo.**
 
 ## V2 Status
 
+- Release scope: **shared surgical image + optional scan profiles**, not dynamic per-target scanner image generation.
 - V2 interfaces now exist in-repo: `ZAP_IMAGE`, `SCAN_PROFILE`, `CAPTURE_ZAP_INTERNALS`, and `CAPTURE_MEMORY`.
 - Existing GitHub workflows still default to stock ZAP with no profile; enabling V2 behavior is explicit.
 - V2 currently uses one shared surgical scanner image across targets; it does not yet generate a different scanner image per target.
-- Local demo-core evidence on April 14, 2026 measured `zerodast-scanner:2.17.0` at `1.37 GB` versus `zaproxy/zap-stable:2.17.0` at `2.23 GB`.
-- The refreshed local demo-core proof on April 15, 2026 now passes `verify-alert-parity.sh` with **no missing Medium+ alert types**.
-- That parity restoration came from exposing `firefox` in the surgical image so ZAP's DOM XSS rule can execute the same browser-backed path as stock.
-- After removing add-on self-upgrades and realigning the image to the stock `2.17.0` add-on set, the rebuilt shared surgical image now passes the Medium+ parity gate across the four external targets: `NocoDB`, `Strapi`, `Directus`, and `Medusa`.
+- The rebuilt surgical image is now measured at `1.01 GB` versus `2.23 GB` for `zaproxy/zap-stable:2.17.0`.
+- Medium+ parity now passes on the validated target set: `demo-core`, `NocoDB`, `Strapi`, `Directus`, and `Medusa`.
+- That parity restoration came from two concrete fixes:
+  - exposing `firefox` in the surgical image so ZAP's DOM XSS rule can execute the same browser-backed path as stock
+  - removing add-on self-upgrades and realigning the image to the stock `2.17.0` add-on set
+- Hosted benchmark evidence now exists for both:
+  - stock vs surgical on `NocoDB`, `Strapi`, `Directus`, and `Medusa`
+  - profiled vs unprofiled surgical on `NocoDB`, `Strapi`, `Directus`, and `Medusa`
 - `CAPTURE_ZAP_INTERNALS` currently records installed addon inventory from the scan image, not a live loaded-class inventory.
-- See [docs/V2_BENCHMARK_SUMMARY.md](docs/V2_BENCHMARK_SUMMARY.md) for the measured demo-core before/after benchmark on merged `main`.
-- See [docs/V2_SHIP_STATUS.md](docs/V2_SHIP_STATUS.md) for the exact commands, measured outputs, and remaining validation gap.
+- `NocoDB` still shows acceptable Medium+ detail drift in some comparisons; there are no missing Medium+ alert types in the validated passes.
+- See [docs/V2_BENCHMARK_SUMMARY.md](docs/V2_BENCHMARK_SUMMARY.md) for the measured demo-core before/after benchmark.
+- See [docs/V2_EXTERNAL_TARGET_BENCHMARKS.md](docs/V2_EXTERNAL_TARGET_BENCHMARKS.md) for local and hosted benchmark evidence across the four external validation targets.
+- See [docs/V2_SHIP_STATUS.md](docs/V2_SHIP_STATUS.md) for the exact commands, measured outputs, and release caveats.
 
 ---
 
